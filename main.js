@@ -225,6 +225,47 @@
   }
 
   /* --------------------------------------------------------
+     7b. Últimas notas — fetch assets/articles.json (panel admin)
+  -------------------------------------------------------- */
+  function initLatestNotes() {
+    var list = $1("#ultimasNotasList");
+    if (!list) return;
+
+    fetch("assets/articles.json", { cache: "no-store" })
+      .then(function (res) { return res.ok ? res.json() : []; })
+      .then(function (items) {
+        if (!items || !items.length) {
+          list.innerHTML = '<p class="latest-notes-empty">Todavía no hay notas publicadas desde el panel.</p>';
+          return;
+        }
+        list.innerHTML = items
+          .slice(0, 6)
+          .map(function (item) {
+            return (
+              '<article class="latest-note-item reveal">' +
+              '<p class="kicker">' + escapeHtml(item.category || "") + "</p>" +
+              '<h3><a href="' + escapeHtml(item.url) + '">' + escapeHtml(item.title) + "</a></h3>" +
+              (item.dek ? '<p class="latest-note-dek">' + escapeHtml(item.dek) + "</p>" : "") +
+              '<time class="pubdate-sm">' + escapeHtml(item.dateLabel || "") + "</time>" +
+              "</article>"
+            );
+          })
+          .join("");
+      })
+      .catch(function () {
+        list.innerHTML = "";
+      });
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  /* --------------------------------------------------------
      8. Date/time top bar — current date in Spanish
   -------------------------------------------------------- */
   function initTopBarDate() {
@@ -252,6 +293,7 @@
     safe(initSmoothAnchors, "initSmoothAnchors");
     safe(initProgressBar,   "initProgressBar");
     safe(initNewsletter,    "initNewsletter");
+    safe(initLatestNotes,   "initLatestNotes");
 
     if (window.gsap && window.ScrollTrigger) {
       try { gsap.registerPlugin(ScrollTrigger); } catch (_) {}

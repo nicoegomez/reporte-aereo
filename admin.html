@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel — Reporte Aéreo</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=20260812">
+<style>
+  body { background: var(--bg-2); min-height: 100vh; }
+  .admin-wrap {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: var(--space-16) var(--space-4);
+  }
+  .admin-brand {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: var(--space-8);
+  }
+  .admin-brand .ra-logo-word { font-size: 1.25rem; }
+  .admin-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: var(--space-8);
+  }
+  .admin-card h1 {
+    font-family: var(--serif);
+    font-size: 1.5rem;
+    margin: 0 0 var(--space-6);
+    color: var(--ink);
+  }
+  .field { margin-bottom: var(--space-4); }
+  .field label {
+    display: block;
+    font-family: var(--sans);
+    font-size: .8125rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin-bottom: .375rem;
+  }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    font-family: var(--sans);
+    font-size: .9375rem;
+    padding: .625rem .75rem;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    background: var(--bg);
+    color: var(--ink);
+    box-sizing: border-box;
+  }
+  .field textarea { resize: vertical; min-height: 160px; line-height: 1.6; }
+  .field-row { display: flex; gap: var(--space-4); }
+  .field-row .field { flex: 1; }
+  .btn-submit {
+    width: 100%;
+    padding: .75rem;
+    background: var(--accent-blue);
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: .9375rem;
+    cursor: pointer;
+    transition: background .2s ease;
+  }
+  .btn-submit:hover { background: var(--accent-blue-dark); }
+  .btn-submit:disabled { opacity: .6; cursor: default; }
+  .msg { font-family: var(--sans); font-size: .875rem; margin-top: var(--space-4); }
+  .msg.error { color: var(--accent-dark); }
+  .msg.ok { color: #1a7a40; }
+  .topline {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: var(--space-6);
+    font-family: var(--sans); font-size: .8125rem; color: var(--ink-mute);
+  }
+  .topline a { color: var(--accent-blue); text-decoration: none; cursor: pointer; }
+  .hidden { display: none !important; }
+  .change-pw {
+    margin-top: var(--space-8);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--line);
+  }
+  .change-pw h2 { font-family: var(--sans); font-size: .9375rem; margin: 0 0 var(--space-4); }
+</style>
+</head>
+<body>
+<div class="admin-wrap">
+  <div class="admin-brand">
+    <span class="ra-logo ra-logo--compact">
+      <span class="ra-logo-bars" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span class="ra-logo-word">REPORTE AÉREO</span>
+    </span>
+  </div>
+
+  <!-- LOGIN -->
+  <div class="admin-card" id="loginCard">
+    <h1>Ingresar al panel</h1>
+    <form id="loginForm">
+      <div class="field">
+        <label for="loginUser">Usuario</label>
+        <input id="loginUser" type="text" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="loginPass">Contraseña</label>
+        <input id="loginPass" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="btn-submit" type="submit">Ingresar</button>
+      <div class="msg error hidden" id="loginMsg"></div>
+    </form>
+  </div>
+
+  <!-- PANEL -->
+  <div class="admin-card hidden" id="panelCard">
+    <div class="topline">
+      <span id="whoami"></span>
+      <a id="logoutBtn">Cerrar sesión</a>
+    </div>
+
+    <h1>Nueva nota</h1>
+    <form id="publishForm">
+      <div class="field">
+        <label for="pTitle">Título</label>
+        <input id="pTitle" type="text" required maxlength="140">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="pCategory">Categoría</label>
+          <select id="pCategory">
+            <option>Actualidad</option>
+            <option>Aerolíneas</option>
+            <option>Aeropuertos</option>
+            <option>Turismo</option>
+            <option>Análisis</option>
+            <option>Entrevista</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="pAuthor">Firma (opcional)</label>
+          <input id="pAuthor" type="text" placeholder="Nicolás E. Gómez">
+        </div>
+      </div>
+      <div class="field">
+        <label for="pDek">Bajada (resumen corto)</label>
+        <input id="pDek" type="text" maxlength="220">
+      </div>
+      <div class="field">
+        <label for="pBody">Cuerpo de la nota</label>
+        <textarea id="pBody" required placeholder="Escribí la nota. Separá los párrafos con una línea en blanco."></textarea>
+      </div>
+      <button class="btn-submit" type="submit" id="publishBtn">Publicar nota</button>
+      <div class="msg hidden" id="publishMsg"></div>
+    </form>
+
+    <div class="change-pw">
+      <h2>Cambiar contraseña</h2>
+      <form id="pwForm">
+        <div class="field-row">
+          <div class="field">
+            <label for="curPw">Contraseña actual</label>
+            <input id="curPw" type="password" required>
+          </div>
+          <div class="field">
+            <label for="newPw">Nueva contraseña (min. 8)</label>
+            <input id="newPw" type="password" required minlength="8">
+          </div>
+        </div>
+        <button class="btn-submit" type="submit">Actualizar contraseña</button>
+        <div class="msg hidden" id="pwMsg"></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  function $(id) { return document.getElementById(id); }
+  function show(el) { el.classList.remove("hidden"); }
+  function hide(el) { el.classList.add("hidden"); }
+  function setMsg(el, text, isError) {
+    el.textContent = text;
+    el.classList.remove("hidden", "error", "ok");
+    el.classList.add(isError ? "error" : "ok");
+  }
+
+  async function checkSession() {
+    try {
+      var res = await fetch("/api/me");
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (_) { return null; }
+  }
+
+  function showPanel(me) {
+    hide($("loginCard"));
+    show($("panelCard"));
+    $("whoami").textContent = "Conectado como " + me.displayName;
+  }
+
+  function showLogin() {
+    show($("loginCard"));
+    hide($("panelCard"));
+  }
+
+  $("loginForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var msg = $("loginMsg");
+    hide(msg);
+    try {
+      var res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: $("loginUser").value.trim(), password: $("loginPass").value }),
+      });
+      var data = await res.json();
+      if (!res.ok) { setMsg(msg, data.error || "Error al ingresar", true); return; }
+      showPanel(data);
+    } catch (err) {
+      setMsg(msg, "Error de conexión", true);
+    }
+  });
+
+  $("logoutBtn").addEventListener("click", async function () {
+    await fetch("/api/logout", { method: "POST" });
+    showLogin();
+  });
+
+  $("publishForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var msg = $("publishMsg");
+    var btn = $("publishBtn");
+    hide(msg);
+    btn.disabled = true;
+    btn.textContent = "Publicando…";
+    try {
+      var res = await fetch("/api/publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: $("pTitle").value.trim(),
+          category: $("pCategory").value,
+          author: $("pAuthor").value.trim(),
+          dek: $("pDek").value.trim(),
+          body: $("pBody").value,
+        }),
+      });
+      var data = await res.json();
+      if (!res.ok) { setMsg(msg, data.error || "Error al publicar", true); return; }
+      setMsg(msg, "¡Publicado! Va a verse en unos minutos: " + data.url, false);
+      $("publishForm").reset();
+    } catch (err) {
+      setMsg(msg, "Error de conexión", true);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Publicar nota";
+    }
+  });
+
+  $("pwForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var msg = $("pwMsg");
+    hide(msg);
+    try {
+      var res = await fetch("/api/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: $("curPw").value, newPassword: $("newPw").value }),
+      });
+      var data = await res.json();
+      if (!res.ok) { setMsg(msg, data.error || "Error al cambiar contraseña", true); return; }
+      setMsg(msg, "Contraseña actualizada.", false);
+      $("pwForm").reset();
+    } catch (err) {
+      setMsg(msg, "Error de conexión", true);
+    }
+  });
+
+  checkSession().then(function (me) {
+    if (me) showPanel(me);
+    else showLogin();
+  });
+})();
+</script>
+</body>
+</html>

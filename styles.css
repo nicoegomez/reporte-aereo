@@ -1328,6 +1328,43 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
 }
 
 /* =============================================================
+   23b. Últimas notas (panel de administración)
+   ============================================================= */
+.latest-notes-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-6);
+}
+.latest-note-item h3 {
+  font-family: var(--serif);
+  font-size: 1.125rem;
+  line-height: 1.3;
+  margin: .375rem 0;
+}
+.latest-note-item h3 a {
+  color: var(--ink);
+  text-decoration: none;
+}
+.latest-note-item h3 a:hover { color: var(--accent-blue); }
+.latest-note-dek {
+  font-family: var(--body-serif);
+  font-size: .875rem;
+  color: var(--ink-soft);
+  margin: 0 0 .375rem;
+}
+.latest-notes-empty {
+  font-family: var(--sans);
+  color: var(--ink-mute);
+  font-size: .875rem;
+}
+@media (max-width: 899px) {
+  .latest-notes-list { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 599px) {
+  .latest-notes-list { grid-template-columns: 1fr; }
+}
+
+/* =============================================================
    24. Isotipo — 3 barras rojas + wordmark (Manual de marca)
    ============================================================= */
 .ra-logo {

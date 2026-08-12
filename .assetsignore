@@ -7,3 +7,5 @@ node_modules/**
 Reporte Aereo - Manual de marca.html
 ChatGPT Image*.png
 *.psd
+worker.js
+wrangler.jsonc

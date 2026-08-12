@@ -1,8 +1,17 @@
 {
   "name": "reporte-aereo",
+  "main": "worker.js",
   "compatibility_date": "2026-08-12",
   "assets": {
     "directory": "./",
+    "binding": "ASSETS",
     "not_found_handling": "404-page"
-  }
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "reporte-aereo-db",
+      "database_id": "2cc62b5c-5e53-4419-aa05-3b43661d601d"
+    }
+  ]
 }
