@@ -10,82 +10,47 @@
 <link rel="stylesheet" href="styles.css?v=20260812">
 <style>
   body { background: var(--bg-2); min-height: 100vh; }
-  .admin-wrap {
-    max-width: 640px;
-    margin: 0 auto;
-    padding: var(--space-16) var(--space-4);
-  }
-  .admin-brand {
-    display: flex; align-items: center; gap: 10px;
-    margin-bottom: var(--space-8);
-  }
+  .admin-wrap { max-width: 760px; margin: 0 auto; padding: var(--space-16) var(--space-4); }
+  .admin-brand { display: flex; align-items: center; gap: 10px; margin-bottom: var(--space-8); }
   .admin-brand .ra-logo-word { font-size: 1.25rem; }
-  .admin-card {
-    background: #fff;
-    border: 1px solid var(--line);
-    border-radius: 4px;
-    padding: var(--space-8);
-  }
-  .admin-card h1 {
-    font-family: var(--serif);
-    font-size: 1.5rem;
-    margin: 0 0 var(--space-6);
-    color: var(--ink);
-  }
+  .admin-card { background: #fff; border: 1px solid var(--line); border-radius: 4px; padding: var(--space-8); }
+  .admin-card h1 { font-family: var(--serif); font-size: 1.5rem; margin: 0 0 var(--space-6); color: var(--ink); }
   .field { margin-bottom: var(--space-4); }
-  .field label {
-    display: block;
-    font-family: var(--sans);
-    font-size: .8125rem;
-    font-weight: 600;
-    color: var(--ink-soft);
-    margin-bottom: .375rem;
-  }
-  .field input, .field select, .field textarea {
-    width: 100%;
-    font-family: var(--sans);
-    font-size: .9375rem;
-    padding: .625rem .75rem;
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    background: var(--bg);
-    color: var(--ink);
-    box-sizing: border-box;
-  }
+  .field label { display: block; font-family: var(--sans); font-size: .8125rem; font-weight: 600; color: var(--ink-soft); margin-bottom: .375rem; }
+  .field input, .field select, .field textarea { width: 100%; font-family: var(--sans); font-size: .9375rem; padding: .625rem .75rem; border: 1px solid var(--line); border-radius: 3px; background: var(--bg); color: var(--ink); box-sizing: border-box; }
   .field textarea { resize: vertical; min-height: 160px; line-height: 1.6; }
   .field-row { display: flex; gap: var(--space-4); }
   .field-row .field { flex: 1; }
-  .btn-submit {
-    width: 100%;
-    padding: .75rem;
-    background: var(--accent-blue);
-    color: #fff;
-    border: none;
-    border-radius: 3px;
-    font-family: var(--sans);
-    font-weight: 600;
-    font-size: .9375rem;
-    cursor: pointer;
-    transition: background .2s ease;
-  }
+  .field-hint { font-family: var(--sans); font-size: .75rem; color: var(--ink-mute); margin-top: .25rem; }
+  .btn-submit { padding: .75rem 1.25rem; background: var(--accent-blue); color: #fff; border: none; border-radius: 3px; font-family: var(--sans); font-weight: 600; font-size: .9375rem; cursor: pointer; transition: background .2s ease; }
   .btn-submit:hover { background: var(--accent-blue-dark); }
   .btn-submit:disabled { opacity: .6; cursor: default; }
+  .btn-secondary { padding: .625rem 1rem; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 3px; font-family: var(--sans); font-weight: 600; font-size: .8125rem; cursor: pointer; }
+  .btn-danger { color: var(--accent-dark); border-color: var(--accent-dark); }
   .msg { font-family: var(--sans); font-size: .875rem; margin-top: var(--space-4); }
   .msg.error { color: var(--accent-dark); }
   .msg.ok { color: #1a7a40; }
-  .topline {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: var(--space-6);
-    font-family: var(--sans); font-size: .8125rem; color: var(--ink-mute);
-  }
+  .topline { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-6); font-family: var(--sans); font-size: .8125rem; color: var(--ink-mute); }
   .topline a { color: var(--accent-blue); text-decoration: none; cursor: pointer; }
   .hidden { display: none !important; }
-  .change-pw {
-    margin-top: var(--space-8);
-    padding-top: var(--space-6);
-    border-top: 1px solid var(--line);
-  }
-  .change-pw h2 { font-family: var(--sans); font-size: .9375rem; margin: 0 0 var(--space-4); }
+  .tabs { display: flex; gap: var(--space-2); margin-bottom: var(--space-6); border-bottom: 1px solid var(--line); }
+  .tab-btn { font-family: var(--sans); font-size: .875rem; font-weight: 600; color: var(--ink-mute); background: none; border: none; padding: .625rem .25rem; margin-right: var(--space-6); cursor: pointer; border-bottom: 2px solid transparent; }
+  .tab-btn.active { color: var(--accent-blue); border-bottom-color: var(--accent-blue); }
+  .tab-panel.hidden { display: none; }
+  .cover-preview { max-width: 100%; max-height: 160px; border-radius: 3px; margin-top: .5rem; display: none; }
+  .cover-preview.show { display: block; }
+  .articles-list { display: flex; flex-direction: column; gap: var(--space-3); }
+  .article-row { display: flex; gap: var(--space-3); align-items: center; padding: var(--space-3); border: 1px solid var(--line); border-radius: 3px; }
+  .article-row img { width: 56px; height: 56px; object-fit: cover; border-radius: 3px; background: var(--bg-2); flex-shrink: 0; }
+  .article-row-main { flex: 1; min-width: 0; }
+  .article-row-main .t { font-family: var(--sans); font-weight: 600; font-size: .875rem; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .article-row-main .m { font-family: var(--sans); font-size: .75rem; color: var(--ink-mute); }
+  .article-row-actions { display: flex; gap: .375rem; flex-wrap: wrap; }
+  .article-row-actions button { font-family: var(--sans); font-size: .75rem; padding: .3rem .55rem; border-radius: 3px; border: 1px solid var(--line); background: var(--bg); cursor: pointer; }
+  .badge-featured { display: inline-block; font-family: var(--sans); font-size: .625rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--gold); border: 1px solid var(--gold); border-radius: 2px; padding: .05rem .3rem; margin-left: .375rem; }
+  .checkbox-field { display: flex; align-items: center; gap: .5rem; }
+  .checkbox-field input { width: auto; }
+  .checkbox-field label { margin: 0; }
 </style>
 </head>
 <body>
@@ -121,53 +86,93 @@
       <a id="logoutBtn">Cerrar sesión</a>
     </div>
 
-    <h1>Nueva nota</h1>
-    <form id="publishForm">
-      <div class="field">
-        <label for="pTitle">Título</label>
-        <input id="pTitle" type="text" required maxlength="140">
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label for="pCategory">Categoría</label>
-          <select id="pCategory">
-            <option>Actualidad</option>
-            <option>Aerolíneas</option>
-            <option>Aeropuertos</option>
-            <option>Turismo</option>
-            <option>Análisis</option>
-            <option>Entrevista</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="pAuthor">Firma (opcional)</label>
-          <input id="pAuthor" type="text" placeholder="Nicolás E. Gómez">
-        </div>
-      </div>
-      <div class="field">
-        <label for="pDek">Bajada (resumen corto)</label>
-        <input id="pDek" type="text" maxlength="220">
-      </div>
-      <div class="field">
-        <label for="pBody">Cuerpo de la nota</label>
-        <textarea id="pBody" required placeholder="Escribí la nota. Separá los párrafos con una línea en blanco."></textarea>
-      </div>
-      <button class="btn-submit" type="submit" id="publishBtn">Publicar nota</button>
-      <div class="msg hidden" id="publishMsg"></div>
-    </form>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="new">Nueva nota</button>
+      <button class="tab-btn" data-tab="list">Notas publicadas</button>
+      <button class="tab-btn" data-tab="profile">Perfil</button>
+    </div>
 
-    <div class="change-pw">
-      <h2>Cambiar contraseña</h2>
-      <form id="pwForm">
+    <!-- TAB: nueva nota / editar -->
+    <div class="tab-panel" id="tabNew">
+      <h1 id="formTitle">Nueva nota</h1>
+      <form id="publishForm">
+        <input type="hidden" id="editId" value="">
+        <div class="field">
+          <label for="pTitle">Título</label>
+          <input id="pTitle" type="text" required maxlength="140">
+        </div>
         <div class="field-row">
           <div class="field">
-            <label for="curPw">Contraseña actual</label>
-            <input id="curPw" type="password" required>
+            <label for="pCategory">Categoría</label>
+            <select id="pCategory">
+              <option>Actualidad</option>
+              <option>Aerolíneas</option>
+              <option>Aeropuertos</option>
+              <option>Turismo</option>
+              <option>Análisis</option>
+              <option>Entrevista</option>
+            </select>
           </div>
           <div class="field">
-            <label for="newPw">Nueva contraseña (min. 8)</label>
-            <input id="newPw" type="password" required minlength="8">
+            <label for="pAuthor">Firma (opcional)</label>
+            <input id="pAuthor" type="text" placeholder="Nicolás E. Gómez">
           </div>
+        </div>
+        <div class="field">
+          <label for="pDek">Bajada (resumen corto)</label>
+          <input id="pDek" type="text" maxlength="220">
+        </div>
+
+        <div class="field">
+          <label for="pCoverFile">Imagen de portada</label>
+          <input id="pCoverFile" type="file" accept="image/*">
+          <input type="hidden" id="pCoverUrl" value="">
+          <img id="coverPreview" class="cover-preview" alt="">
+          <p class="field-hint" id="coverStatus"></p>
+        </div>
+
+        <div class="field">
+          <label for="pBody">Cuerpo de la nota</label>
+          <textarea id="pBody" required placeholder="Escribí la nota. Separá los párrafos con una línea en blanco."></textarea>
+          <p class="field-hint">Para insertar una imagen dentro del texto, usá el botón de abajo — se agrega en el cursor.</p>
+          <input id="pInlineFile" type="file" accept="image/*" class="hidden">
+          <button type="button" class="btn-secondary" id="insertImgBtn" style="margin-top:.5rem;">+ Insertar imagen en el cuerpo</button>
+          <span class="field-hint" id="inlineImgStatus"></span>
+        </div>
+
+        <div class="field checkbox-field">
+          <input type="checkbox" id="pFeatured">
+          <label for="pFeatured">Destacar esta nota (aparece primero y más grande)</label>
+        </div>
+
+        <button class="btn-submit" type="submit" id="publishBtn">Publicar nota</button>
+        <button type="button" class="btn-secondary hidden" id="cancelEditBtn" style="margin-left:.5rem;">Cancelar edición</button>
+        <div class="msg hidden" id="publishMsg"></div>
+      </form>
+    </div>
+
+    <!-- TAB: listado -->
+    <div class="tab-panel hidden" id="tabList">
+      <h1>Notas publicadas</h1>
+      <div class="articles-list" id="articlesList"></div>
+      <div class="msg hidden" id="listMsg"></div>
+    </div>
+
+    <!-- TAB: perfil -->
+    <div class="tab-panel hidden" id="tabProfile">
+      <h1>Perfil</h1>
+      <form id="pwForm">
+        <div class="field">
+          <label for="curPw">Contraseña actual</label>
+          <input id="curPw" type="password" required autocomplete="current-password">
+        </div>
+        <div class="field">
+          <label for="newPw">Nueva contraseña (mín. 8 caracteres)</label>
+          <input id="newPw" type="password" required minlength="8" autocomplete="new-password">
+        </div>
+        <div class="field">
+          <label for="confirmPw">Repetir nueva contraseña</label>
+          <input id="confirmPw" type="password" required minlength="8" autocomplete="new-password">
         </div>
         <button class="btn-submit" type="submit">Actualizar contraseña</button>
         <div class="msg hidden" id="pwMsg"></div>
@@ -188,7 +193,16 @@
     el.classList.remove("hidden", "error", "ok");
     el.classList.add(isError ? "error" : "ok");
   }
+  function fileToBase64(file) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () { resolve(reader.result.split(",")[1]); };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
 
+  /* ---------- sesión ---------- */
   async function checkSession() {
     try {
       var res = await fetch("/api/me");
@@ -201,12 +215,9 @@
     hide($("loginCard"));
     show($("panelCard"));
     $("whoami").textContent = "Conectado como " + me.displayName;
+    loadArticles();
   }
-
-  function showLogin() {
-    show($("loginCard"));
-    hide($("panelCard"));
-  }
+  function showLogin() { show($("loginCard")); hide($("panelCard")); }
 
   $("loginForm").addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -221,9 +232,7 @@
       var data = await res.json();
       if (!res.ok) { setMsg(msg, data.error || "Error al ingresar", true); return; }
       showPanel(data);
-    } catch (err) {
-      setMsg(msg, "Error de conexión", true);
-    }
+    } catch (err) { setMsg(msg, "Error de conexión", true); }
   });
 
   $("logoutBtn").addEventListener("click", async function () {
@@ -231,54 +240,236 @@
     showLogin();
   });
 
+  /* ---------- tabs ---------- */
+  var tabs = { new: $("tabNew"), list: $("tabList"), profile: $("tabProfile") };
+  document.querySelectorAll(".tab-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      document.querySelectorAll(".tab-btn").forEach(function (b) { b.classList.remove("active"); });
+      btn.classList.add("active");
+      Object.keys(tabs).forEach(function (k) { hide(tabs[k]); });
+      show(tabs[btn.dataset.tab]);
+      if (btn.dataset.tab === "list") loadArticles();
+    });
+  });
+
+  /* ---------- imagen de portada ---------- */
+  $("pCoverFile").addEventListener("change", async function () {
+    var file = this.files[0];
+    if (!file) return;
+    var status = $("coverStatus");
+    status.textContent = "Subiendo…";
+    try {
+      var b64 = await fileToBase64(file);
+      var res = await fetch("/api/upload-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dataBase64: b64, mime: file.type }),
+      });
+      var data = await res.json();
+      if (!res.ok) { status.textContent = data.error || "Error al subir imagen"; return; }
+      $("pCoverUrl").value = data.url;
+      var img = $("coverPreview");
+      img.src = data.url;
+      img.classList.add("show");
+      status.textContent = "Imagen cargada.";
+    } catch (err) { status.textContent = "Error de conexión"; }
+  });
+
+  /* ---------- imagen inline en el cuerpo ---------- */
+  $("insertImgBtn").addEventListener("click", function () { $("pInlineFile").click(); });
+  $("pInlineFile").addEventListener("change", async function () {
+    var file = this.files[0];
+    if (!file) return;
+    var status = $("inlineImgStatus");
+    status.textContent = " Subiendo…";
+    try {
+      var b64 = await fileToBase64(file);
+      var res = await fetch("/api/upload-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dataBase64: b64, mime: file.type }),
+      });
+      var data = await res.json();
+      if (!res.ok) { status.textContent = " " + (data.error || "Error al subir imagen"); return; }
+      var textarea = $("pBody");
+      var placeholder = "\n\n{{img:" + data.url + "}}\n\n";
+      var start = textarea.selectionStart || textarea.value.length;
+      textarea.value = textarea.value.slice(0, start) + placeholder + textarea.value.slice(start);
+      status.textContent = " Imagen insertada en el cuerpo.";
+      this.value = "";
+    } catch (err) { status.textContent = " Error de conexión"; }
+  });
+
+  /* ---------- publicar / editar nota ---------- */
+  function resetForm() {
+    $("publishForm").reset();
+    $("editId").value = "";
+    $("pCoverUrl").value = "";
+    $("coverPreview").classList.remove("show");
+    $("formTitle").textContent = "Nueva nota";
+    $("publishBtn").textContent = "Publicar nota";
+    hide($("cancelEditBtn"));
+  }
+
+  $("cancelEditBtn").addEventListener("click", resetForm);
+
   $("publishForm").addEventListener("submit", async function (e) {
     e.preventDefault();
     var msg = $("publishMsg");
     var btn = $("publishBtn");
     hide(msg);
     btn.disabled = true;
-    btn.textContent = "Publicando…";
+    var editId = $("editId").value;
+    btn.textContent = editId ? "Guardando…" : "Publicando…";
+
+    var payload = {
+      title: $("pTitle").value.trim(),
+      category: $("pCategory").value,
+      author: $("pAuthor").value.trim(),
+      dek: $("pDek").value.trim(),
+      body: $("pBody").value,
+      coverImageUrl: $("pCoverUrl").value,
+      featured: $("pFeatured").checked,
+    };
+
     try {
-      var res = await fetch("/api/publish", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: $("pTitle").value.trim(),
-          category: $("pCategory").value,
-          author: $("pAuthor").value.trim(),
-          dek: $("pDek").value.trim(),
-          body: $("pBody").value,
-        }),
-      });
-      var data = await res.json();
-      if (!res.ok) { setMsg(msg, data.error || "Error al publicar", true); return; }
-      setMsg(msg, "¡Publicado! Va a verse en unos minutos: " + data.url, false);
-      $("publishForm").reset();
+      var res, data;
+      if (editId) {
+        res = await fetch("/api/articles/" + editId, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        res = await fetch("/api/articles", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      }
+      data = await res.json();
+      if (!res.ok) { setMsg(msg, data.error || "Error al guardar", true); return; }
+      setMsg(msg, (editId ? "¡Actualizado! " : "¡Publicado! ") + "Va a verse en unos minutos: " + data.url, false);
+      resetForm();
+      loadArticles();
     } catch (err) {
       setMsg(msg, "Error de conexión", true);
     } finally {
       btn.disabled = false;
-      btn.textContent = "Publicar nota";
+      btn.textContent = editId ? "Guardar cambios" : "Publicar nota";
     }
   });
 
+  /* ---------- listado ---------- */
+  async function loadArticles() {
+    var container = $("articlesList");
+    var msg = $("listMsg");
+    hide(msg);
+    try {
+      var res = await fetch("/api/articles");
+      var data = await res.json();
+      if (!res.ok) { setMsg(msg, data.error || "Error al cargar", true); return; }
+      if (!data.articles.length) {
+        container.innerHTML = '<p class="field-hint">Todavía no publicaste ninguna nota.</p>';
+        return;
+      }
+      container.innerHTML = data.articles
+        .map(function (a) {
+          return (
+            '<div class="article-row" data-id="' + a.id + '">' +
+            (a.cover_image_url ? '<img src="' + a.cover_image_url + '" alt="">' : '<div style="width:56px;height:56px;background:var(--bg-2);border-radius:3px;flex-shrink:0;"></div>') +
+            '<div class="article-row-main">' +
+            '<div class="t">' + a.title + (a.featured ? '<span class="badge-featured">Destacada</span>' : "") + "</div>" +
+            '<div class="m">' + a.category + " · " + new Date(a.created_at).toLocaleDateString("es-AR") + "</div>" +
+            "</div>" +
+            '<div class="article-row-actions">' +
+            '<button data-action="up" title="Subir">↑</button>' +
+            '<button data-action="down" title="Bajar">↓</button>' +
+            '<button data-action="edit">Editar</button>' +
+            '<button data-action="delete" style="color:var(--accent-dark);border-color:var(--accent-dark);">Borrar</button>' +
+            "</div>" +
+            "</div>"
+          );
+        })
+        .join("");
+    } catch (err) { setMsg(msg, "Error de conexión", true); }
+  }
+
+  $("articlesList").addEventListener("click", async function (e) {
+    var btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+    var row = btn.closest(".article-row");
+    var id = row.dataset.id;
+    var action = btn.dataset.action;
+
+    if (action === "up" || action === "down") {
+      await fetch("/api/articles/" + id + "/move", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ direction: action === "up" ? "up" : "down" }),
+      });
+      loadArticles();
+      return;
+    }
+
+    if (action === "delete") {
+      if (!confirm("¿Borrar esta nota? Esta acción no se puede deshacer.")) return;
+      await fetch("/api/articles/" + id, { method: "DELETE" });
+      loadArticles();
+      return;
+    }
+
+    if (action === "edit") {
+      var res = await fetch("/api/articles/" + id);
+      var data = await res.json();
+      if (!res.ok) return;
+      var a = data.article;
+      document.querySelector('.tab-btn[data-tab="new"]').click();
+      $("editId").value = a.id;
+      $("pTitle").value = a.title;
+      $("pCategory").value = a.category;
+      $("pAuthor").value = a.author;
+      $("pDek").value = a.dek || "";
+      $("pBody").value = a.body;
+      $("pFeatured").checked = !!a.featured;
+      $("pCoverUrl").value = a.cover_image_url || "";
+      if (a.cover_image_url) {
+        var img = $("coverPreview");
+        img.src = a.cover_image_url;
+        img.classList.add("show");
+      }
+      $("formTitle").textContent = "Editar nota";
+      $("publishBtn").textContent = "Guardar cambios";
+      show($("cancelEditBtn"));
+    }
+  });
+
+  /* ---------- cambio de contraseña ---------- */
   $("pwForm").addEventListener("submit", async function (e) {
     e.preventDefault();
     var msg = $("pwMsg");
     hide(msg);
+
+    if ($("newPw").value !== $("confirmPw").value) {
+      setMsg(msg, "Las contraseñas nuevas no coinciden", true);
+      return;
+    }
+
     try {
       var res = await fetch("/api/change-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword: $("curPw").value, newPassword: $("newPw").value }),
+        body: JSON.stringify({
+          currentPassword: $("curPw").value,
+          newPassword: $("newPw").value,
+          confirmPassword: $("confirmPw").value,
+        }),
       });
       var data = await res.json();
       if (!res.ok) { setMsg(msg, data.error || "Error al cambiar contraseña", true); return; }
       setMsg(msg, "Contraseña actualizada.", false);
       $("pwForm").reset();
-    } catch (err) {
-      setMsg(msg, "Error de conexión", true);
-    }
+    } catch (err) { setMsg(msg, "Error de conexión", true); }
   });
 
   checkSession().then(function (me) {

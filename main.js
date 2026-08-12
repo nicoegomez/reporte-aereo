@@ -241,12 +241,19 @@
         list.innerHTML = items
           .slice(0, 6)
           .map(function (item) {
+            var featClass = item.featured ? " is-featured" : "";
+            var thumb = item.image
+              ? '<img class="latest-note-thumb" src="' + escapeHtml(item.image) + '" alt="" loading="lazy">'
+              : "";
             return (
-              '<article class="latest-note-item reveal">' +
+              '<article class="latest-note-item reveal' + featClass + '">' +
+              thumb +
+              '<div>' +
               '<p class="kicker">' + escapeHtml(item.category || "") + "</p>" +
               '<h3><a href="' + escapeHtml(item.url) + '">' + escapeHtml(item.title) + "</a></h3>" +
               (item.dek ? '<p class="latest-note-dek">' + escapeHtml(item.dek) + "</p>" : "") +
               '<time class="pubdate-sm">' + escapeHtml(item.dateLabel || "") + "</time>" +
+              "</div>" +
               "</article>"
             );
           })

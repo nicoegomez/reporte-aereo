@@ -1335,6 +1335,15 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
   grid-template-columns: repeat(3, 1fr);
   gap: var(--space-6);
 }
+.latest-note-item { display: flex; flex-direction: column; }
+.latest-note-thumb {
+  width: 100%;
+  aspect-ratio: 16/10;
+  object-fit: cover;
+  border-radius: 2px;
+  margin-bottom: var(--space-3);
+  background: var(--bg-2);
+}
 .latest-note-item h3 {
   font-family: var(--serif);
   font-size: 1.125rem;
@@ -1357,11 +1366,47 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
   color: var(--ink-mute);
   font-size: .875rem;
 }
+/* nota destacada: ocupa todo el ancho y se muestra más grande */
+.latest-note-item.is-featured {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  gap: var(--space-6);
+  align-items: center;
+}
+.latest-note-item.is-featured .latest-note-thumb {
+  width: 42%;
+  aspect-ratio: 16/9;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+.latest-note-item.is-featured h3 {
+  font-size: clamp(1.375rem, 2.4vw, 1.875rem);
+}
 @media (max-width: 899px) {
   .latest-notes-list { grid-template-columns: repeat(2, 1fr); }
+  .latest-note-item.is-featured { flex-direction: column; }
+  .latest-note-item.is-featured .latest-note-thumb { width: 100%; margin-bottom: var(--space-3); }
 }
 @media (max-width: 599px) {
   .latest-notes-list { grid-template-columns: 1fr; }
+}
+
+/* Imágenes dentro del cuerpo de una nota + portada */
+.article-cover-img, .article-inline-img {
+  margin: var(--space-6) 0;
+}
+.article-cover-img img, .article-inline-img img {
+  width: 100%;
+  height: auto;
+  border-radius: 2px;
+  display: block;
+}
+.article-inline-img figcaption {
+  font-family: var(--sans);
+  font-size: .8125rem;
+  color: var(--ink-mute);
+  margin-top: .5rem;
+  text-align: center;
 }
 
 /* =============================================================
