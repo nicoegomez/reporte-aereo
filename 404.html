@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Página no encontrada — Reporte Aéreo</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=20260812">
+<style>
+  .error-page {
+    min-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--space-24) var(--space-4);
+    background: var(--bg);
+  }
+  .error-code {
+    font-family: var(--serif);
+    font-weight: 900;
+    font-size: clamp(4rem, 12vw, 8rem);
+    color: var(--accent-blue);
+    line-height: 1;
+    margin: 0 0 var(--space-4);
+  }
+  .error-msg {
+    font-family: var(--sans);
+    color: var(--ink-soft);
+    font-size: 1.125rem;
+    margin: 0 0 var(--space-8);
+    max-width: 32ch;
+  }
+  .error-back {
+    display: inline-block;
+    padding: var(--space-3) var(--space-8);
+    background: var(--accent-blue);
+    color: #fff;
+    font-family: var(--sans);
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: var(--radius, 2px);
+    transition: background .2s ease;
+  }
+  .error-back:hover { background: var(--accent-blue-dark); }
+</style>
+</head>
+<body>
+  <main class="error-page">
+    <a href="index.html" class="ra-logo" aria-label="Reporte Aéreo — inicio" style="margin-bottom: var(--space-8);">
+      <span class="ra-logo-bars" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span class="ra-logo-word" style="display:block; font-size: 1.75rem;">REPORTE AÉREO</span>
+    </a>
+    <p class="error-code">404</p>
+    <p class="error-msg">Esta página no existe o fue movida. Volvé al inicio para seguir la última hora de la industria aerocomercial.</p>
+    <a href="index.html" class="error-back">Ir al inicio</a>
+  </main>
+</body>
+</html>
