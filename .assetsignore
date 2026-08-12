@@ -1,0 +1,9 @@
+.git
+.git/**
+.wrangler
+.wrangler/**
+node_modules
+node_modules/**
+Reporte Aereo - Manual de marca.html
+ChatGPT Image*.png
+*.psd
