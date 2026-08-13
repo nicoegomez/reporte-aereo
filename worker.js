@@ -31,6 +31,84 @@ async function sha256Hex(text) {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+/* ---------------- contraseñas ----------------
+
+   Formato guardado: pbkdf2$sha256$<iteraciones>$<sal_b64>$<hash_b64>
+
+   Las iteraciones viajan DENTRO del hash: cada contraseña se verifica
+   con el número con el que fue creada. Por eso este valor se puede
+   cambiar cuando se quiera sin invalidar ninguna cuenta existente.
+
+   Está en 25.000 para entrar cómodo en el límite de 10 ms de CPU del
+   plan gratuito de Workers (medido: ~4 ms). Es menos de lo que
+   recomienda OWASP; si el sitio está en el plan pago, subilo a 200000
+   y las contraseñas viejas siguen andando igual. Aun así, con sal
+   aleatoria por cuenta, esto ya deja sin efecto las tablas
+   precalculadas que rompían el SHA-256 pelado anterior.              */
+
+const PBKDF2_ITERATIONS = 25000;
+
+function bytesToB64(bytes) {
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin);
+}
+
+function b64ToBytes(b64) {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+async function pbkdf2(password, salt, iterations) {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", hash: "SHA-256", salt, iterations },
+    key,
+    256
+  );
+  return new Uint8Array(bits);
+}
+
+async function hashPassword(password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const hash = await pbkdf2(password, salt, PBKDF2_ITERATIONS);
+  return `pbkdf2$sha256$${PBKDF2_ITERATIONS}$${bytesToB64(salt)}$${bytesToB64(hash)}`;
+}
+
+/* Comparación en tiempo constante: no filtra cuánto coincidió. */
+function timingSafeEqual(a, b) {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
+  return diff === 0;
+}
+
+function isLegacyHash(stored) {
+  return !!stored && !String(stored).startsWith("pbkdf2$");
+}
+
+async function verifyPassword(password, stored) {
+  if (!stored) return false; // cuenta sin contraseña: ingresa con Google
+  if (String(stored).startsWith("pbkdf2$")) {
+    const parts = String(stored).split("$");
+    if (parts.length !== 5) return false;
+    const hash = await pbkdf2(password, b64ToBytes(parts[3]), Number(parts[2]));
+    return timingSafeEqual(hash, b64ToBytes(parts[4]));
+  }
+  /* Formato viejo (SHA-256 sin sal): se acepta una vez y se re-hashea. */
+  const legacy = await sha256Hex(password);
+  const enc = new TextEncoder();
+  return timingSafeEqual(enc.encode(legacy), enc.encode(String(stored)));
+}
+
 async function hmacHex(secret, text) {
   const key = await crypto.subtle.importKey(
     "raw",
@@ -94,6 +172,67 @@ function clearSessionCookie() {
 
 async function requireSession(request, env) {
   return verifySession(env, getCookie(request, SESSION_COOKIE));
+}
+
+/* ---------------- roles ----------------
+
+   Dos niveles. "director" es la dirección del medio: publica, edita y
+   borra cualquier nota, ordena la portada y administra el equipo.
+   Cualquier otro valor se trata como redactor: escribe, y edita o
+   borra únicamente lo propio.                                        */
+
+function isDirector(session) {
+  return !!session && session.r === "director";
+}
+
+async function requireDirector(request, env) {
+  const session = await requireSession(request, env);
+  if (!session) return { error: jsonResponse({ error: "No autenticado" }, 401) };
+  if (!isDirector(session)) {
+    return { error: jsonResponse({ error: "Sólo la dirección puede hacer esto" }, 403) };
+  }
+  return { session };
+}
+
+/* ---------------- migración de esquema ----------------
+
+   Corre una vez por isolate y es idempotente: agrega las columnas que
+   falten sin tocar los datos. Evita tener que ejecutar SQL a mano.    */
+
+let schemaReady = false;
+
+async function ensureSchema(env) {
+  if (schemaReady) return;
+
+  async function columnsOf(table) {
+    const { results } = await env.DB.prepare(`PRAGMA table_info(${table})`).all();
+    return results.map((r) => r.name);
+  }
+
+  const userCols = await columnsOf("users");
+  const articleCols = await columnsOf("articles");
+  const statements = [];
+
+  if (!userCols.includes("active")) statements.push("ALTER TABLE users ADD COLUMN active INTEGER NOT NULL DEFAULT 1");
+  if (!userCols.includes("created_at")) statements.push("ALTER TABLE users ADD COLUMN created_at TEXT");
+  if (!userCols.includes("email")) statements.push("ALTER TABLE users ADD COLUMN email TEXT");
+  if (!articleCols.includes("created_by")) statements.push("ALTER TABLE articles ADD COLUMN created_by TEXT");
+  if (!articleCols.includes("updated_by")) statements.push("ALTER TABLE articles ADD COLUMN updated_by TEXT");
+
+  for (const sql of statements) await env.DB.prepare(sql).run();
+
+  /* Si todavía no hay dirección, la cuenta más antigua la asume: es la
+     del dueño del medio, la única que existía antes de los roles. */
+  const director = await env.DB.prepare(
+    "SELECT COUNT(*) AS n FROM users WHERE role = 'director'"
+  ).first();
+  if (!director || !director.n) {
+    await env.DB.prepare(
+      "UPDATE users SET role = 'director' WHERE rowid = (SELECT MIN(rowid) FROM users)"
+    ).run();
+  }
+
+  schemaReady = true;
 }
 
 function slugify(text) {
@@ -411,15 +550,33 @@ async function regenerateArticleFile(env, article) {
 
 /* ---------------- auth handlers ---------------- */
 
-async function handleLogin(request, env) {
+async function handleLogin(request, env, ctx) {
   const { username, password } = await request.json();
   if (!username || !password) return jsonResponse({ error: "Faltan credenciales" }, 400);
 
-  const row = await env.DB.prepare("SELECT * FROM users WHERE username = ?").bind(username).first();
+  const row = await env.DB.prepare("SELECT * FROM users WHERE lower(username) = lower(?)")
+    .bind(String(username).trim())
+    .first();
   if (!row) return jsonResponse({ error: "Usuario o contraseña incorrectos" }, 401);
+  if (row.active === 0) return jsonResponse({ error: "Esta cuenta está desactivada" }, 403);
+  if (!row.password_hash) {
+    return jsonResponse({ error: "Esta cuenta ingresa con Google, no con contraseña" }, 401);
+  }
 
-  const hash = await sha256Hex(password);
-  if (hash !== row.password_hash) return jsonResponse({ error: "Usuario o contraseña incorrectos" }, 401);
+  const ok = await verifyPassword(password, row.password_hash);
+  if (!ok) return jsonResponse({ error: "Usuario o contraseña incorrectos" }, 401);
+
+  /* Hash viejo: se reemplaza por PBKDF2 fuera del camino de respuesta,
+     para no gastar el presupuesto de CPU del login. */
+  if (isLegacyHash(row.password_hash) && ctx && ctx.waitUntil) {
+    ctx.waitUntil(
+      hashPassword(password).then((upgraded) =>
+        env.DB.prepare("UPDATE users SET password_hash = ? WHERE username = ?")
+          .bind(upgraded, row.username)
+          .run()
+      )
+    );
+  }
 
   const token = await createSession(env, row);
   return jsonResponse(
@@ -436,7 +593,12 @@ async function handleLogout() {
 async function handleMe(request, env) {
   const session = await requireSession(request, env);
   if (!session) return jsonResponse({ error: "No autenticado" }, 401);
-  return jsonResponse({ username: session.u, displayName: session.n, role: session.r });
+  return jsonResponse({
+    username: session.u,
+    displayName: session.n,
+    role: session.r,
+    isDirector: isDirector(session),
+  });
 }
 
 async function handleChangePassword(request, env) {
@@ -451,14 +613,162 @@ async function handleChangePassword(request, env) {
   if (newPassword !== confirmPassword) return jsonResponse({ error: "Las contraseñas no coinciden" }, 400);
 
   const row = await env.DB.prepare("SELECT * FROM users WHERE username = ?").bind(session.u).first();
-  if (!row) return jsonResponse({ error: "Usuario no encontrado" }, 404);
+  if (!row) {
+    return jsonResponse(
+      { error: "Tu cuenta ingresa con Google, así que no tiene contraseña que cambiar" },
+      400
+    );
+  }
+  if (!row.password_hash) {
+    return jsonResponse(
+      { error: "Esta cuenta ingresa con Google. Pedile a la dirección que te asigne una contraseña si querés entrar sin Google." },
+      400
+    );
+  }
 
-  const currentHash = await sha256Hex(currentPassword);
-  if (currentHash !== row.password_hash) return jsonResponse({ error: "Contraseña actual incorrecta" }, 401);
+  const ok = await verifyPassword(currentPassword, row.password_hash);
+  if (!ok) return jsonResponse({ error: "Contraseña actual incorrecta" }, 401);
 
-  const newHash = await sha256Hex(newPassword);
+  const newHash = await hashPassword(newPassword);
   await env.DB.prepare("UPDATE users SET password_hash = ? WHERE username = ?").bind(newHash, session.u).run();
 
+  return jsonResponse({ ok: true });
+}
+
+/* ---------------- equipo (sólo dirección) ---------------- */
+
+const USERNAME_SHAPE = /^[a-z0-9._-]{3,32}$/;
+
+function normalizeRole(role) {
+  return role === "director" ? "director" : "redactor";
+}
+
+async function handleListUsers(request, env) {
+  const guard = await requireDirector(request, env);
+  if (guard.error) return guard.error;
+
+  const { results } = await env.DB.prepare(
+    `SELECT username, display_name, role, active, created_at, email,
+            (password_hash IS NOT NULL AND password_hash != '') AS has_password
+       FROM users
+      ORDER BY (role = 'director') DESC, display_name`
+  ).all();
+
+  return jsonResponse({ users: results, me: guard.session.u });
+}
+
+async function handleCreateUser(request, env) {
+  const guard = await requireDirector(request, env);
+  if (guard.error) return guard.error;
+
+  const { username, displayName, role, password, email } = await request.json();
+  const user = String(username || "").trim().toLowerCase();
+  const name = String(displayName || "").trim();
+  const mail = String(email || "").trim().toLowerCase();
+
+  if (!USERNAME_SHAPE.test(user)) {
+    return jsonResponse(
+      { error: "El usuario debe tener entre 3 y 32 caracteres: letras, números, punto, guion o guion bajo" },
+      400
+    );
+  }
+  if (!name) return jsonResponse({ error: "Falta el nombre con el que va a firmar" }, 400);
+  if (password && String(password).length < 8) {
+    return jsonResponse({ error: "La contraseña debe tener al menos 8 caracteres" }, 400);
+  }
+  if (!password && !mail) {
+    return jsonResponse({ error: "Poné una contraseña, o un mail de Google para que entre por ahí" }, 400);
+  }
+
+  const exists = await env.DB.prepare("SELECT username FROM users WHERE lower(username) = ?").bind(user).first();
+  if (exists) return jsonResponse({ error: "Ya existe una cuenta con ese usuario" }, 409);
+
+  const hash = password ? await hashPassword(String(password)) : "";
+
+  await env.DB.prepare(
+    `INSERT INTO users (username, password_hash, display_name, role, active, created_at, email)
+     VALUES (?, ?, ?, ?, 1, ?, ?)`
+  )
+    .bind(user, hash, name, normalizeRole(role), new Date().toISOString(), mail || null)
+    .run();
+
+  return jsonResponse({ ok: true, username: user });
+}
+
+/* No dejar el medio sin dirección activa. */
+async function wouldLeaveNoDirector(env, username) {
+  const others = await env.DB.prepare(
+    "SELECT COUNT(*) AS n FROM users WHERE role = 'director' AND active = 1 AND username != ?"
+  )
+    .bind(username)
+    .first();
+  return !others || !others.n;
+}
+
+async function handleUpdateUser(request, env, username) {
+  const guard = await requireDirector(request, env);
+  if (guard.error) return guard.error;
+
+  const target = await env.DB.prepare("SELECT * FROM users WHERE username = ?").bind(username).first();
+  if (!target) return jsonResponse({ error: "Usuario no encontrado" }, 404);
+
+  const { role, active, newPassword, displayName, email } = await request.json();
+
+  const losesDirection =
+    (role && normalizeRole(role) !== "director" && target.role === "director") ||
+    (active === false && target.role === "director");
+  if (losesDirection && (await wouldLeaveNoDirector(env, username))) {
+    return jsonResponse({ error: "Tiene que quedar al menos una persona en la dirección" }, 400);
+  }
+
+  const sets = [];
+  const vals = [];
+  if (typeof displayName === "string" && displayName.trim()) {
+    sets.push("display_name = ?");
+    vals.push(displayName.trim());
+  }
+  if (typeof email === "string") {
+    sets.push("email = ?");
+    vals.push(email.trim().toLowerCase() || null);
+  }
+  if (role) {
+    sets.push("role = ?");
+    vals.push(normalizeRole(role));
+  }
+  if (typeof active === "boolean") {
+    sets.push("active = ?");
+    vals.push(active ? 1 : 0);
+  }
+  if (newPassword) {
+    if (String(newPassword).length < 8) {
+      return jsonResponse({ error: "La contraseña debe tener al menos 8 caracteres" }, 400);
+    }
+    sets.push("password_hash = ?");
+    vals.push(await hashPassword(String(newPassword)));
+  }
+  if (!sets.length) return jsonResponse({ ok: true });
+
+  vals.push(username);
+  await env.DB.prepare(`UPDATE users SET ${sets.join(", ")} WHERE username = ?`).bind(...vals).run();
+  return jsonResponse({ ok: true });
+}
+
+async function handleDeleteUser(request, env, username) {
+  const guard = await requireDirector(request, env);
+  if (guard.error) return guard.error;
+
+  if (guard.session.u === username) {
+    return jsonResponse({ error: "No podés borrar tu propia cuenta" }, 400);
+  }
+
+  const target = await env.DB.prepare("SELECT * FROM users WHERE username = ?").bind(username).first();
+  if (!target) return jsonResponse({ error: "Usuario no encontrado" }, 404);
+
+  if (target.role === "director" && (await wouldLeaveNoDirector(env, username))) {
+    return jsonResponse({ error: "Tiene que quedar al menos una persona en la dirección" }, 400);
+  }
+
+  await env.DB.prepare("DELETE FROM users WHERE username = ?").bind(username).run();
   return jsonResponse({ ok: true });
 }
 
@@ -494,9 +804,10 @@ async function handleListArticles(request, env) {
   if (!session) return jsonResponse({ error: "No autenticado" }, 401);
 
   const { results } = await env.DB.prepare(
-    "SELECT id, slug, title, category, author, cover_image_url, featured, sort_order, status, created_at FROM articles ORDER BY featured DESC, sort_order DESC, id DESC"
+    "SELECT id, slug, title, category, author, cover_image_url, featured, sort_order, status, created_at, created_by FROM articles ORDER BY featured DESC, sort_order DESC, id DESC"
   ).all();
-  return jsonResponse({ articles: results });
+  /* La interfaz usa esto para mostrar sólo las acciones permitidas. */
+  return jsonResponse({ articles: results, me: session.u, isDirector: isDirector(session) });
 }
 
 async function handleGetArticle(request, env, id) {
@@ -526,8 +837,8 @@ async function handlePublish(request, env) {
   if (!finalCover) finalCover = await autoPhotoForArticle(env, category, title);
 
   const insert = await env.DB.prepare(
-    `INSERT INTO articles (slug, title, dek, category, author, body, cover_image_url, featured, sort_order, status, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'published', ?, ?)`
+    `INSERT INTO articles (slug, title, dek, category, author, body, cover_image_url, featured, sort_order, status, created_at, updated_at, created_by, updated_by)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'published', ?, ?, ?, ?)`
   )
     .bind(
       slug,
@@ -540,7 +851,9 @@ async function handlePublish(request, env) {
       featured ? 1 : 0,
       sortOrder,
       now,
-      now
+      now,
+      session.u,
+      session.u
     )
     .run();
 
@@ -559,6 +872,12 @@ async function handleUpdateArticle(request, env, id) {
   const existing = await env.DB.prepare("SELECT * FROM articles WHERE id = ?").bind(id).first();
   if (!existing) return jsonResponse({ error: "No encontrada" }, 404);
 
+  /* Un redactor sólo toca lo suyo. Las notas anteriores a los roles no
+     tienen autor registrado: quedan reservadas a la dirección. */
+  if (!isDirector(session) && existing.created_by !== session.u) {
+    return jsonResponse({ error: "Sólo podés editar las notas que escribiste vos" }, 403);
+  }
+
   const { title, category, dek, body, author, coverImageUrl, featured } = await request.json();
   if (!title || !body) return jsonResponse({ error: "Falta título o cuerpo de la nota" }, 400);
 
@@ -566,7 +885,7 @@ async function handleUpdateArticle(request, env, id) {
   if (!finalCover) finalCover = await autoPhotoForArticle(env, category, title);
 
   await env.DB.prepare(
-    `UPDATE articles SET title=?, dek=?, category=?, author=?, body=?, cover_image_url=?, featured=?, updated_at=? WHERE id=?`
+    `UPDATE articles SET title=?, dek=?, category=?, author=?, body=?, cover_image_url=?, featured=?, updated_at=?, updated_by=? WHERE id=?`
   )
     .bind(
       title,
@@ -577,6 +896,7 @@ async function handleUpdateArticle(request, env, id) {
       finalCover,
       featured ? 1 : 0,
       new Date().toISOString(),
+      session.u,
       id
     )
     .run();
@@ -595,6 +915,10 @@ async function handleDeleteArticle(request, env, id) {
   const existing = await env.DB.prepare("SELECT * FROM articles WHERE id = ?").bind(id).first();
   if (!existing) return jsonResponse({ error: "No encontrada" }, 404);
 
+  if (!isDirector(session) && existing.created_by !== session.u) {
+    return jsonResponse({ error: "Sólo podés borrar las notas que escribiste vos" }, 403);
+  }
+
   await env.DB.prepare("DELETE FROM articles WHERE id = ?").bind(id).run();
   await githubDeleteFile(env, `notas/${existing.slug}.html`, `Borrar nota: ${existing.title}`);
   await regenerateArticlesJson(env);
@@ -603,8 +927,9 @@ async function handleDeleteArticle(request, env, id) {
 }
 
 async function handleMoveArticle(request, env, id) {
-  const session = await requireSession(request, env);
-  if (!session) return jsonResponse({ error: "No autenticado" }, 401);
+  /* Ordenar la portada es una decisión editorial: sólo la dirección. */
+  const guard = await requireDirector(request, env);
+  if (guard.error) return guard.error;
 
   const { direction } = await request.json();
   const current = await env.DB.prepare("SELECT * FROM articles WHERE id = ?").bind(id).first();
@@ -814,13 +1139,37 @@ async function handleGoogleLogin(request, env) {
     return jsonResponse({ error: "Esa cuenta de Google no tiene acceso a la redacción" }, 403);
   }
 
+  /* La cuenta vive siempre en la tabla de usuarios, así el rol se
+     administra desde «Equipo» en un solo lugar. */
   let user = null;
   if (allowed.username) {
     user = await env.DB.prepare("SELECT * FROM users WHERE username = ?").bind(allowed.username).first();
   }
   if (!user) {
-    user = { username: email, display_name: info.name || email, role: "editor" };
+    user = await env.DB.prepare("SELECT * FROM users WHERE lower(email) = ? OR lower(username) = ?")
+      .bind(email, email)
+      .first();
   }
+
+  if (!user) {
+    /* Primer ingreso de alguien de la lista: se da de alta como redactor.
+       Después la dirección puede subirlo de rol desde el panel. */
+    const base = (email.split("@")[0] || "usuario").toLowerCase().replace(/[^a-z0-9._-]/g, "").slice(0, 24);
+    let username = base.length >= 3 ? base : "usuario";
+    let n = 1;
+    while (await env.DB.prepare("SELECT username FROM users WHERE username = ?").bind(username).first()) {
+      username = `${base}${++n}`.slice(0, 32);
+    }
+    await env.DB.prepare(
+      `INSERT INTO users (username, password_hash, display_name, role, active, created_at, email)
+       VALUES (?, '', ?, 'redactor', 1, ?, ?)`
+    )
+      .bind(username, info.name || email, new Date().toISOString(), email)
+      .run();
+    user = await env.DB.prepare("SELECT * FROM users WHERE username = ?").bind(username).first();
+  }
+
+  if (user.active === 0) return jsonResponse({ error: "Esta cuenta está desactivada" }, 403);
 
   const token = await createSession(env, user);
   return jsonResponse({ ok: true, displayName: user.display_name, role: user.role }, 200, {
@@ -868,15 +1217,25 @@ async function handleImportDoc(request, env) {
 /* ---------------- router ---------------- */
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
 
     try {
+      /* Las columnas de roles y autoría se agregan solas la primera vez
+         que el worker toca la base después de desplegar. */
+      if (path.startsWith("/api/") || path === "/sitemap.xml") await ensureSchema(env);
+
       if (path === "/sitemap.xml" && request.method === "GET") return await handleSitemap(env);
       if (path === "/api/config" && request.method === "GET") return handleConfig(env);
 
-      if (path === "/api/login" && request.method === "POST") return await handleLogin(request, env);
+      const userMatch = path.match(/^\/api\/users\/([a-z0-9._-]{3,32})$/);
+      if (path === "/api/users" && request.method === "GET") return await handleListUsers(request, env);
+      if (path === "/api/users" && request.method === "POST") return await handleCreateUser(request, env);
+      if (userMatch && request.method === "PUT") return await handleUpdateUser(request, env, userMatch[1]);
+      if (userMatch && request.method === "DELETE") return await handleDeleteUser(request, env, userMatch[1]);
+
+      if (path === "/api/login" && request.method === "POST") return await handleLogin(request, env, ctx);
       if (path === "/api/login/google" && request.method === "POST") return await handleGoogleLogin(request, env);
       if (path === "/api/import-doc" && request.method === "POST") return await handleImportDoc(request, env);
       if (path === "/api/logout" && request.method === "POST") return await handleLogout();

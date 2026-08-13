@@ -498,6 +498,63 @@ body::after { display: none; }   /* sin grano de papel dentro del panel */
 }
 .login-form .sub { font-size: .8125rem; color: var(--ra-acero); margin: 0 0 var(--space-6); }
 
+/* ---------- equipo ---------- */
+.role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); }
+.role-grid h4 {
+  font-family: var(--sans);
+  font-size: .6875rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ra-noche);
+  margin: 0 0 .375rem;
+}
+.role-grid p { font-size: .8125rem; line-height: 1.55; color: var(--ra-texto); margin: 0; }
+
+.user-row .article-row-main .t { font-family: var(--sans); font-size: .875rem; }
+.user-avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: var(--ra-noche);
+  color: #fff;
+  font-family: var(--serif);
+  font-size: .875rem;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.user-row.is-inactive { opacity: .55; }
+.role-pill {
+  font-size: .5625rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: .15rem .45rem;
+  border: 1px solid var(--ra-niebla);
+  color: var(--ra-texto);
+}
+.role-pill.is-director { background: var(--ra-noche); border-color: var(--ra-noche); color: #fff; }
+.role-select {
+  font-family: var(--sans);
+  font-size: .75rem;
+  padding: .3rem .4rem;
+  border: 1px solid var(--ra-niebla);
+  background: var(--ra-blanco);
+  color: var(--ra-noche);
+  border-radius: 0;
+}
+.you-tag { font-size: .625rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ra-acero); }
+code {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: .9em;
+  background: var(--ra-humo);
+  padding: .05rem .25rem;
+}
+
+@media (max-width: 700px) {
+  .role-grid { grid-template-columns: 1fr; }
+}
+
 /* separador "o" del acceso con Google */
 .or-sep {
   display: flex;
@@ -638,6 +695,17 @@ body::after { display: none; }   /* sin grano de papel dentro del panel */
         Notas publicadas
         <span class="tab-count" id="countArticles"></span>
       </button>
+      <p class="cms-side-label" style="margin-top: var(--space-8);">Dirección</p>
+      <button class="tab-btn hidden" data-tab="team" id="teamTabBtn">
+        <svg class="ico" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <circle cx="6" cy="5.5" r="2.4" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M1.5 13.5c.6-2.2 2.3-3.4 4.5-3.4s3.9 1.2 4.5 3.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          <path d="M11 3.4a2.4 2.4 0 010 4.2M12.6 13.5c-.2-1-.6-1.9-1.2-2.6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+        Equipo
+        <span class="tab-count" id="countUsers"></span>
+      </button>
+
       <p class="cms-side-label" style="margin-top: var(--space-8);">Cuenta</p>
       <button class="tab-btn" data-tab="profile">
         <svg class="ico" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -787,6 +855,78 @@ body::after { display: none; }   /* sin grano de papel dentro del panel */
         <div class="msg hidden" id="listMsg"></div>
       </section>
 
+      <!-- ============ TAB: equipo (sólo dirección) ============ -->
+      <section class="tab-panel hidden" id="tabTeam">
+        <div class="cms-head">
+          <div>
+            <h1>Equipo</h1>
+            <p>Quién entra a la redacción y qué puede hacer.</p>
+          </div>
+        </div>
+
+        <div class="editor-grid">
+          <div>
+            <div class="articles-list" id="usersList"></div>
+            <div class="msg hidden" id="teamMsg"></div>
+
+            <div class="panel" style="margin-top: var(--space-6);">
+              <span class="panel-label">Qué puede hacer cada rol</span>
+              <div class="role-grid">
+                <div>
+                  <h4>Dirección</h4>
+                  <p>Publica, edita y borra cualquier nota. Ordena la portada y administra el equipo.</p>
+                </div>
+                <div>
+                  <h4>Redacción</h4>
+                  <p>Publica notas propias, y sólo edita o borra las que escribió. No toca el orden de portada ni el equipo.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <aside class="rail">
+            <div class="panel">
+              <span class="panel-label">Sumar a alguien</span>
+              <form id="newUserForm">
+                <div class="field">
+                  <label for="nuName">Nombre y apellido</label>
+                  <input id="nuName" type="text" required placeholder="María Fernández">
+                  <p class="field-hint">Es el nombre con el que va a firmar.</p>
+                </div>
+                <div class="field">
+                  <label for="nuUser">Usuario</label>
+                  <input id="nuUser" type="text" required placeholder="mfernandez"
+                         pattern="[a-zA-Z0-9._-]{3,32}" autocomplete="off">
+                </div>
+                <div class="field">
+                  <label for="nuRole">Rol</label>
+                  <select id="nuRole">
+                    <option value="redactor">Redacción</option>
+                    <option value="director">Dirección</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="nuPass">Contraseña</label>
+                  <input id="nuPass" type="text" minlength="8" autocomplete="off"
+                         placeholder="mínimo 8 caracteres">
+                  <p class="field-hint">Se la pasás vos y la cambia desde su perfil.</p>
+                </div>
+                <div class="field">
+                  <label for="nuEmail">Mail de Google (opcional)</label>
+                  <input id="nuEmail" type="email" autocomplete="off" placeholder="persona@gmail.com">
+                  <p class="field-hint">
+                    Si preferís que entre con Google, dejá la contraseña vacía y cargá el mail.
+                    Acordate de sumarlo también a <code>GOOGLE_ALLOWED_EMAILS</code>.
+                  </p>
+                </div>
+                <button class="btn-submit" type="submit">Crear cuenta</button>
+                <div class="msg hidden" id="newUserMsg"></div>
+              </form>
+            </div>
+          </aside>
+        </div>
+      </section>
+
       <!-- ============ TAB: perfil ============ -->
       <section class="tab-panel hidden" id="tabProfile">
         <div class="cms-head">
@@ -859,12 +999,21 @@ body::after { display: none; }   /* sin grano de papel dentro del panel */
       .map(function (w) { return w.charAt(0); }).join("").toUpperCase();
   }
 
+  var ME = null;
+
   function showPanel(me) {
+    ME = me;
     hide($("loginCard"));
     show($("panelCard"));
     $("whoami").textContent = me.displayName;
     $("userInitials").textContent = initials(me.displayName);
     $("pAuthor").placeholder = me.displayName;
+
+    /* La pestaña Equipo existe sólo para la dirección. El worker igual
+       rechaza los pedidos, esto es únicamente para no mostrar de más. */
+    if (me.isDirector) show($("teamTabBtn"));
+    else hide($("teamTabBtn"));
+
     updatePreview();
     loadArticles();
   }
@@ -981,7 +1130,7 @@ body::after { display: none; }   /* sin grano de papel dentro del panel */
   });
 
   /* ---------- navegación ---------- */
-  var tabs = { new: $("tabNew"), list: $("tabList"), profile: $("tabProfile") };
+  var tabs = { new: $("tabNew"), list: $("tabList"), team: $("tabTeam"), profile: $("tabProfile") };
   document.querySelectorAll(".tab-btn").forEach(function (btn) {
     btn.addEventListener("click", function () {
       document.querySelectorAll(".tab-btn").forEach(function (b) { b.classList.remove("active"); });
@@ -989,6 +1138,7 @@ body::after { display: none; }   /* sin grano de papel dentro del panel */
       Object.keys(tabs).forEach(function (k) { hide(tabs[k]); });
       show(tabs[btn.dataset.tab]);
       if (btn.dataset.tab === "list") loadArticles();
+      if (btn.dataset.tab === "team") loadUsers();
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
   });
@@ -1224,8 +1374,11 @@ body::after { display: none; }   /* sin grano de papel dentro del panel */
           '<span>Empezá por «Escribir nota» en el menú de la izquierda.</span></div>';
         return;
       }
+      var canOrder = !!data.isDirector;
       container.innerHTML = data.articles
         .map(function (a) {
+          /* Un redactor sólo ve las acciones sobre lo que escribió. */
+          var mine = data.isDirector || a.created_by === data.me;
           return (
             '<div class="article-row" data-id="' + a.id + '">' +
             (a.cover_image_url
@@ -1242,11 +1395,15 @@ body::after { display: none; }   /* sin grano de papel dentro del panel */
               "</div>" +
             "</div>" +
             '<div class="article-row-actions">' +
-              '<button class="move" data-action="up" title="Subir en el orden" aria-label="Subir">↑</button>' +
-              '<button class="move" data-action="down" title="Bajar en el orden" aria-label="Bajar">↓</button>' +
+              (canOrder
+                ? '<button class="move" data-action="up" title="Subir en el orden" aria-label="Subir">↑</button>' +
+                  '<button class="move" data-action="down" title="Bajar en el orden" aria-label="Bajar">↓</button>'
+                : "") +
               '<button data-action="view" title="Ver publicada">Ver</button>' +
-              '<button data-action="edit">Editar</button>' +
-              '<button data-action="delete">Borrar</button>' +
+              (mine
+                ? '<button data-action="edit">Editar</button>' +
+                  '<button data-action="delete">Borrar</button>'
+                : "") +
             "</div>" +
             "</div>"
           );
@@ -1304,6 +1461,142 @@ body::after { display: none; }   /* sin grano de papel dentro del panel */
       show($("cancelEditBtn"));
       updatePreview();
     }
+  });
+
+  /* ---------- equipo ---------- */
+  async function loadUsers() {
+    var container = $("usersList");
+    var msg = $("teamMsg");
+    hide(msg);
+    try {
+      var res = await fetch("/api/users");
+      var data = await res.json();
+      if (!res.ok) { setMsg(msg, data.error || "Error al cargar el equipo", true); return; }
+
+      $("countUsers").textContent = data.users.length || "";
+
+      container.innerHTML = data.users
+        .map(function (u) {
+          var isMe = u.username === data.me;
+          var director = u.role === "director";
+          var inactive = u.active === 0;
+          return (
+            '<div class="article-row user-row' + (inactive ? " is-inactive" : "") + '" data-user="' + escapeHtml(u.username) + '">' +
+              '<div class="user-avatar">' + escapeHtml(initials(u.display_name)) + "</div>" +
+              '<div class="article-row-main">' +
+                '<div class="t">' + escapeHtml(u.display_name) +
+                  (isMe ? ' <span class="you-tag">— vos</span>' : "") +
+                "</div>" +
+                '<div class="m">' +
+                  '<span class="role-pill' + (director ? " is-director" : "") + '">' +
+                    (director ? "Dirección" : "Redacción") + "</span>" +
+                  "<span>@" + escapeHtml(u.username) + "</span>" +
+                  (u.email ? "<span>·</span><span>" + escapeHtml(u.email) + "</span>" : "") +
+                  (Number(u.has_password) ? "" : "<span>·</span><span>entra con Google</span>") +
+                  (inactive ? '<span>·</span><span>desactivada</span>' : "") +
+                "</div>" +
+              "</div>" +
+              '<div class="article-row-actions">' +
+                (isMe
+                  ? '<span class="you-tag">tu cuenta</span>'
+                  : '<select class="role-select" data-action="role">' +
+                      '<option value="redactor"' + (director ? "" : " selected") + ">Redacción</option>" +
+                      '<option value="director"' + (director ? " selected" : "") + ">Dirección</option>" +
+                    "</select>" +
+                    '<button data-action="password">Contraseña</button>' +
+                    '<button data-action="toggle">' + (inactive ? "Reactivar" : "Desactivar") + "</button>" +
+                    '<button data-action="delete">Borrar</button>') +
+              "</div>" +
+            "</div>"
+          );
+        })
+        .join("");
+    } catch (err) { setMsg(msg, "Error de conexión", true); }
+  }
+
+  async function updateUser(username, payload, msg) {
+    var res = await fetch("/api/users/" + encodeURIComponent(username), {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    var data = await res.json();
+    if (!res.ok) { setMsg(msg, data.error || "No se pudo actualizar", true); return false; }
+    return true;
+  }
+
+  $("usersList").addEventListener("change", async function (e) {
+    var sel = e.target.closest('select[data-action="role"]');
+    if (!sel) return;
+    var username = sel.closest(".user-row").dataset.user;
+    var msg = $("teamMsg");
+    hide(msg);
+    if (await updateUser(username, { role: sel.value }, msg)) {
+      setMsg(msg, "Rol actualizado.", false);
+    }
+    loadUsers();
+  });
+
+  $("usersList").addEventListener("click", async function (e) {
+    var btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+    var row = btn.closest(".user-row");
+    var username = row.dataset.user;
+    var name = row.querySelector(".t").textContent.trim();
+    var msg = $("teamMsg");
+    hide(msg);
+
+    if (btn.dataset.action === "password") {
+      var pw = prompt("Nueva contraseña para " + name + " (mínimo 8 caracteres):");
+      if (!pw) return;
+      if (pw.length < 8) { setMsg(msg, "La contraseña debe tener al menos 8 caracteres", true); return; }
+      if (await updateUser(username, { newPassword: pw }, msg)) {
+        setMsg(msg, "Contraseña actualizada. Pasásela y que la cambie desde su perfil.", false);
+      }
+      return;
+    }
+
+    if (btn.dataset.action === "toggle") {
+      var reactivating = btn.textContent.trim() === "Reactivar";
+      if (await updateUser(username, { active: reactivating }, msg)) {
+        setMsg(msg, reactivating ? "Cuenta reactivada." : "Cuenta desactivada: ya no puede ingresar.", false);
+      }
+      loadUsers();
+      return;
+    }
+
+    if (btn.dataset.action === "delete") {
+      if (!confirm("¿Borrar la cuenta de " + name + "? Las notas que publicó siguen online.")) return;
+      var res = await fetch("/api/users/" + encodeURIComponent(username), { method: "DELETE" });
+      var data = await res.json();
+      if (!res.ok) { setMsg(msg, data.error || "No se pudo borrar", true); return; }
+      setMsg(msg, "Cuenta borrada.", false);
+      loadUsers();
+    }
+  });
+
+  $("newUserForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var msg = $("newUserMsg");
+    hide(msg);
+    try {
+      var res = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: $("nuUser").value.trim(),
+          displayName: $("nuName").value.trim(),
+          role: $("nuRole").value,
+          password: $("nuPass").value,
+          email: $("nuEmail").value.trim(),
+        }),
+      });
+      var data = await res.json();
+      if (!res.ok) { setMsg(msg, data.error || "No se pudo crear la cuenta", true); return; }
+      setMsg(msg, "Cuenta creada.", false);
+      $("newUserForm").reset();
+      loadUsers();
+    } catch (err) { setMsg(msg, "Error de conexión", true); }
   });
 
   /* ---------- cambio de contraseña ---------- */
