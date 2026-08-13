@@ -1629,10 +1629,10 @@ body::after {
   transition: box-shadow .3s var(--ease-out), background-color .3s var(--ease-out);
 }
 .main-nav.is-stuck {
-  background: rgba(250, 247, 240, .93);
+  background: rgba(0, 28, 79, .96);
   backdrop-filter: saturate(180%) blur(12px);
   -webkit-backdrop-filter: saturate(180%) blur(12px);
-  box-shadow: 0 1px 0 var(--line), 0 6px 24px rgba(20, 22, 26, .07);
+  box-shadow: 0 8px 28px rgba(20, 22, 26, .18);
 }
 
 /* ---------- 25.11 Masthead con reglas de diario ---------- */
@@ -1668,4 +1668,30 @@ body::after {
 @media (max-width: 899px) {
   .hero-deck::first-letter { font-size: 2.8em; }
   .section-header::after { width: 64px; }
+}
+
+/* ---------- 25.17 Masthead en una sola línea ---------- */
+.masthead .ra-logo {
+  align-items: center;
+  gap: clamp(12px, 2vw, 22px);
+}
+.masthead .ra-logo-bars {
+  margin-top: 0;
+  gap: clamp(4px, .6vw, 7px);
+}
+.masthead .ra-logo-bars span {
+  width: clamp(30px, 4.5vw, 56px);
+  height: clamp(5px, .8vw, 9px);
+}
+.masthead .ra-logo-tagline {
+  margin-top: .45rem;
+  letter-spacing: clamp(.1em, .8vw, .22em);
+}
+@media (max-width: 700px) {
+  .masthead .ra-logo-word { font-size: clamp(1.35rem, 6.2vw, 2.2rem) !important; }
+  .masthead .ra-logo-tagline { font-size: .5rem; letter-spacing: .1em; }
+}
+@media (max-width: 400px) {
+  .masthead .ra-logo-word { font-size: 1.25rem !important; }
+  .masthead .ra-logo-bars span { width: 24px; height: 4px; }
 }
