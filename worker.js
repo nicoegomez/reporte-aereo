@@ -205,7 +205,7 @@ function renderArticleHtml({ title, dek, category, author, dateLabel, bodyHtml, 
 <title>${escapeHtml(title)} — Reporte Aéreo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../styles.css?v=20260812">
+<link rel="stylesheet" href="../styles.css?v=20260813">
 </head>
 <body>
   <header class="top-bar">

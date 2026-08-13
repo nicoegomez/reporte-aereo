@@ -295,6 +295,85 @@
   }
 
   /* --------------------------------------------------------
+     7c. Nav sticky — se solidifica al bajar
+  -------------------------------------------------------- */
+  function initStickyNav() {
+    var nav = $1(".main-nav");
+    if (!nav) return;
+
+    var threshold = 8;
+    function update() {
+      var top = nav.getBoundingClientRect().top;
+      if (top <= threshold) nav.classList.add("is-stuck");
+      else nav.classList.remove("is-stuck");
+    }
+    window.addEventListener("scroll", update, { passive: true });
+    update();
+  }
+
+  /* --------------------------------------------------------
+     7d. Split text — reveal por palabras del titular principal
+         Preserva <br> y <em>. Nunca deja el texto invisible.
+  -------------------------------------------------------- */
+  function escHTML(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function splitWords(el) {
+    el.setAttribute("aria-label", el.textContent.trim().replace(/\s+/g, " "));
+    function wrapWords(text) {
+      return text
+        .split(/(\s+)/)
+        .map(function (w) {
+          return /^\s*$/.test(w)
+            ? w
+            : '<span class="split-word" aria-hidden="true">' + escHTML(w) + "</span>";
+        })
+        .join("");
+    }
+    var html = Array.prototype.map
+      .call(el.childNodes, function (node) {
+        if (node.nodeType === 3) return wrapWords(node.textContent);
+        if (node.nodeName === "BR") return "<br>";
+        if (node.nodeType === 1) {
+          var tag = node.tagName.toLowerCase();
+          return "<" + tag + ">" + wrapWords(node.textContent) + "</" + tag + ">";
+        }
+        return "";
+      })
+      .join("");
+    el.innerHTML = html;
+    return el.querySelectorAll(".split-word");
+  }
+
+  function initSplitText() {
+    if (!window.gsap) return;
+    $$("[data-split]").forEach(function (el) {
+      var parts = splitWords(el);
+      if (!parts.length) return;
+
+      /* red de seguridad: si algo falla, el texto se muestra igual */
+      var safety = setTimeout(function () {
+        gsap.set(parts, { y: 0, opacity: 1 });
+      }, 3000);
+
+      gsap.set(parts, { y: 22, opacity: 0 });
+      gsap.to(parts, {
+        y: 0,
+        opacity: 1,
+        duration: 0.85,
+        stagger: 0.035,
+        ease: "expo.out",
+        delay: 0.15,
+        onComplete: function () { clearTimeout(safety); }
+      });
+    });
+  }
+
+  /* --------------------------------------------------------
      8. Date/time top bar — current date in Spanish
   -------------------------------------------------------- */
   function initTopBarDate() {
@@ -323,6 +402,8 @@
     safe(initProgressBar,   "initProgressBar");
     safe(initNewsletter,    "initNewsletter");
     safe(initLatestNotes,   "initLatestNotes");
+    safe(initStickyNav,     "initStickyNav");
+    safe(initSplitText,     "initSplitText");
 
     if (window.gsap && window.ScrollTrigger) {
       try { gsap.registerPlugin(ScrollTrigger); } catch (_) {}

@@ -1463,3 +1463,209 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
   .ra-logo-bars span { width: 32px; height: 6px; }
   .ra-logo-bars { gap: 4px; margin-top: 6px; }
 }
+
+/* =============================================================
+   25. CAPA EDITORIAL — jerarquía, textura y profundidad
+   Refuerza la composición sin alterar la identidad de marca.
+   ============================================================= */
+
+/* ---------- 25.1 Textura de papel: grano sutil global ---------- */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  opacity: .035;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  background-size: 200px 200px;
+}
+
+/* ---------- 25.2 Ritmo vertical más generoso ---------- */
+.section { padding-block: clamp(3rem, 7vw, 6rem); }
+.hero-feature { padding-top: clamp(2rem, 4vw, 3.5rem); }
+
+/* ---------- 25.3 Titular del hero: escala de diario ---------- */
+.hero-headline {
+  font-size: clamp(2.25rem, 5.6vw, 4.5rem);
+  font-weight: 900;
+  line-height: .98;
+  letter-spacing: -.035em;
+  margin-bottom: 1.25rem;
+  text-wrap: balance;
+}
+.hero-headline em {
+  font-style: italic;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+/* Bajada del hero con capitular editorial */
+.hero-deck {
+  font-size: clamp(1rem, 1.6vw, 1.1875rem);
+  line-height: 1.6;
+  color: var(--ink-soft);
+  max-width: 58ch;
+}
+.hero-deck::first-letter {
+  float: left;
+  font-family: var(--serif);
+  font-weight: 900;
+  font-size: 3.4em;
+  line-height: .82;
+  padding: .06em .12em 0 0;
+  color: var(--accent-blue);
+}
+
+/* ---------- 25.4 Regla vertical entre columnas (broadsheet) ---------- */
+@media (min-width: 900px) {
+  .hero-grid { gap: 3.5rem; position: relative; }
+  .hero-sidebar {
+    padding-left: 3.5rem;
+    border-left: 1px solid var(--line);
+    margin-left: -1.75rem;
+  }
+}
+
+/* ---------- 25.5 Kicker con marca roja delante ---------- */
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .6875rem;
+  color: var(--accent);
+}
+.kicker::before {
+  content: "";
+  width: 18px;
+  height: 3px;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+/* ---------- 25.6 Encabezados de sección con más peso ---------- */
+.section-header {
+  margin-bottom: 2rem;
+  padding-bottom: .75rem;
+  border-bottom: 3px solid var(--ink);
+  position: relative;
+}
+.section-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -3px;
+  width: 88px;
+  height: 3px;
+  background: var(--accent);
+}
+.section-title {
+  font-size: clamp(1.5rem, 3.2vw, 2.375rem);
+  font-weight: 900;
+  letter-spacing: -.03em;
+}
+
+/* ---------- 25.7 Badge de categoría del hero ---------- */
+.hero-category {
+  bottom: 1rem;
+  left: 1rem;
+  font-size: .6875rem;
+  letter-spacing: .14em;
+  padding: .4rem .85rem;
+  border-radius: 0;
+  box-shadow: 0 2px 12px rgba(0,0,0,.25);
+}
+
+/* ---------- 25.8 Imágenes: encuadre más cinematográfico ---------- */
+.hero-image-wrap {
+  aspect-ratio: 3/2;
+  border-radius: 0;
+  margin-bottom: 1.75rem;
+}
+.hero-image-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(0,0,0,.42) 0%, rgba(0,0,0,.08) 38%, transparent 65%);
+}
+.hero-image-wrap > div,
+.hero-image-wrap img {
+  transition: transform 1s var(--ease-out);
+}
+.hero-main a:hover .hero-image-wrap > div,
+.hero-main a:hover .hero-image-wrap img { transform: scale(1.045); }
+
+.side-img-wrap { border-radius: 0; }
+.side-img-wrap > div,
+.side-img-wrap img { transition: transform .7s var(--ease-out); }
+.hero-side-article:hover .side-img-wrap > div,
+.hero-side-article:hover .side-img-wrap img { transform: scale(1.07); }
+
+/* ---------- 25.9 Titulares con subrayado que se dibuja al hover ---------- */
+.hero-side-article h2 a,
+.hero-side-article h3 a,
+.latest-note-item h3 a {
+  background-image: linear-gradient(var(--accent-blue), var(--accent-blue));
+  background-size: 0% 1.5px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: background-size .35s var(--ease-out), color .2s;
+  padding-bottom: 1px;
+}
+.hero-side-article h2 a:hover,
+.hero-side-article h3 a:hover,
+.latest-note-item h3 a:hover {
+  background-size: 100% 1.5px;
+  color: var(--accent-blue);
+}
+
+/* ---------- 25.10 Nav sticky que se solidifica al bajar ---------- */
+.main-nav {
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  transition: box-shadow .3s var(--ease-out), background-color .3s var(--ease-out);
+}
+.main-nav.is-stuck {
+  background: rgba(250, 247, 240, .93);
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  box-shadow: 0 1px 0 var(--line), 0 6px 24px rgba(20, 22, 26, .07);
+}
+
+/* ---------- 25.11 Masthead con reglas de diario ---------- */
+.masthead {
+  border-bottom: 1px solid var(--line);
+  padding-block: clamp(1.5rem, 3.5vw, 2.75rem);
+}
+
+/* ---------- 25.12 Reglas de sección más presentes ---------- */
+.section-rule {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 0;
+}
+
+/* ---------- 25.13 Split text: CSS defensivo (gotcha A.4.5) ---------- */
+.reveal[data-split] { opacity: 1; transform: none; }
+.split-word {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+/* ---------- 25.14 Botón "leer más" con desplazamiento de flecha ---------- */
+.read-more svg { transition: transform .3s var(--ease-out); }
+.read-more:hover svg { transform: translateX(4px); }
+
+/* ---------- 25.15 Tarjetas de últimas notas con más aire ---------- */
+.latest-note-thumb { border-radius: 0; transition: transform .7s var(--ease-out); }
+.latest-note-item { overflow: hidden; }
+.latest-note-item:hover .latest-note-thumb { transform: scale(1.05); }
+
+/* ---------- 25.16 Ajustes móviles de la capa editorial ---------- */
+@media (max-width: 899px) {
+  .hero-deck::first-letter { font-size: 2.8em; }
+  .section-header::after { width: 64px; }
+}
