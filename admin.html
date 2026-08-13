@@ -498,6 +498,29 @@ body::after { display: none; }   /* sin grano de papel dentro del panel */
 }
 .login-form .sub { font-size: .8125rem; color: var(--ra-acero); margin: 0 0 var(--space-6); }
 
+/* separador "o" del acceso con Google */
+.or-sep {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin: var(--space-6) 0 var(--space-4);
+  color: var(--ra-acero);
+  font-size: .6875rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.or-sep::before, .or-sep::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--ra-niebla);
+}
+
+/* importar desde Google Docs */
+.import-row { display: flex; gap: .5rem; }
+.import-row input { flex: 1; }
+.import-row button { flex-shrink: 0; }
+
 .hidden { display: none !important; }
 
 /* ---------- responsive ---------- */
@@ -565,6 +588,13 @@ body::after { display: none; }   /* sin grano de papel dentro del panel */
         </div>
         <button class="btn-submit" type="submit">Ingresar</button>
         <div class="msg error hidden" id="loginMsg"></div>
+
+        <!-- Acceso con Google: aparece sólo si el worker tiene cargado
+             GOOGLE_CLIENT_ID. Si no, esta zona queda oculta. -->
+        <div id="googleZone" class="hidden">
+          <div class="or-sep"><span>o</span></div>
+          <div id="googleBtn"></div>
+        </div>
       </form>
     </div>
   </div>
@@ -637,6 +667,18 @@ body::after { display: none; }   /* sin grano de papel dentro del panel */
             <!-- columna de escritura -->
             <div>
               <div class="panel">
+                <div class="field">
+                  <label for="pImportDoc">Importar desde Google Docs</label>
+                  <div class="import-row">
+                    <input id="pImportDoc" type="url" placeholder="https://docs.google.com/document/d/…">
+                    <button type="button" class="btn-secondary" id="importDocBtn">Traer</button>
+                  </div>
+                  <p class="field-hint" id="importDocStatus">
+                    El documento tiene que estar compartido como «Cualquier persona con el enlace».
+                    La primera línea se usa como título.
+                  </p>
+                </div>
+
                 <div class="field">
                   <label for="pTitle">Título <span class="counter" id="titleCount">0 / 140</span></label>
                   <input id="pTitle" type="text" required maxlength="140" placeholder="El titular, como saldría en tapa">
@@ -847,6 +889,95 @@ body::after { display: none; }   /* sin grano de papel dentro del panel */
   $("logoutBtn").addEventListener("click", async function () {
     await fetch("/api/logout", { method: "POST" });
     showLogin();
+  });
+
+  /* ---------- acceso con Google ---------- */
+  window.__raGoogleCredential = async function (response) {
+    var msg = $("loginMsg");
+    hide(msg);
+    try {
+      var res = await fetch("/api/login/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: response.credential }),
+      });
+      var data = await res.json();
+      if (!res.ok) { setMsg(msg, data.error || "No se pudo ingresar con Google", true); return; }
+      showPanel(data);
+    } catch (err) { setMsg(msg, "Error de conexión", true); }
+  };
+
+  async function initGoogleLogin() {
+    var clientId = "";
+    try {
+      var res = await fetch("/api/config");
+      if (!res.ok) return;
+      clientId = (await res.json()).googleClientId || "";
+    } catch (_) { return; }
+    if (!clientId) return;                    /* sin client id, no se muestra nada */
+
+    var script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.onload = function () {
+      if (!window.google || !google.accounts || !google.accounts.id) return;
+      google.accounts.id.initialize({
+        client_id: clientId,
+        callback: window.__raGoogleCredential,
+      });
+      google.accounts.id.renderButton($("googleBtn"), {
+        theme: "outline",
+        size: "large",
+        width: 340,
+        text: "signin_with",
+        locale: "es",
+      });
+      show($("googleZone"));
+    };
+    document.head.appendChild(script);
+  }
+
+  /* Enter en un campo de una línea no debe publicar la nota: sólo el
+     botón «Publicar» envía el formulario. */
+  $("publishForm").addEventListener("keydown", function (e) {
+    if (e.key !== "Enter") return;
+    var t = e.target;
+    if (t.tagName === "TEXTAREA" || t.type === "submit") return;
+    e.preventDefault();
+    if (t.id === "pImportDoc") $("importDocBtn").click();
+  });
+
+  /* ---------- importar desde Google Docs ---------- */
+  $("importDocBtn").addEventListener("click", async function () {
+    var status = $("importDocStatus");
+    var url = $("pImportDoc").value.trim();
+    if (!url) { status.textContent = "Pegá el enlace del documento."; return; }
+
+    var btn = this;
+    btn.disabled = true;
+    status.textContent = "Leyendo el documento…";
+    try {
+      var res = await fetch("/api/import-doc", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: url }),
+      });
+      var data = await res.json();
+      if (!res.ok) { status.textContent = data.error || "No se pudo importar"; return; }
+
+      if (data.title && !$("pTitle").value.trim()) $("pTitle").value = data.title;
+      if (data.body) {
+        $("pBody").value = $("pBody").value.trim()
+          ? $("pBody").value.trim() + "\n\n" + data.body
+          : data.body;
+      }
+      status.textContent = "Documento importado. Revisá el título y los párrafos antes de publicar.";
+      updatePreview();
+    } catch (err) {
+      status.textContent = "Error de conexión";
+    } finally {
+      btn.disabled = false;
+    }
   });
 
   /* ---------- navegación ---------- */
@@ -1205,7 +1336,7 @@ body::after { display: none; }   /* sin grano de papel dentro del panel */
 
   checkSession().then(function (me) {
     if (me) showPanel(me);
-    else showLogin();
+    else { showLogin(); initGoogleLogin(); }
   });
 })();
 </script>

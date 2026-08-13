@@ -1731,3 +1731,52 @@ body::after {
   .masthead .ra-logo-word { font-size: 1.25rem !important; }
   .masthead .ra-logo { --mark-w: 30px; }
 }
+
+/* =============================================================
+   26. Notas publicadas desde el panel
+   El worker genera estas notas con su propio marcado. Estas clases
+   le dan el mismo tratamiento editorial que article.html.
+   ============================================================= */
+.article-page {
+  padding-block: clamp(2rem, 5vw, 4.5rem) clamp(3rem, 7vw, 6rem);
+  padding-inline: var(--gutter);
+}
+.article-body-wrap {
+  max-width: 700px;
+  margin-inline: auto;
+}
+.article-body-wrap .article-cat-label { display: block; margin-bottom: .875rem; }
+.article-body-wrap .article-title { margin-bottom: 1rem; }
+
+.article-dek {
+  font-family: var(--body-serif);
+  font-size: clamp(1rem, 1.8vw, 1.1875rem);
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin-bottom: 1.25rem;
+  text-wrap: pretty;
+}
+.article-dek:empty { display: none; }
+
+.article-byline {
+  font-family: var(--sans);
+  font-size: .8125rem;
+  color: var(--ink-mute);
+  padding-block: .875rem;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: clamp(1.5rem, 3vw, 2.25rem);
+}
+.article-byline .author-link { color: var(--ink); font-weight: 600; }
+
+/* El nav de las notas es sólo la marca: se alinea como barra */
+.article-page-nav .container,
+.main-nav > .ra-logo {
+  display: flex;
+  align-items: center;
+  height: var(--nav-h);
+  padding-inline: var(--gutter);
+}
+
+/* Pie reducido de las notas */
+.site-footer .footer-inner > .ra-logo { align-self: flex-start; }

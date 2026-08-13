@@ -391,9 +391,32 @@
   }
 
   /* --------------------------------------------------------
+     9. Google Analytics 4 — se activa sólo si hay ID cargado
+        en lib/manifest.js (__BRAND__.analyticsId).
+  -------------------------------------------------------- */
+  function initAnalytics() {
+    var id = window.__BRAND__ && window.__BRAND__.analyticsId;
+    if (!id) return;                                   /* sin ID, no se carga nada */
+    if (document.querySelector('script[data-ra-ga]')) return;
+
+    var s = document.createElement("script");
+    s.async = true;
+    s.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(id);
+    s.setAttribute("data-ra-ga", "");
+    document.head.appendChild(s);
+
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { window.dataLayer.push(arguments); }
+    window.gtag = gtag;
+    gtag("js", new Date());
+    gtag("config", id);
+  }
+
+  /* --------------------------------------------------------
      Boot
   -------------------------------------------------------- */
   function boot() {
+    safe(initAnalytics,     "initAnalytics");
     safe(initTopBarDate,    "initTopBarDate");
     safe(initNav,           "initNav");
     safe(initReveals,       "initReveals");

@@ -11,6 +11,12 @@ const GITHUB_BRANCH = "main";
 const SESSION_COOKIE = "ra_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 12; // 12 horas
 
+/* Origen canónico del sitio: define las URLs absolutas del sitemap,
+   del canonical y de los datos estructurados que lee Google. */
+const SITE_ORIGIN = "https://www.reporteaereo.com";
+const SITE_NAME = "Reporte Aéreo";
+const SITE_LOGO = `${SITE_ORIGIN}/favicon.svg`;
+
 /* ---------------- utils ---------------- */
 
 function jsonResponse(data, status = 200, extraHeaders) {
@@ -228,13 +234,72 @@ async function githubDeleteFile(env, path, message) {
 
 /* ---------------- article template + json index ---------------- */
 
-function renderArticleHtml({ title, dek, category, author, dateLabel, bodyHtml, coverImageUrl }) {
+/* Convierte una ruta del sitio o una URL externa en URL absoluta. */
+function absoluteUrl(pathOrUrl) {
+  if (!pathOrUrl) return "";
+  if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
+  return SITE_ORIGIN + (pathOrUrl.startsWith("/") ? pathOrUrl : "/" + pathOrUrl);
+}
+
+/* Resumen para el meta description: la bajada, o el arranque del cuerpo. */
+function metaDescription(dek, body) {
+  const text = (dek && dek.trim()) || String(body || "").replace(/\{\{img:[^}]*\}\}/g, " ").replace(/[#>*]/g, "");
+  return text.replace(/\s+/g, " ").trim().slice(0, 300);
+}
+
+function renderArticleHtml({
+  title, dek, category, author, dateLabel, bodyHtml, coverImageUrl,
+  slug, isoDate, isoUpdated, description,
+}) {
+  const canonical = `${SITE_ORIGIN}/notas/${slug}.html`;
+  const image = absoluteUrl(coverImageUrl) || SITE_LOGO;
+  const desc = escapeHtml(description || "");
+
+  /* Datos estructurados: es lo que permite que la nota entre en
+     Google News y en Discover como artículo periodístico. */
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    mainEntityOfPage: { "@type": "WebPage", "@id": canonical },
+    headline: String(title).slice(0, 110),
+    description: description || "",
+    articleSection: category,
+    inLanguage: "es-AR",
+    datePublished: isoDate,
+    dateModified: isoUpdated || isoDate,
+    author: { "@type": "Person", name: author },
+    publisher: {
+      "@type": "NewsMediaOrganization",
+      name: SITE_NAME,
+      logo: { "@type": "ImageObject", url: SITE_LOGO },
+    },
+  };
+  if (coverImageUrl) jsonLd.image = [image];
+
   return `<!DOCTYPE html>
-<html lang="es">
+<html lang="es-AR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${escapeHtml(title)} — Reporte Aéreo</title>
+<meta name="description" content="${desc}">
+<meta name="author" content="${escapeHtml(author)}">
+<link rel="canonical" href="${canonical}">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="${SITE_NAME}">
+<meta property="og:locale" content="es_AR">
+<meta property="og:title" content="${escapeHtml(title)}">
+<meta property="og:description" content="${desc}">
+<meta property="og:url" content="${canonical}">
+<meta property="og:image" content="${escapeHtml(image)}">
+<meta property="article:published_time" content="${isoDate}">
+<meta property="article:modified_time" content="${isoUpdated || isoDate}">
+<meta property="article:section" content="${escapeHtml(category)}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${escapeHtml(title)}">
+<meta name="twitter:description" content="${desc}">
+<meta name="twitter:image" content="${escapeHtml(image)}">
+<script type="application/ld+json">${JSON.stringify(jsonLd).replace(/</g, "\\u003c")}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
@@ -268,7 +333,7 @@ function renderArticleHtml({ title, dek, category, author, dateLabel, bodyHtml, 
       <p class="article-dek">${escapeHtml(dek || "")}</p>
       <p class="article-byline">Por <a class="author-link" href="https://www.linkedin.com/in/nicolasezequielgomez/" target="_blank" rel="noopener">${escapeHtml(
         author
-      )}</a> · ${escapeHtml(dateLabel)}</p>
+      )}</a> · <time datetime="${isoDate}">${escapeHtml(dateLabel)}</time></p>
       ${coverImageUrl ? `<figure class="article-cover-img"><img src="${escapeHtml(coverImageUrl)}" alt="${escapeHtml(title)}"></figure>` : ""}
       <div class="article-body">
 ${bodyHtml}
@@ -334,6 +399,10 @@ async function regenerateArticleFile(env, article) {
     dateLabel: dateLabelFor(article.created_at),
     bodyHtml: bodyToHtml(article.body),
     coverImageUrl: article.cover_image_url,
+    slug: article.slug,
+    isoDate: article.created_at,
+    isoUpdated: article.updated_at,
+    description: metaDescription(article.dek, article.body),
   });
   const path = `notas/${article.slug}.html`;
   const existing = await githubGetFile(env, path);
@@ -634,6 +703,168 @@ async function handleSubscribe(request, env) {
   return jsonResponse({ error: "No se pudo completar la suscripción. Probá de nuevo en unos minutos." }, 502);
 }
 
+/* ---------------- SEO: sitemap para Google News ---------------- */
+
+function xmlEscape(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+/* Se arma en vivo desde D1, así nunca queda desfasado respecto de lo
+   publicado. Las notas de menos de 48 h llevan además el bloque
+   <news:news>, que es el que mira Google News. */
+async function handleSitemap(env) {
+  const { results } = await env.DB.prepare(
+    "SELECT slug, title, created_at, updated_at FROM articles WHERE status = 'published' ORDER BY created_at DESC"
+  ).all();
+
+  const recentCutoff = Date.now() - 48 * 60 * 60 * 1000;
+  const urls = [
+    `  <url>\n    <loc>${SITE_ORIGIN}/</loc>\n    <changefreq>hourly</changefreq>\n    <priority>1.0</priority>\n  </url>`,
+  ];
+
+  for (const a of results) {
+    const isRecent = new Date(a.created_at).getTime() > recentCutoff;
+    urls.push(
+      `  <url>\n` +
+        `    <loc>${SITE_ORIGIN}/notas/${xmlEscape(a.slug)}.html</loc>\n` +
+        `    <lastmod>${xmlEscape(a.updated_at || a.created_at)}</lastmod>\n` +
+        (isRecent
+          ? `    <news:news>\n` +
+            `      <news:publication>\n` +
+            `        <news:name>${xmlEscape(SITE_NAME)}</news:name>\n` +
+            `        <news:language>es</news:language>\n` +
+            `      </news:publication>\n` +
+            `      <news:publication_date>${xmlEscape(a.created_at)}</news:publication_date>\n` +
+            `      <news:title>${xmlEscape(a.title)}</news:title>\n` +
+            `    </news:news>\n`
+          : "") +
+        `  </url>`
+    );
+  }
+
+  const xml =
+    `<?xml version="1.0" encoding="UTF-8"?>\n` +
+    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n` +
+    `        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">\n` +
+    `${urls.join("\n")}\n</urlset>\n`;
+
+  return new Response(xml, {
+    headers: {
+      "content-type": "application/xml; charset=utf-8",
+      "cache-control": "public, max-age=600",
+    },
+  });
+}
+
+/* ---------------- configuración pública del panel ---------------- */
+
+/* El panel pregunta qué hay habilitado. Si no cargaste el client id de
+   Google, el botón de "Ingresar con Google" simplemente no aparece. */
+function handleConfig(env) {
+  return jsonResponse({ googleClientId: env.GOOGLE_CLIENT_ID || "" });
+}
+
+/* ---------------- acceso con Google ---------------- */
+
+/* GOOGLE_ALLOWED_EMAILS acepta "mail@dominio.com" o, si querés que la
+   sesión adopte un usuario existente del panel, "mail@dominio.com=usuario". */
+function parseGoogleAllowlist(raw) {
+  return String(raw || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((entry) => {
+      const [email, username] = entry.split("=").map((s) => (s || "").trim());
+      return { email: email.toLowerCase(), username: username || null };
+    });
+}
+
+async function handleGoogleLogin(request, env) {
+  if (!env.GOOGLE_CLIENT_ID) {
+    return jsonResponse({ error: "El acceso con Google no está configurado" }, 400);
+  }
+
+  const { credential } = await request.json();
+  if (!credential) return jsonResponse({ error: "Falta el token de Google" }, 400);
+
+  const res = await fetch(
+    "https://oauth2.googleapis.com/tokeninfo?id_token=" + encodeURIComponent(credential)
+  );
+  if (!res.ok) return jsonResponse({ error: "Token de Google inválido" }, 401);
+  const info = await res.json();
+
+  if (info.aud !== env.GOOGLE_CLIENT_ID) {
+    return jsonResponse({ error: "El token fue emitido para otra aplicación" }, 401);
+  }
+  if (String(info.email_verified) !== "true") {
+    return jsonResponse({ error: "El mail de esa cuenta de Google no está verificado" }, 401);
+  }
+  if (Number(info.exp) * 1000 < Date.now()) {
+    return jsonResponse({ error: "El token de Google expiró, probá de nuevo" }, 401);
+  }
+
+  const email = String(info.email || "").toLowerCase();
+  const allowed = parseGoogleAllowlist(env.GOOGLE_ALLOWED_EMAILS).find((e) => e.email === email);
+  if (!allowed) {
+    return jsonResponse({ error: "Esa cuenta de Google no tiene acceso a la redacción" }, 403);
+  }
+
+  let user = null;
+  if (allowed.username) {
+    user = await env.DB.prepare("SELECT * FROM users WHERE username = ?").bind(allowed.username).first();
+  }
+  if (!user) {
+    user = { username: email, display_name: info.name || email, role: "editor" };
+  }
+
+  const token = await createSession(env, user);
+  return jsonResponse({ ok: true, displayName: user.display_name, role: user.role }, 200, {
+    "Set-Cookie": setSessionCookie(token),
+  });
+}
+
+/* ---------------- importar desde Google Docs ---------------- */
+
+/* Lee un documento compartido por enlace y lo trae al editor. La primera
+   línea con texto pasa a ser el título y el resto, el cuerpo. */
+async function handleImportDoc(request, env) {
+  const session = await requireSession(request, env);
+  if (!session) return jsonResponse({ error: "No autenticado" }, 401);
+
+  const { url } = await request.json();
+  const match = String(url || "").match(/\/document\/d\/([a-zA-Z0-9_-]+)/);
+  if (!match) return jsonResponse({ error: "Pegá el enlace de un documento de Google Docs" }, 400);
+
+  const res = await fetch(`https://docs.google.com/document/d/${match[1]}/export?format=txt`, {
+    redirect: "follow",
+  });
+  const text = res.ok ? await res.text() : "";
+
+  /* Un documento privado no da error: devuelve la pantalla de login. */
+  if (!res.ok || /^\s*<!DOCTYPE html/i.test(text) || /accounts\.google\.com/i.test(text.slice(0, 500))) {
+    return jsonResponse(
+      { error: "No pude leer el documento. Compartilo como «Cualquier persona con el enlace»." },
+      403
+    );
+  }
+
+  const lines = text.replace(/^﻿/, "").replace(/\r\n/g, "\n").split("\n");
+  const titleIndex = lines.findIndex((l) => l.trim());
+  const title = titleIndex >= 0 ? lines[titleIndex].trim() : "";
+  const body = lines
+    .slice(titleIndex + 1)
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  return jsonResponse({ ok: true, title, body });
+}
+
 /* ---------------- router ---------------- */
 
 export default {
@@ -642,7 +873,12 @@ export default {
     const path = url.pathname;
 
     try {
+      if (path === "/sitemap.xml" && request.method === "GET") return await handleSitemap(env);
+      if (path === "/api/config" && request.method === "GET") return handleConfig(env);
+
       if (path === "/api/login" && request.method === "POST") return await handleLogin(request, env);
+      if (path === "/api/login/google" && request.method === "POST") return await handleGoogleLogin(request, env);
+      if (path === "/api/import-doc" && request.method === "POST") return await handleImportDoc(request, env);
       if (path === "/api/logout" && request.method === "POST") return await handleLogout();
       if (path === "/api/me" && request.method === "GET") return await handleMe(request, env);
       if (path === "/api/change-password" && request.method === "POST") return await handleChangePassword(request, env);
