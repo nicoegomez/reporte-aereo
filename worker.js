@@ -111,8 +111,20 @@ function escapeHtml(str) {
     .replace(/"/g, "&quot;");
 }
 
-/* body: párrafos separados por línea en blanco. Soporta placeholders
-   {{img:URL}} o {{img:URL|ALT}} en su propia línea -> <figure><img></figure> */
+/* Marcas de énfasis sobre texto YA escapado: **negrita** y *cursiva*.
+   La negrita se resuelve primero para que los ** no se lean como * sueltos. */
+function inlineMarks(escaped) {
+  return escaped
+    .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>");
+}
+
+/* body: párrafos separados por línea en blanco. Soporta:
+     {{img:URL}} o {{img:URL|EPÍGRAFE}}  -> <figure><img></figure>
+     ## Subtítulo                        -> <h2>
+     > Cita destacada / — Autor          -> <blockquote class="pull-quote">
+     **negrita** y *cursiva*             -> <strong> / <em>
+   Un cuerpo sin ninguna de estas marcas se renderiza igual que antes. */
 function bodyToHtml(body) {
   return body
     .split(/\n\s*\n/)
@@ -127,7 +139,27 @@ function bodyToHtml(body) {
           alt ? `<figcaption>${alt}</figcaption>` : ""
         }</figure>`;
       }
-      return `<p>${escapeHtml(p).replace(/\n/g, "<br>")}</p>`;
+
+      if (/^#{2,3}\s+/.test(p) && !p.includes("\n")) {
+        return `<h2>${inlineMarks(escapeHtml(p.replace(/^#{2,3}\s+/, "")))}</h2>`;
+      }
+
+      if (/^>\s?/.test(p)) {
+        const lines = p
+          .split("\n")
+          .map((l) => l.replace(/^>\s?/, "").trim())
+          .filter(Boolean);
+        let cite = "";
+        if (lines.length > 1 && /^[—–-]\s*/.test(lines[lines.length - 1])) {
+          cite = lines.pop().replace(/^[—–-]\s*/, "");
+        }
+        const text = inlineMarks(escapeHtml(lines.join(" ")));
+        return `<blockquote class="pull-quote"><p>${text}</p>${
+          cite ? `<cite>${escapeHtml(cite)}</cite>` : ""
+        }</blockquote>`;
+      }
+
+      return `<p>${inlineMarks(escapeHtml(p)).replace(/\n/g, "<br>")}</p>`;
     })
     .join("\n");
 }

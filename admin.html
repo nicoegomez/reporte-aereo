@@ -3,182 +3,778 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Panel — Reporte Aéreo</title>
+<title>Redacción — Reporte Aéreo</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="styles.css?v=20260814">
 <style>
-  body { background: var(--bg-2); min-height: 100vh; }
-  .admin-wrap { max-width: 760px; margin: 0 auto; padding: var(--space-16) var(--space-4); }
-  .admin-brand { display: flex; align-items: center; gap: 10px; margin-bottom: var(--space-8); }
-  .admin-brand .ra-logo-word { font-size: 1.25rem; }
-  .admin-card { background: #fff; border: 1px solid var(--line); border-radius: 4px; padding: var(--space-8); }
-  .admin-card h1 { font-family: var(--serif); font-size: 1.5rem; margin: 0 0 var(--space-6); color: var(--ink); }
-  .field { margin-bottom: var(--space-4); }
-  .field label { display: block; font-family: var(--sans); font-size: .8125rem; font-weight: 600; color: var(--ink-soft); margin-bottom: .375rem; }
-  .field input, .field select, .field textarea { width: 100%; font-family: var(--sans); font-size: .9375rem; padding: .625rem .75rem; border: 1px solid var(--line); border-radius: 3px; background: var(--bg); color: var(--ink); box-sizing: border-box; }
-  .field textarea { resize: vertical; min-height: 160px; line-height: 1.6; }
-  .field-row { display: flex; gap: var(--space-4); }
-  .field-row .field { flex: 1; }
-  .field-hint { font-family: var(--sans); font-size: .75rem; color: var(--ink-mute); margin-top: .25rem; }
-  .btn-submit { padding: .75rem 1.25rem; background: var(--accent-blue); color: #fff; border: none; border-radius: 3px; font-family: var(--sans); font-weight: 600; font-size: .9375rem; cursor: pointer; transition: background .2s ease; }
-  .btn-submit:hover { background: var(--accent-blue-dark); }
-  .btn-submit:disabled { opacity: .6; cursor: default; }
-  .btn-secondary { padding: .625rem 1rem; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 3px; font-family: var(--sans); font-weight: 600; font-size: .8125rem; cursor: pointer; }
-  .btn-danger { color: var(--accent-dark); border-color: var(--accent-dark); }
-  .msg { font-family: var(--sans); font-size: .875rem; margin-top: var(--space-4); }
-  .msg.error { color: var(--accent-dark); }
-  .msg.ok { color: #1a7a40; }
-  .topline { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-6); font-family: var(--sans); font-size: .8125rem; color: var(--ink-mute); }
-  .topline a { color: var(--accent-blue); text-decoration: none; cursor: pointer; }
-  .hidden { display: none !important; }
-  .tabs { display: flex; gap: var(--space-2); margin-bottom: var(--space-6); border-bottom: 1px solid var(--line); }
-  .tab-btn { font-family: var(--sans); font-size: .875rem; font-weight: 600; color: var(--ink-mute); background: none; border: none; padding: .625rem .25rem; margin-right: var(--space-6); cursor: pointer; border-bottom: 2px solid transparent; }
-  .tab-btn.active { color: var(--accent-blue); border-bottom-color: var(--accent-blue); }
-  .tab-panel.hidden { display: none; }
-  .cover-preview { max-width: 100%; max-height: 160px; border-radius: 3px; margin-top: .5rem; display: none; }
-  .cover-preview.show { display: block; }
-  .articles-list { display: flex; flex-direction: column; gap: var(--space-3); }
-  .article-row { display: flex; gap: var(--space-3); align-items: center; padding: var(--space-3); border: 1px solid var(--line); border-radius: 3px; }
-  .article-row img { width: 56px; height: 56px; object-fit: cover; border-radius: 3px; background: var(--bg-2); flex-shrink: 0; }
-  .article-row-main { flex: 1; min-width: 0; }
-  .article-row-main .t { font-family: var(--sans); font-weight: 600; font-size: .875rem; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .article-row-main .m { font-family: var(--sans); font-size: .75rem; color: var(--ink-mute); }
-  .article-row-actions { display: flex; gap: .375rem; flex-wrap: wrap; }
-  .article-row-actions button { font-family: var(--sans); font-size: .75rem; padding: .3rem .55rem; border-radius: 3px; border: 1px solid var(--line); background: var(--bg); cursor: pointer; }
-  .badge-featured { display: inline-block; font-family: var(--sans); font-size: .625rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--gold); border: 1px solid var(--gold); border-radius: 2px; padding: .05rem .3rem; margin-left: .375rem; }
-  .checkbox-field { display: flex; align-items: center; gap: .5rem; }
-  .checkbox-field input { width: auto; }
-  .checkbox-field label { margin: 0; }
+/* =============================================================
+   SALA DE REDACCIÓN — interfaz del panel
+   Usa los tokens del manual de marca v2 (styles.css).
+   ============================================================= */
+
+body {
+  background: var(--ra-papel);
+  font-family: var(--sans);
+  min-height: 100vh;
+}
+body::after { display: none; }   /* sin grano de papel dentro del panel */
+
+/* ---------- barra superior ---------- */
+.cms-top {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--ra-noche);
+  border-bottom: 2px solid var(--ra-rojo);
+  height: 58px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding-inline: var(--space-6);
+}
+.cms-top .ra-logo { --mark-w: 26px; gap: 11px; }
+.cms-top .ra-logo-word { font-size: 1.0625rem; color: #fff; }
+.cms-top .ra-mark { background: none; border: 1.5px solid #fff; }
+.cms-desk {
+  font-size: .625rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--ra-acero);
+  padding-left: var(--space-6);
+  border-left: 1px solid rgba(255,255,255,.16);
+}
+.cms-top-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: .8125rem;
+  color: rgba(255,255,255,.62);
+}
+.cms-top-right a, .cms-top-right button {
+  color: rgba(255,255,255,.62);
+  font-family: var(--sans);
+  font-size: .8125rem;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+  transition: color .2s;
+}
+.cms-top-right a:hover, .cms-top-right button:hover { color: #fff; }
+.cms-user {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding-right: var(--space-4);
+  border-right: 1px solid rgba(255,255,255,.16);
+}
+.cms-avatar {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--ra-pizarra);
+  color: #fff;
+  font-family: var(--serif);
+  font-size: .75rem;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ---------- estructura ---------- */
+.cms-shell { display: grid; grid-template-columns: 232px minmax(0, 1fr); }
+.cms-side {
+  border-right: 1px solid var(--ra-niebla);
+  padding: var(--space-8) 0;
+  min-height: calc(100vh - 58px);
+  background: var(--ra-papel);
+}
+.cms-side-label {
+  font-size: .625rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--ra-acero);
+  padding: 0 var(--space-6) var(--space-3);
+}
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+  width: 100%;
+  font-family: var(--sans);
+  font-size: .875rem;
+  font-weight: 500;
+  color: var(--ra-texto);
+  background: none;
+  border: 0;
+  border-left: 3px solid transparent;
+  padding: .7rem var(--space-6);
+  cursor: pointer;
+  text-align: left;
+  transition: background .18s, color .18s, border-color .18s;
+}
+.tab-btn:hover { background: var(--ra-humo); }
+.tab-btn.active {
+  border-left-color: var(--ra-rojo);
+  color: var(--ra-noche);
+  font-weight: 600;
+  background: var(--ra-humo);
+}
+.tab-btn .ico { width: 15px; height: 15px; flex-shrink: 0; opacity: .75; }
+.tab-btn.active .ico { opacity: 1; }
+.tab-count {
+  margin-left: auto;
+  font-size: .6875rem;
+  font-weight: 600;
+  color: var(--ra-acero);
+  font-variant-numeric: tabular-nums;
+}
+
+.cms-main { padding: var(--space-8) var(--space-8) var(--space-24); min-width: 0; }
+.cms-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
+  padding-bottom: var(--space-4);
+  border-bottom: 3px solid var(--ra-noche);
+  position: relative;
+}
+.cms-head::after {
+  content: "";
+  position: absolute;
+  left: 0; bottom: -3px;
+  width: 72px; height: 3px;
+  background: var(--ra-rojo);
+}
+.cms-head h1 {
+  font-family: var(--serif);
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  color: var(--ra-noche);
+  margin: 0;
+}
+.cms-head p {
+  font-size: .8125rem;
+  color: var(--ra-acero);
+  margin: .25rem 0 0;
+}
+
+/* ---------- editor a dos columnas ---------- */
+.editor-grid { display: grid; grid-template-columns: minmax(0, 1fr) 316px; gap: var(--space-8); align-items: start; }
+.panel {
+  background: var(--ra-blanco);
+  border: 1px solid var(--ra-niebla);
+  padding: var(--space-6);
+}
+.panel + .panel { margin-top: var(--space-6); }
+.panel-label {
+  font-size: .625rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--ra-acero);
+  margin-bottom: var(--space-4);
+  display: block;
+}
+
+.field { margin-bottom: var(--space-5, 20px); }
+.field:last-child { margin-bottom: 0; }
+.field label {
+  display: block;
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--ra-noche);
+  margin-bottom: .375rem;
+}
+.field input, .field select, .field textarea {
+  width: 100%;
+  font-family: var(--sans);
+  font-size: .9375rem;
+  color: var(--ra-noche);
+  padding: .625rem .75rem;
+  border: 1px solid var(--ra-niebla);
+  border-radius: 0;
+  background: var(--ra-papel);
+  box-sizing: border-box;
+  transition: border-color .18s, background .18s;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none;
+  border-color: var(--ra-noche);
+  background: var(--ra-blanco);
+}
+.field textarea { resize: vertical; min-height: 380px; line-height: 1.75; font-size: .9375rem; }
+.field-row { display: flex; gap: var(--space-4); }
+.field-row .field { flex: 1; }
+.field-hint { font-size: .75rem; color: var(--ra-acero); margin-top: .375rem; line-height: 1.5; }
+
+/* título en la serif real del diario */
+#pTitle {
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -.02em;
+  padding: .75rem;
+}
+#pDek { font-family: var(--serif); font-size: 1.0625rem; line-height: 1.45; }
+#pBody { font-family: var(--serif); font-size: 1.0625rem; line-height: 1.8; }
+
+.counter {
+  float: right;
+  font-size: .6875rem;
+  font-weight: 500;
+  color: var(--ra-acero);
+  font-variant-numeric: tabular-nums;
+}
+.counter.over { color: var(--ra-rojo); }
+
+/* barra del cuerpo */
+.body-toolbar {
+  display: flex;
+  align-items: center;
+  gap: .375rem;
+  flex-wrap: wrap;
+  border: 1px solid var(--ra-niebla);
+  border-bottom: 0;
+  background: var(--ra-humo);
+  padding: .375rem .5rem;
+}
+.body-toolbar button {
+  font-family: var(--sans);
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--ra-texto);
+  background: var(--ra-blanco);
+  border: 1px solid var(--ra-niebla);
+  padding: .3rem .6rem;
+  cursor: pointer;
+  transition: background .18s, color .18s, border-color .18s;
+}
+.body-toolbar button:hover { background: var(--ra-noche); color: #fff; border-color: var(--ra-noche); }
+.body-toolbar .sep { width: 1px; height: 18px; background: var(--ra-niebla); margin-inline: .25rem; }
+.body-toolbar .stats {
+  margin-left: auto;
+  font-size: .6875rem;
+  color: var(--ra-acero);
+  font-variant-numeric: tabular-nums;
+  padding-right: .25rem;
+}
+.body-toolbar + textarea { border-top-color: var(--ra-niebla); }
+
+/* ---------- rail de publicación ---------- */
+.rail { position: sticky; top: calc(58px + var(--space-6)); }
+.rail .panel { padding: var(--space-5, 20px) var(--space-6); }
+
+.dropzone {
+  border: 1px dashed var(--ra-acero);
+  background: var(--ra-papel);
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .18s, background .18s;
+}
+.dropzone:hover, .dropzone.is-drag { border-color: var(--ra-noche); background: var(--ra-humo); }
+.dropzone-text { font-size: .75rem; color: var(--ra-acero); line-height: 1.6; }
+.dropzone-text strong { color: var(--ra-noche); font-weight: 600; display: block; margin-bottom: .2rem; }
+.cover-preview { display: none; width: 100%; margin-top: .625rem; }
+.cover-preview.show { display: block; }
+
+.checkbox-field { display: flex; align-items: flex-start; gap: .5rem; }
+.checkbox-field input { width: auto; margin-top: .15rem; flex-shrink: 0; }
+.checkbox-field label { margin: 0; font-weight: 500; line-height: 1.45; }
+
+.btn-submit {
+  width: 100%;
+  padding: .8rem 1.25rem;
+  background: var(--ra-noche);
+  color: #fff;
+  border: none;
+  border-radius: 0;
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: .9375rem;
+  cursor: pointer;
+  transition: background .2s;
+}
+.btn-submit:hover { background: var(--ra-grafito); }
+.btn-submit:disabled { opacity: .55; cursor: default; }
+.btn-secondary {
+  padding: .55rem 1rem;
+  background: transparent;
+  color: var(--ra-noche);
+  border: 1px solid var(--ra-noche);
+  border-radius: 0;
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: .8125rem;
+  cursor: pointer;
+  transition: background .18s, color .18s;
+}
+.btn-secondary:hover { background: var(--ra-noche); color: #fff; }
+.btn-danger { color: var(--ra-rojo); border-color: var(--ra-rojo); }
+.btn-danger:hover { background: var(--ra-rojo); border-color: var(--ra-rojo); color: #fff; }
+
+.msg { font-size: .8125rem; margin-top: var(--space-4); line-height: 1.55; }
+.msg.error { color: var(--ra-rojo); }
+.msg.ok { color: #1a7a40; }
+.msg a { color: inherit; text-decoration: underline; }
+
+/* ---------- vista previa del titular ---------- */
+.preview-card { background: var(--ra-blanco); border: 1px solid var(--ra-niebla); padding: var(--space-6); }
+.preview-kicker {
+  display: inline-flex; align-items: center; gap: .5rem;
+  font-size: .6875rem; font-weight: 700; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--ra-rojo); margin-bottom: .5rem;
+}
+.preview-kicker::before { content: ""; width: 18px; height: 3px; background: var(--ra-rojo); }
+.preview-title {
+  font-family: var(--serif);
+  font-size: clamp(1.5rem, 2.6vw, 2.125rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -.02em;
+  color: var(--ra-noche);
+  text-wrap: balance;
+  margin: 0;
+}
+.preview-dek {
+  font-family: var(--serif);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--ra-texto);
+  margin: .625rem 0 0;
+  max-width: 62ch;
+}
+.preview-meta {
+  font-size: .75rem;
+  color: var(--ra-acero);
+  margin-top: .875rem;
+  padding-top: .75rem;
+  border-top: 1px solid var(--ra-niebla);
+}
+.preview-empty { color: var(--ra-acero); font-family: var(--sans); font-size: .875rem; font-style: italic; }
+
+/* ---------- listado de notas ---------- */
+.articles-list { display: flex; flex-direction: column; }
+.article-row {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  padding: var(--space-4);
+  background: var(--ra-blanco);
+  border: 1px solid var(--ra-niebla);
+  border-bottom: 0;
+  transition: background .18s;
+}
+.article-row:last-child { border-bottom: 1px solid var(--ra-niebla); }
+.article-row:hover { background: var(--ra-papel); }
+.article-row img, .article-row .thumb-empty {
+  width: 72px; height: 52px;
+  object-fit: cover;
+  background: var(--ra-humo);
+  flex-shrink: 0;
+}
+.article-row-main { flex: 1; min-width: 0; }
+.article-row-main .t {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.3;
+  color: var(--ra-noche);
+  margin-bottom: .25rem;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.article-row-main .m {
+  font-size: .75rem;
+  color: var(--ra-acero);
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+.cat-chip {
+  font-size: .625rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ra-noche);
+  border: 1px solid var(--ra-niebla);
+  padding: .1rem .4rem;
+}
+.badge-featured {
+  display: inline-block;
+  font-size: .5625rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--ra-dorado);
+  padding: .15rem .4rem;
+  margin-left: .5rem;
+  vertical-align: middle;
+}
+.article-row-actions { display: flex; gap: .3rem; flex-wrap: wrap; flex-shrink: 0; }
+.article-row-actions button {
+  font-family: var(--sans);
+  font-size: .75rem;
+  font-weight: 500;
+  padding: .35rem .6rem;
+  border-radius: 0;
+  border: 1px solid var(--ra-niebla);
+  background: var(--ra-blanco);
+  color: var(--ra-texto);
+  cursor: pointer;
+  transition: background .18s, color .18s, border-color .18s;
+}
+.article-row-actions button:hover { background: var(--ra-noche); color: #fff; border-color: var(--ra-noche); }
+.article-row-actions button[data-action="delete"]:hover { background: var(--ra-rojo); border-color: var(--ra-rojo); }
+.article-row-actions .move { font-size: .8125rem; line-height: 1; padding: .35rem .5rem; }
+
+.empty-state {
+  background: var(--ra-blanco);
+  border: 1px solid var(--ra-niebla);
+  padding: var(--space-16) var(--space-8);
+  text-align: center;
+}
+.empty-state p { font-family: var(--serif); font-size: 1.125rem; color: var(--ra-noche); margin: 0 0 .5rem; }
+.empty-state span { font-size: .8125rem; color: var(--ra-acero); }
+
+/* ---------- login ---------- */
+.login-screen {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr;
+}
+.login-aside {
+  background: var(--ra-noche);
+  color: #fff;
+  padding: var(--space-16) var(--space-12);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-16);
+}
+.login-aside .ra-logo { --mark-w: 52px; }
+.login-aside .ra-logo-word { color: #fff; font-size: 1.75rem; }
+.login-aside .ra-mark { background: none; border: 1.5px solid #fff; }
+.login-claim {
+  font-family: var(--serif);
+  font-size: clamp(1.5rem, 2.4vw, 2.125rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -.02em;
+  text-wrap: balance;
+  max-width: 18ch;
+}
+.login-claim em { font-style: italic; color: var(--ra-dorado); }
+.login-foot {
+  font-size: .625rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--ra-acero);
+}
+.login-form-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12) var(--space-6);
+}
+.login-form { width: 100%; max-width: 340px; }
+.login-form h1 {
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  color: var(--ra-noche);
+  margin: 0 0 .375rem;
+}
+.login-form .sub { font-size: .8125rem; color: var(--ra-acero); margin: 0 0 var(--space-6); }
+
+.hidden { display: none !important; }
+
+/* ---------- responsive ---------- */
+@media (min-width: 860px) {
+  .login-screen { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 1180px) {
+  .editor-grid { grid-template-columns: 1fr; }
+  .rail { position: static; }
+}
+@media (max-width: 800px) {
+  .cms-shell { grid-template-columns: 1fr; }
+  .cms-side {
+    min-height: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--ra-niebla);
+    padding: var(--space-4) 0;
+    display: flex;
+    overflow-x: auto;
+  }
+  .cms-side-label { display: none; }
+  .tab-btn {
+    width: auto;
+    white-space: nowrap;
+    border-left: 0;
+    border-bottom: 3px solid transparent;
+    padding: .5rem var(--space-4);
+  }
+  .tab-btn.active { border-left: 0; border-bottom-color: var(--ra-rojo); }
+  .tab-count { margin-left: .35rem; }
+  .cms-main { padding: var(--space-6) var(--space-4) var(--space-16); }
+  .cms-desk { display: none; }
+  .article-row { flex-wrap: wrap; }
+  .article-row-actions { width: 100%; }
+}
 </style>
 </head>
 <body>
-<div class="admin-wrap">
-  <div class="admin-brand">
-    <span class="ra-logo ra-logo--compact">
+
+<!-- =========================================================
+     LOGIN
+     ========================================================= -->
+<div id="loginCard">
+  <div class="login-screen">
+    <div class="login-aside">
+      <span class="ra-logo">
+        <span class="ra-mark" aria-hidden="true"><span>RA</span><i></i></span>
+        <span class="ra-logo-word">REPORTE AÉREO</span>
+      </span>
+      <p class="login-claim">La industria aerocomercial, <em>en perspectiva</em>.</p>
+      <p class="login-foot">Sala de redacción · Acceso restringido</p>
+    </div>
+
+    <div class="login-form-wrap">
+      <form class="login-form" id="loginForm">
+        <h1>Ingresar a la redacción</h1>
+        <p class="sub">Panel de publicación de Reporte Aéreo.</p>
+        <div class="field">
+          <label for="loginUser">Usuario</label>
+          <input id="loginUser" type="text" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="loginPass">Contraseña</label>
+          <input id="loginPass" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn-submit" type="submit">Ingresar</button>
+        <div class="msg error hidden" id="loginMsg"></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
+     PANEL
+     ========================================================= -->
+<div id="panelCard" class="hidden">
+
+  <header class="cms-top">
+    <span class="ra-logo">
       <span class="ra-mark" aria-hidden="true"><span>RA</span><i></i></span>
       <span class="ra-logo-word">REPORTE AÉREO</span>
     </span>
-  </div>
-
-  <!-- LOGIN -->
-  <div class="admin-card" id="loginCard">
-    <h1>Ingresar al panel</h1>
-    <form id="loginForm">
-      <div class="field">
-        <label for="loginUser">Usuario</label>
-        <input id="loginUser" type="text" autocomplete="username" required>
-      </div>
-      <div class="field">
-        <label for="loginPass">Contraseña</label>
-        <input id="loginPass" type="password" autocomplete="current-password" required>
-      </div>
-      <button class="btn-submit" type="submit">Ingresar</button>
-      <div class="msg error hidden" id="loginMsg"></div>
-    </form>
-  </div>
-
-  <!-- PANEL -->
-  <div class="admin-card hidden" id="panelCard">
-    <div class="topline">
-      <span id="whoami"></span>
-      <a id="logoutBtn">Cerrar sesión</a>
+    <span class="cms-desk">Sala de redacción</span>
+    <div class="cms-top-right">
+      <span class="cms-user">
+        <span class="cms-avatar" id="userInitials" aria-hidden="true"></span>
+        <span id="whoami"></span>
+      </span>
+      <a href="index.html" target="_blank" rel="noopener">Ver el sitio ↗</a>
+      <button type="button" id="logoutBtn">Cerrar sesión</button>
     </div>
+  </header>
 
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="new">Nueva nota</button>
-      <button class="tab-btn" data-tab="list">Notas publicadas</button>
-      <button class="tab-btn" data-tab="profile">Perfil</button>
-    </div>
+  <div class="cms-shell">
 
-    <!-- TAB: nueva nota / editar -->
-    <div class="tab-panel" id="tabNew">
-      <h1 id="formTitle">Nueva nota</h1>
-      <form id="publishForm">
-        <input type="hidden" id="editId" value="">
-        <div class="field">
-          <label for="pTitle">Título</label>
-          <input id="pTitle" type="text" required maxlength="140">
-        </div>
-        <div class="field-row">
-          <div class="field">
-            <label for="pCategory">Categoría</label>
-            <select id="pCategory">
-              <option>Actualidad</option>
-              <option>Aerolíneas</option>
-              <option>Aeropuertos</option>
-              <option>Turismo</option>
-              <option>Análisis</option>
-              <option>Entrevista</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="pAuthor">Firma (opcional)</label>
-            <input id="pAuthor" type="text" placeholder="Nicolás E. Gómez">
+    <nav class="cms-side" aria-label="Secciones del panel">
+      <p class="cms-side-label">Redacción</p>
+      <button class="tab-btn active" data-tab="new">
+        <svg class="ico" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M2 13.5V11l7.5-7.5 2.5 2.5L4.5 13.5H2zM10.5 2.5l1.2-1.2a1 1 0 011.4 0l1.1 1.1a1 1 0 010 1.4l-1.2 1.2-2.5-2.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+        </svg>
+        Escribir nota
+      </button>
+      <button class="tab-btn" data-tab="list">
+        <svg class="ico" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M2 3h12M2 6.5h12M2 10h8M2 13.5h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+        Notas publicadas
+        <span class="tab-count" id="countArticles"></span>
+      </button>
+      <p class="cms-side-label" style="margin-top: var(--space-8);">Cuenta</p>
+      <button class="tab-btn" data-tab="profile">
+        <svg class="ico" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <circle cx="8" cy="5.5" r="2.75" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M2.5 14c.7-2.6 2.8-4 5.5-4s4.8 1.4 5.5 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+        Perfil y seguridad
+      </button>
+    </nav>
+
+    <main class="cms-main">
+
+      <!-- ============ TAB: escribir ============ -->
+      <section class="tab-panel" id="tabNew">
+        <div class="cms-head">
+          <div>
+            <h1 id="formTitle">Nueva nota</h1>
+            <p>Escribí, revisá la vista previa y publicá. La nota queda online en unos minutos.</p>
           </div>
         </div>
-        <div class="field">
-          <label for="pDek">Bajada (resumen corto)</label>
-          <input id="pDek" type="text" maxlength="220">
-        </div>
 
-        <div class="field">
-          <label for="pCoverFile">Imagen de portada (opcional)</label>
-          <input id="pCoverFile" type="file" accept="image/*">
-          <input type="hidden" id="pCoverUrl" value="">
-          <img id="coverPreview" class="cover-preview" alt="">
-          <p class="field-hint" id="coverStatus">Si no subís nada, el sistema busca sola una foto relacionada con el tema de la nota.</p>
-        </div>
+        <form id="publishForm">
+          <input type="hidden" id="editId" value="">
 
-        <div class="field">
-          <label for="pBody">Cuerpo de la nota</label>
-          <textarea id="pBody" required placeholder="Escribí la nota. Separá los párrafos con una línea en blanco."></textarea>
-          <p class="field-hint">Para insertar una imagen dentro del texto, usá el botón de abajo — se agrega en el cursor.</p>
-          <input id="pInlineFile" type="file" accept="image/*" class="hidden">
-          <button type="button" class="btn-secondary" id="insertImgBtn" style="margin-top:.5rem;">+ Insertar imagen en el cuerpo</button>
-          <span class="field-hint" id="inlineImgStatus"></span>
-        </div>
+          <div class="editor-grid">
 
-        <div class="field checkbox-field">
-          <input type="checkbox" id="pFeatured">
-          <label for="pFeatured">Destacar esta nota (aparece primero y más grande)</label>
-        </div>
+            <!-- columna de escritura -->
+            <div>
+              <div class="panel">
+                <div class="field">
+                  <label for="pTitle">Título <span class="counter" id="titleCount">0 / 140</span></label>
+                  <input id="pTitle" type="text" required maxlength="140" placeholder="El titular, como saldría en tapa">
+                </div>
 
-        <button class="btn-submit" type="submit" id="publishBtn">Publicar nota</button>
-        <button type="button" class="btn-secondary hidden" id="cancelEditBtn" style="margin-left:.5rem;">Cancelar edición</button>
-        <div class="msg hidden" id="publishMsg"></div>
-      </form>
-    </div>
+                <div class="field">
+                  <label for="pDek">Bajada <span class="counter" id="dekCount">0 / 220</span></label>
+                  <input id="pDek" type="text" maxlength="220" placeholder="Una línea que amplíe el título y dé contexto">
+                </div>
 
-    <!-- TAB: listado -->
-    <div class="tab-panel hidden" id="tabList">
-      <h1>Notas publicadas</h1>
-      <div class="articles-list" id="articlesList"></div>
-      <div class="msg hidden" id="listMsg"></div>
-    </div>
+                <div class="field" style="margin-bottom:0;">
+                  <label for="pBody">Cuerpo de la nota</label>
+                  <div class="body-toolbar">
+                    <button type="button" id="insertImgBtn" title="Insertar una imagen en la posición del cursor">Imagen</button>
+                    <span class="sep" aria-hidden="true"></span>
+                    <button type="button" data-mark="h2" title="Subtítulo (## al inicio del párrafo)">Subtítulo</button>
+                    <button type="button" data-mark="bold" title="Negrita (**texto**)"><strong>N</strong></button>
+                    <button type="button" data-mark="italic" title="Cursiva (*texto*)"><em>C</em></button>
+                    <button type="button" data-mark="quote" title="Cita destacada (&gt; al inicio del párrafo)">Cita</button>
+                    <span class="stats" id="bodyStats">0 palabras · 0 min</span>
+                  </div>
+                  <input id="pInlineFile" type="file" accept="image/*" class="hidden">
+                  <textarea id="pBody" required placeholder="Escribí la nota.&#10;&#10;Separá los párrafos con una línea en blanco."></textarea>
+                  <p class="field-hint" id="inlineImgStatus"></p>
+                  <p class="field-hint">
+                    Párrafos separados por una línea en blanco. <strong>##</strong> al inicio hace un subtítulo,
+                    <strong>&gt;</strong> una cita destacada, <strong>**texto**</strong> negrita y <strong>*texto*</strong> cursiva.
+                  </p>
+                </div>
+              </div>
 
-    <!-- TAB: perfil -->
-    <div class="tab-panel hidden" id="tabProfile">
-      <h1>Perfil</h1>
-      <form id="pwForm">
-        <div class="field">
-          <label for="curPw">Contraseña actual</label>
-          <input id="curPw" type="password" required autocomplete="current-password">
+              <!-- vista previa -->
+              <div class="panel">
+                <span class="panel-label">Cómo va a verse en el diario</span>
+                <div class="preview-card">
+                  <span class="preview-kicker" id="previewKicker">Actualidad</span>
+                  <h2 class="preview-title" id="previewTitle"><span class="preview-empty">El titular aparece acá mientras escribís.</span></h2>
+                  <p class="preview-dek" id="previewDek"></p>
+                  <p class="preview-meta" id="previewMeta"></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- rail de publicación -->
+            <aside class="rail">
+              <div class="panel">
+                <span class="panel-label">Publicación</span>
+
+                <div class="field">
+                  <label for="pCategory">Sección</label>
+                  <select id="pCategory">
+                    <option>Actualidad</option>
+                    <option>Aerolíneas</option>
+                    <option>Aeropuertos</option>
+                    <option>Turismo</option>
+                    <option>Análisis</option>
+                    <option>Entrevista</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label for="pAuthor">Firma</label>
+                  <input id="pAuthor" type="text" placeholder="Nicolás E. Gómez">
+                  <p class="field-hint">Si lo dejás vacío firma el usuario conectado.</p>
+                </div>
+
+                <div class="field checkbox-field">
+                  <input type="checkbox" id="pFeatured">
+                  <label for="pFeatured">Destacar en portada<br><span class="field-hint" style="margin:0;">Aparece primera y a mayor tamaño.</span></label>
+                </div>
+
+                <button class="btn-submit" type="submit" id="publishBtn">Publicar nota</button>
+                <button type="button" class="btn-secondary hidden" id="cancelEditBtn" style="width:100%; margin-top:.5rem;">Cancelar edición</button>
+                <div class="msg hidden" id="publishMsg"></div>
+              </div>
+
+              <div class="panel">
+                <span class="panel-label">Imagen de portada</span>
+                <div class="dropzone" id="coverDrop">
+                  <p class="dropzone-text">
+                    <strong>Arrastrá una foto o hacé clic</strong>
+                    JPG, PNG o WebP
+                  </p>
+                </div>
+                <input id="pCoverFile" type="file" accept="image/*" class="hidden">
+                <input type="hidden" id="pCoverUrl" value="">
+                <img id="coverPreview" class="cover-preview" alt="">
+                <p class="field-hint" id="coverStatus">Si no subís nada, el sistema busca sola una foto relacionada con el tema de la nota.</p>
+                <button type="button" class="btn-secondary hidden" id="removeCoverBtn" style="width:100%; margin-top:.5rem;">Quitar portada</button>
+              </div>
+            </aside>
+
+          </div>
+        </form>
+      </section>
+
+      <!-- ============ TAB: listado ============ -->
+      <section class="tab-panel hidden" id="tabList">
+        <div class="cms-head">
+          <div>
+            <h1>Notas publicadas</h1>
+            <p>Editá, reordená o dá de baja lo que ya está online.</p>
+          </div>
         </div>
-        <div class="field">
-          <label for="newPw">Nueva contraseña (mín. 8 caracteres)</label>
-          <input id="newPw" type="password" required minlength="8" autocomplete="new-password">
+        <div class="articles-list" id="articlesList"></div>
+        <div class="msg hidden" id="listMsg"></div>
+      </section>
+
+      <!-- ============ TAB: perfil ============ -->
+      <section class="tab-panel hidden" id="tabProfile">
+        <div class="cms-head">
+          <div>
+            <h1>Perfil y seguridad</h1>
+            <p>Cambiá la contraseña de acceso a la redacción.</p>
+          </div>
         </div>
-        <div class="field">
-          <label for="confirmPw">Repetir nueva contraseña</label>
-          <input id="confirmPw" type="password" required minlength="8" autocomplete="new-password">
+        <div class="panel" style="max-width: 420px;">
+          <form id="pwForm">
+            <div class="field">
+              <label for="curPw">Contraseña actual</label>
+              <input id="curPw" type="password" required autocomplete="current-password">
+            </div>
+            <div class="field">
+              <label for="newPw">Nueva contraseña</label>
+              <input id="newPw" type="password" required minlength="8" autocomplete="new-password">
+              <p class="field-hint">Mínimo 8 caracteres.</p>
+            </div>
+            <div class="field">
+              <label for="confirmPw">Repetir nueva contraseña</label>
+              <input id="confirmPw" type="password" required minlength="8" autocomplete="new-password">
+            </div>
+            <button class="btn-submit" type="submit">Actualizar contraseña</button>
+            <div class="msg hidden" id="pwMsg"></div>
+          </form>
         </div>
-        <button class="btn-submit" type="submit">Actualizar contraseña</button>
-        <div class="msg hidden" id="pwMsg"></div>
-      </form>
-    </div>
+      </section>
+
+    </main>
   </div>
 </div>
 
@@ -193,6 +789,10 @@
     el.textContent = text;
     el.classList.remove("hidden", "error", "ok");
     el.classList.add(isError ? "error" : "ok");
+  }
+  function escapeHtml(str) {
+    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
   function fileToBase64(file) {
     return new Promise(function (resolve, reject) {
@@ -212,10 +812,18 @@
     } catch (_) { return null; }
   }
 
+  function initials(name) {
+    return String(name || "").trim().split(/\s+/).slice(0, 2)
+      .map(function (w) { return w.charAt(0); }).join("").toUpperCase();
+  }
+
   function showPanel(me) {
     hide($("loginCard"));
     show($("panelCard"));
-    $("whoami").textContent = "Conectado como " + me.displayName;
+    $("whoami").textContent = me.displayName;
+    $("userInitials").textContent = initials(me.displayName);
+    $("pAuthor").placeholder = me.displayName;
+    updatePreview();
     loadArticles();
   }
   function showLogin() { show($("loginCard")); hide($("panelCard")); }
@@ -241,7 +849,7 @@
     showLogin();
   });
 
-  /* ---------- tabs ---------- */
+  /* ---------- navegación ---------- */
   var tabs = { new: $("tabNew"), list: $("tabList"), profile: $("tabProfile") };
   document.querySelectorAll(".tab-btn").forEach(function (btn) {
     btn.addEventListener("click", function () {
@@ -250,12 +858,80 @@
       Object.keys(tabs).forEach(function (k) { hide(tabs[k]); });
       show(tabs[btn.dataset.tab]);
       if (btn.dataset.tab === "list") loadArticles();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  });
+
+  /* ---------- contadores y vista previa ---------- */
+  function setCounter(el, value, max) {
+    el.textContent = value + " / " + max;
+    el.classList.toggle("over", value > max * 0.92);
+  }
+
+  function updatePreview() {
+    var title = $("pTitle").value.trim();
+    var dek = $("pDek").value.trim();
+    var cat = $("pCategory").value;
+    var author = $("pAuthor").value.trim() || $("pAuthor").placeholder || "Redacción";
+
+    setCounter($("titleCount"), $("pTitle").value.length, 140);
+    setCounter($("dekCount"), $("pDek").value.length, 220);
+
+    $("previewKicker").textContent = cat;
+    $("previewTitle").innerHTML = title
+      ? escapeHtml(title)
+      : '<span class="preview-empty">El titular aparece acá mientras escribís.</span>';
+    $("previewDek").textContent = dek;
+
+    var words = $("pBody").value.trim().split(/\s+/).filter(Boolean).length;
+    var mins = Math.max(1, Math.round(words / 200));
+    $("bodyStats").textContent = words.toLocaleString("es-AR") + " palabras · " + mins + " min";
+
+    var today = new Date().toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" });
+    $("previewMeta").textContent = "Por " + author + " · " + today + (words ? " · " + mins + " min de lectura" : "");
+  }
+
+  ["pTitle", "pDek", "pBody", "pCategory", "pAuthor"].forEach(function (id) {
+    $(id).addEventListener("input", updatePreview);
+    $(id).addEventListener("change", updatePreview);
+  });
+
+  /* ---------- marcas de formato en el cuerpo ---------- */
+  function wrapSelection(before, after) {
+    var ta = $("pBody");
+    var start = ta.selectionStart, end = ta.selectionEnd;
+    var raw = ta.value.slice(start, end) || "texto";
+    // los espacios de los extremos quedan fuera de la marca
+    var lead = raw.match(/^\s*/)[0];
+    var trail = raw.match(/\s*$/)[0];
+    var core = raw.slice(lead.length, raw.length - trail.length) || "texto";
+    ta.value = ta.value.slice(0, start) + lead + before + core + after + trail + ta.value.slice(end);
+    ta.focus();
+    var coreStart = start + lead.length + before.length;
+    ta.setSelectionRange(coreStart, coreStart + core.length);
+    updatePreview();
+  }
+  function prefixParagraph(prefix) {
+    var ta = $("pBody");
+    var start = ta.selectionStart;
+    var lineStart = ta.value.lastIndexOf("\n", start - 1) + 1;
+    ta.value = ta.value.slice(0, lineStart) + prefix + ta.value.slice(lineStart);
+    ta.focus();
+    ta.setSelectionRange(start + prefix.length, start + prefix.length);
+    updatePreview();
+  }
+  document.querySelectorAll(".body-toolbar button[data-mark]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var m = btn.dataset.mark;
+      if (m === "bold") wrapSelection("**", "**");
+      else if (m === "italic") wrapSelection("*", "*");
+      else if (m === "h2") prefixParagraph("## ");
+      else if (m === "quote") prefixParagraph("> ");
     });
   });
 
   /* ---------- imagen de portada ---------- */
-  $("pCoverFile").addEventListener("change", async function () {
-    var file = this.files[0];
+  async function uploadCover(file) {
     if (!file) return;
     var status = $("coverStatus");
     status.textContent = "Subiendo…";
@@ -268,12 +944,47 @@
       });
       var data = await res.json();
       if (!res.ok) { status.textContent = data.error || "Error al subir imagen"; return; }
-      $("pCoverUrl").value = data.url;
-      var img = $("coverPreview");
-      img.src = data.url;
-      img.classList.add("show");
-      status.textContent = "Imagen cargada.";
+      setCover(data.url);
+      status.textContent = "Portada cargada.";
     } catch (err) { status.textContent = "Error de conexión"; }
+  }
+
+  function setCover(url) {
+    $("pCoverUrl").value = url || "";
+    var img = $("coverPreview");
+    if (url) {
+      img.src = url;
+      img.classList.add("show");
+      show($("removeCoverBtn"));
+    } else {
+      img.classList.remove("show");
+      img.removeAttribute("src");
+      hide($("removeCoverBtn"));
+    }
+  }
+
+  $("coverDrop").addEventListener("click", function () { $("pCoverFile").click(); });
+  $("pCoverFile").addEventListener("change", function () { uploadCover(this.files[0]); });
+  $("removeCoverBtn").addEventListener("click", function () {
+    setCover("");
+    $("coverStatus").textContent = "Si no subís nada, el sistema busca sola una foto relacionada con el tema de la nota.";
+  });
+
+  ["dragenter", "dragover"].forEach(function (ev) {
+    $("coverDrop").addEventListener(ev, function (e) {
+      e.preventDefault();
+      this.classList.add("is-drag");
+    });
+  });
+  ["dragleave", "drop"].forEach(function (ev) {
+    $("coverDrop").addEventListener(ev, function (e) {
+      e.preventDefault();
+      this.classList.remove("is-drag");
+    });
+  });
+  $("coverDrop").addEventListener("drop", function (e) {
+    var file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file && /^image\//.test(file.type)) uploadCover(file);
   });
 
   /* ---------- imagen inline en el cuerpo ---------- */
@@ -282,7 +993,7 @@
     var file = this.files[0];
     if (!file) return;
     var status = $("inlineImgStatus");
-    status.textContent = " Subiendo…";
+    status.textContent = "Subiendo imagen…";
     try {
       var b64 = await fileToBase64(file);
       var res = await fetch("/api/upload-image", {
@@ -291,25 +1002,28 @@
         body: JSON.stringify({ dataBase64: b64, mime: file.type }),
       });
       var data = await res.json();
-      if (!res.ok) { status.textContent = " " + (data.error || "Error al subir imagen"); return; }
+      if (!res.ok) { status.textContent = data.error || "Error al subir imagen"; return; }
       var textarea = $("pBody");
       var placeholder = "\n\n{{img:" + data.url + "}}\n\n";
       var start = textarea.selectionStart || textarea.value.length;
       textarea.value = textarea.value.slice(0, start) + placeholder + textarea.value.slice(start);
-      status.textContent = " Imagen insertada en el cuerpo.";
+      status.textContent = "Imagen insertada. Podés escribir un epígrafe agregando |texto antes de la llave final.";
       this.value = "";
-    } catch (err) { status.textContent = " Error de conexión"; }
+      updatePreview();
+    } catch (err) { status.textContent = "Error de conexión"; }
   });
 
   /* ---------- publicar / editar nota ---------- */
   function resetForm() {
     $("publishForm").reset();
     $("editId").value = "";
-    $("pCoverUrl").value = "";
-    $("coverPreview").classList.remove("show");
+    setCover("");
     $("formTitle").textContent = "Nueva nota";
     $("publishBtn").textContent = "Publicar nota";
+    $("coverStatus").textContent = "Si no subís nada, el sistema busca sola una foto relacionada con el tema de la nota.";
+    $("inlineImgStatus").textContent = "";
     hide($("cancelEditBtn"));
+    updatePreview();
   }
 
   $("cancelEditBtn").addEventListener("click", resetForm);
@@ -350,14 +1064,14 @@
       }
       data = await res.json();
       if (!res.ok) { setMsg(msg, data.error || "Error al guardar", true); return; }
-      setMsg(msg, (editId ? "¡Actualizado! " : "¡Publicado! ") + "Va a verse en unos minutos: " + data.url, false);
+      setMsg(msg, (editId ? "Actualizada. " : "Publicada. ") + "Va a verse en unos minutos en " + data.url, false);
       resetForm();
       loadArticles();
     } catch (err) {
       setMsg(msg, "Error de conexión", true);
     } finally {
       btn.disabled = false;
-      btn.textContent = editId ? "Guardar cambios" : "Publicar nota";
+      btn.textContent = $("editId").value ? "Guardar cambios" : "Publicar nota";
     }
   });
 
@@ -370,24 +1084,38 @@
       var res = await fetch("/api/articles");
       var data = await res.json();
       if (!res.ok) { setMsg(msg, data.error || "Error al cargar", true); return; }
+
+      $("countArticles").textContent = data.articles.length || "";
+
       if (!data.articles.length) {
-        container.innerHTML = '<p class="field-hint">Todavía no publicaste ninguna nota.</p>';
+        container.innerHTML =
+          '<div class="empty-state"><p>Todavía no hay notas publicadas.</p>' +
+          '<span>Empezá por «Escribir nota» en el menú de la izquierda.</span></div>';
         return;
       }
       container.innerHTML = data.articles
         .map(function (a) {
           return (
             '<div class="article-row" data-id="' + a.id + '">' +
-            (a.cover_image_url ? '<img src="' + a.cover_image_url + '" alt="">' : '<div style="width:56px;height:56px;background:var(--bg-2);border-radius:3px;flex-shrink:0;"></div>') +
+            (a.cover_image_url
+              ? '<img src="' + escapeHtml(a.cover_image_url) + '" alt="">'
+              : '<div class="thumb-empty"></div>') +
             '<div class="article-row-main">' +
-            '<div class="t">' + a.title + (a.featured ? '<span class="badge-featured">Destacada</span>' : "") + "</div>" +
-            '<div class="m">' + a.category + " · " + new Date(a.created_at).toLocaleDateString("es-AR") + "</div>" +
+              '<div class="t">' + escapeHtml(a.title) +
+                (a.featured ? '<span class="badge-featured">Destacada</span>' : "") +
+              "</div>" +
+              '<div class="m">' +
+                '<span class="cat-chip">' + escapeHtml(a.category) + "</span>" +
+                "<span>" + new Date(a.created_at).toLocaleDateString("es-AR", { day: "numeric", month: "short", year: "numeric" }) + "</span>" +
+                "<span>·</span><span>" + escapeHtml(a.author || "") + "</span>" +
+              "</div>" +
             "</div>" +
             '<div class="article-row-actions">' +
-            '<button data-action="up" title="Subir">↑</button>' +
-            '<button data-action="down" title="Bajar">↓</button>' +
-            '<button data-action="edit">Editar</button>' +
-            '<button data-action="delete" style="color:var(--accent-dark);border-color:var(--accent-dark);">Borrar</button>' +
+              '<button class="move" data-action="up" title="Subir en el orden" aria-label="Subir">↑</button>' +
+              '<button class="move" data-action="down" title="Bajar en el orden" aria-label="Bajar">↓</button>' +
+              '<button data-action="view" title="Ver publicada">Ver</button>' +
+              '<button data-action="edit">Editar</button>' +
+              '<button data-action="delete">Borrar</button>' +
             "</div>" +
             "</div>"
           );
@@ -420,11 +1148,17 @@
       return;
     }
 
-    if (action === "edit") {
+    if (action === "view" || action === "edit") {
       var res = await fetch("/api/articles/" + id);
       var data = await res.json();
       if (!res.ok) return;
       var a = data.article;
+
+      if (action === "view") {
+        window.open("/notas/" + a.slug + ".html", "_blank", "noopener");
+        return;
+      }
+
       document.querySelector('.tab-btn[data-tab="new"]').click();
       $("editId").value = a.id;
       $("pTitle").value = a.title;
@@ -433,15 +1167,11 @@
       $("pDek").value = a.dek || "";
       $("pBody").value = a.body;
       $("pFeatured").checked = !!a.featured;
-      $("pCoverUrl").value = a.cover_image_url || "";
-      if (a.cover_image_url) {
-        var img = $("coverPreview");
-        img.src = a.cover_image_url;
-        img.classList.add("show");
-      }
+      setCover(a.cover_image_url || "");
       $("formTitle").textContent = "Editar nota";
       $("publishBtn").textContent = "Guardar cambios";
       show($("cancelEditBtn"));
+      updatePreview();
     }
   });
 
