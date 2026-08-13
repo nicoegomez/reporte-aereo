@@ -8,44 +8,47 @@
    1. Tokens
    ============================================================= */
 :root {
-  /* Palette — Manual de marca Reporte Aéreo */
-  --ra-azul:       #003087;   /* institucional — wordmark, header, links, titulares */
-  --ra-azul-400:   #3e5fa8;
-  --ra-azul-200:   #c9d2e6;
-  --ra-azul-900:   #001c4f;
-  --ra-rojo:       #c41230;   /* solo acentos y etiquetas — barras del logo, últimas noticias */
-  --ra-rojo-900:   #960e24;
-  --ra-dorado:     #b8922a;   /* distinciones editoriales — análisis, entrevistas, firma */
-  --ra-crema:      #faf7f0;   /* fondo de página y secciones */
-  --ra-crema-200:  #ede7da;
-  --ra-tinta:      #14161a;   /* texto principal */
-  --ra-tinta-70:   #3a3730;
-  --ra-gris:       #8a8578;
-  --ra-linea:      #e6e0d4;
+  /* Palette — Manual de marca Reporte Aéreo v2 */
+  --ra-noche:      #0B1724;   /* marca, titulares, header, superficies oscuras */
+  --ra-grafito:    #242A30;   /* hover de superficies oscuras */
+  --ra-pizarra:    #4A5563;   /* metadatos y texto secundario */
+  --ra-acero:      #8A939C;   /* rótulos y líneas suaves */
+  --ra-niebla:     #DDD9D0;   /* líneas y bordes */
+  --ra-papel:      #F5F4F0;   /* fondo de página */
+  --ra-humo:       #E9E7E1;   /* superficies secundarias y hover claro */
+  --ra-blanco:     #FFFFFF;   /* superficie de tarjetas y módulos */
+  --ra-rojo:       #D62828;   /* solo etiquetas y último momento */
+  --ra-rojo-900:   #A81E1E;
+  --ra-dorado:     #C39A3E;   /* análisis, entrevistas, contenido de firma */
+  --ra-texto:      #33383F;   /* cuerpo de texto */
 
   /* Alias internos (compatibilidad con el resto de la hoja) */
-  --bg:          var(--ra-crema);
-  --bg-2:        var(--ra-crema-200);
-  --bg-dark:     var(--ra-azul);
-  --ink:         var(--ra-tinta);
-  --ink-soft:    var(--ra-tinta-70);
-  --ink-mute:    var(--ra-gris);
+  --bg:          var(--ra-papel);
+  --bg-2:        var(--ra-humo);
+  --surface:     var(--ra-blanco);
+  --bg-dark:     var(--ra-noche);
+  --ink:         var(--ra-noche);
+  --ink-soft:    var(--ra-texto);
+  --ink-mute:    var(--ra-acero);
   --accent:      var(--ra-rojo);
   --accent-dark: var(--ra-rojo-900);
-  --accent-blue: var(--ra-azul);
-  --accent-blue-dark: var(--ra-azul-900);
+  --accent-blue: var(--ra-noche);       /* la marca es azul noche: sin institucional aparte */
+  --accent-blue-dark: var(--ra-grafito);
   --gold:        var(--ra-dorado);
-  --line:        var(--ra-linea);
-  --line-full:   var(--ra-tinta);
+  --line:        var(--ra-niebla);
+  --line-full:   var(--ra-noche);
 
-  /* Typography */
-  --serif:       'Playfair Display', Georgia, serif;
+  /* Typography — una sola serif editorial (Source Serif 4) + Inter de interfaz */
+  --serif:       'Source Serif 4', Georgia, serif;
   --body-serif:  'Source Serif 4', Georgia, serif;
   --sans:        'Inter', system-ui, -apple-system, sans-serif;
 
   /* Letter-spacing tracks */
   --track-label: 0.16em;
-  --track-mast:  0.015em;
+  --track-mast:  -0.01em;
+
+  /* Isotipo — ventanilla (proporción 1 : 1,3) */
+  --ra-ventanilla-radio: 46% / 34%;
 
   /* Spacing scale */
   --space-1:  4px;
@@ -69,7 +72,7 @@
   /* Misc */
   --nav-h:       48px;
   --header-h:    auto;
-  --radius:      4px;
+  --radius:      0;            /* el sistema v2 es plano: sin esquinas redondeadas */
 }
 
 /* =============================================================
@@ -110,8 +113,8 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
 
 :focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 3px;
-  border-radius: 3px;
+  outline-offset: 2px;
+  border-radius: 0;
 }
 
 /* =============================================================
@@ -126,7 +129,7 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
 .skip-link {
   position: fixed; top: -100px; left: 1rem;
   padding: .5rem 1rem; background: var(--accent); color: #fff;
-  z-index: 9999; border-radius: 4px; font-weight: 600;
+  z-index: 9999; border-radius: 0; font-weight: 600;
   font-size: .875rem; transition: top .2s var(--ease-out);
 }
 .skip-link:focus { top: 1rem; }
@@ -157,12 +160,12 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
   letter-spacing: .1em;
   text-transform: uppercase;
   padding: .2rem .5rem;
-  border-radius: 2px;
+  border-radius: 0;
   margin-bottom: .5rem;
 }
-.tag--red  { background: var(--accent); color: #fff; }
-.tag--blue { background: var(--accent-blue); color: #fff; }
-.tag--gold { background: var(--gold); color: #fff; }
+.tag--red  { background: var(--accent); color: #fff; }             /* último momento */
+.tag--blue { border: 1px solid var(--line); color: var(--ink); }   /* sección — etiqueta de contorno */
+.tag--gold { background: var(--gold); color: #fff; }               /* análisis y entrevistas */
 
 .section-rule {
   border: 0;
@@ -229,7 +232,7 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 1px;
+  height: 3px;
   background: var(--line-full);
 }
 .masthead-inner {
@@ -249,13 +252,13 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
 .masthead-brand {
   font-family: var(--serif);
   font-size: clamp(2.4rem, 7vw, 5.5rem);
-  font-weight: 900;
-  letter-spacing: -.03em;
+  font-weight: 700;
+  letter-spacing: -.01em;
   line-height: 1;
   color: var(--ink);
 }
 .masthead-brand a { color: var(--accent-blue); }
-.masthead-brand a:hover { color: var(--ra-azul-900); transition: color .2s; }
+.masthead-brand a:hover { color: var(--accent); transition: color .2s; }
 .masthead-tagline {
   font-family: var(--sans);
   font-size: .75rem;
@@ -329,7 +332,7 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
   display: block;
   height: 2px;
   background: rgba(255,255,255,.8);
-  border-radius: 2px;
+  border-radius: 0;
   transition: transform .3s var(--ease-out), opacity .3s;
 }
 
@@ -370,7 +373,7 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
   text-transform: uppercase;
   background: rgba(0,0,0,.25);
   padding: .2rem .6rem;
-  border-radius: 2px;
+  border-radius: 0;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -398,72 +401,75 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
    9. Image placeholders (premium aviation gradients)
    ============================================================= */
 
-/* Hero sky — dawn over runway, warm */
+/* Familia azul noche: todos los marcadores de imagen parten de #0B1724
+   y suben hacia acero o dorado. Sin verdes, violetas ni rosados. */
+
+/* Hero sky — amanecer sobre pista */
 .hero-sky {
   background:
     linear-gradient(165deg,
-      #070f1c 0%, #0d1e35 15%,
-      #122848 30%, #1c4478 50%,
-      #2c6fa8 65%, #5899c4 80%,
-      #c9b17a 92%, #e8d08a 100%);
+      #070f18 0%, #0B1724 18%,
+      #16293c 38%, #24405a 55%,
+      #4A5563 70%, #8A939C 84%,
+      #C39A3E 96%, #d8b667 100%);
 }
 /* Side sky variants */
 .side-sky-1 {
-  background: linear-gradient(160deg, #0a1628 0%, #162e55 40%, #2d6090 70%, #6fa8cc 100%);
+  background: linear-gradient(160deg, #0B1724 0%, #1a2e42 45%, #4A5563 75%, #8A939C 100%);
 }
 .side-sky-2 {
-  background: linear-gradient(155deg, #101c30 0%, #1e3060 45%, #4a6898 75%, #7a9cbf 100%);
+  background: linear-gradient(155deg, #08121c 0%, #16283a 45%, #3d4c5e 78%, #7b8590 100%);
 }
 .side-sky-3 {
-  background: linear-gradient(170deg, #18120a 0%, #3a2810 40%, #7a5820 70%, #c0922e 100%);
+  background: linear-gradient(170deg, #0B1724 0%, #2a2a28 42%, #6f5c31 74%, #C39A3E 100%);
 }
 
 /* Card image variants */
 .card-sky-1 {
-  background: linear-gradient(150deg, #0a1628 0%, #1a3256 40%, #2e5e94 70%, #4a88be 100%);
+  background: linear-gradient(150deg, #0B1724 0%, #1c3044 42%, #45525f 72%, #8A939C 100%);
 }
 .card-sky-2 {
-  background: linear-gradient(160deg, #05101e 0%, #0f2540 40%, #1f4874 70%, #4a7aa8 100%);
+  background: linear-gradient(160deg, #070f18 0%, #142434 42%, #34455a 72%, #6d7885 100%);
 }
 .card-sky-3 {
-  background: linear-gradient(145deg, #101a10 0%, #1c3020 40%, #2e5830 70%, #5a9060 100%);
+  background: linear-gradient(145deg, #0B1724 0%, #212f3a 42%, #4A5563 72%, #9aa0a6 100%);
 }
 .card-sky-4 {
-  background: linear-gradient(165deg, #200818 0%, #401030 50%, #7a2050 80%, #c04070 100%);
+  background: linear-gradient(165deg, #0B1724 0%, #26303a 48%, #75643c 80%, #C39A3E 100%);
 }
 
 /* International */
 .card-intl-1 {
-  background: linear-gradient(155deg, #050d18 0%, #0d2038 30%, #1a3e6a 55%, #2a6098 75%, #6098c0 90%, #c0b070 100%);
+  background: linear-gradient(155deg, #060d16 0%, #0B1724 28%, #24384c 56%, #4A5563 76%, #8A939C 92%, #C39A3E 100%);
 }
-.list-sky-1 { background: linear-gradient(140deg, #0a1830 0%, #1a3870 50%, #4a78b8 100%); }
-.list-sky-2 { background: linear-gradient(140deg, #080e20 0%, #151e4a 50%, #3050a0 100%); }
-.list-sky-3 { background: linear-gradient(140deg, #10080a 0%, #301020 50%, #602040 100%); }
-.list-sky-4 { background: linear-gradient(140deg, #0a1020 0%, #1a2850 50%, #385090 100%); }
+.list-sky-1 { background: linear-gradient(140deg, #0B1724 0%, #263849 55%, #7d8792 100%); }
+.list-sky-2 { background: linear-gradient(140deg, #070f18 0%, #1b2a38 55%, #5f6b78 100%); }
+.list-sky-3 { background: linear-gradient(140deg, #0B1724 0%, #33342e 55%, #C39A3E 100%); }
+.list-sky-4 { background: linear-gradient(140deg, #0a1420 0%, #22303f 55%, #8A939C 100%); }
 
 /* Turismo */
 .card-tur-1 {
-  background: linear-gradient(150deg, #0a1c10 0%, #1a3820 40%, #2e6835 70%, #6ab060 95%, #c8d880 100%);
+  background: linear-gradient(150deg, #0B1724 0%, #22323f 42%, #6b6244 74%, #C39A3E 100%);
 }
 .card-tur-2 {
-  background: linear-gradient(155deg, #0a1820 0%, #102a38 35%, #1a4858 65%, #3080a0 88%, #70c8e0 100%);
+  background: linear-gradient(155deg, #0B1724 0%, #17293a 40%, #40525f 70%, #9aa4ac 100%);
 }
 
 /* Negocios */
 .card-neg-1 {
-  background: linear-gradient(150deg, #181018 0%, #2a1828 40%, #4a2850 70%, #6a3870 100%);
+  background: linear-gradient(150deg, #0B1724 0%, #242A30 45%, #4A5563 75%, #8A939C 100%);
 }
 .card-neg-2 {
-  background: linear-gradient(145deg, #101818 0%, #182828 40%, #285040 70%, #408060 100%);
+  background: linear-gradient(145deg, #080f16 0%, #1d2933 45%, #43505c 75%, #7f8a95 100%);
 }
 
 /* Article page */
 .article-sky {
-  background: linear-gradient(165deg, #070f1c 0%, #0f2040 20%, #1c4478 50%, #3a7ab8 72%, #6aaccf 88%, #d0bc88 100%);
+  background: linear-gradient(165deg, #070f18 0%, #0B1724 22%, #1e3145 50%, #4A5563 74%, #8A939C 90%, #C39A3E 100%);
 }
-.related-sky-1 { background: linear-gradient(140deg, #0d1830 0%, #1e3865 50%, #3868b0 100%); }
-.related-sky-2 { background: linear-gradient(140deg, #100a18 0%, #281838 50%, #503870 100%); }
-.related-sky-3 { background: linear-gradient(140deg, #0a1810 0%, #1a3828 50%, #386850 100%); }
+.related-sky-1 { background: linear-gradient(140deg, #0B1724 0%, #253748 55%, #7c8792 100%); }
+.related-sky-2 { background: linear-gradient(140deg, #0a121b 0%, #242A30 55%, #6b7480 100%); }
+.related-sky-3 { background: linear-gradient(140deg, #0B1724 0%, #2f3330 55%, #C39A3E 100%); }
 
 /* =============================================================
    10. Hero feature section
@@ -504,7 +510,7 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
   letter-spacing: .12em;
   text-transform: uppercase;
   padding: .25rem .6rem;
-  border-radius: 2px;
+  border-radius: 0;
 }
 
 .hero-content {}
@@ -653,7 +659,7 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
 .card-cat {
   position: absolute;
   bottom: .5rem; left: .5rem;
-  background: var(--accent);
+  background: var(--ra-noche);
   color: #fff;
   font-family: var(--sans);
   font-size: .5rem;
@@ -661,7 +667,7 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
   letter-spacing: .12em;
   text-transform: uppercase;
   padding: .2rem .45rem;
-  border-radius: 2px;
+  border-radius: 0;
 }
 
 .card-title {
@@ -850,7 +856,7 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
 .footer-logo {
   font-family: var(--serif);
   font-size: 1.75rem;
-  font-weight: 900;
+  font-weight: 700;
   color: #fff;
   letter-spacing: -.02em;
   margin-bottom: .375rem;
@@ -976,7 +982,7 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
 .author-avatar {
   width: 48px; height: 48px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent) 0%, #7a0018 100%);
+  background: linear-gradient(135deg, var(--ra-noche) 0%, var(--ra-pizarra) 100%);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -1038,12 +1044,12 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
 .article-body > p:first-child::first-letter {
   font-family: var(--serif);
   font-size: 4.5em;
-  font-weight: 900;
+  font-weight: 700;
   line-height: .8;
   float: left;
   margin-right: .1em;
   margin-top: .06em;
-  color: var(--accent);
+  color: var(--ink);
 }
 
 .article-body h2 {
@@ -1106,7 +1112,7 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
   font-family: var(--serif);
   font-size: 2rem;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--gold);
   line-height: 1;
   display: block;
   margin-bottom: .375rem;
@@ -1133,7 +1139,7 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
 .author-bio-avatar {
   width: 72px; height: 72px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent) 0%, #7a0018 100%);
+  background: linear-gradient(135deg, var(--ra-noche) 0%, var(--ra-pizarra) 100%);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -1156,7 +1162,7 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
   font-size: .6875rem;
   text-transform: uppercase;
   letter-spacing: .1em;
-  color: var(--accent);
+  color: var(--gold);
   font-weight: 600;
   margin-bottom: .625rem;
 }
@@ -1340,7 +1346,7 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
   width: 100%;
   aspect-ratio: 16/10;
   object-fit: cover;
-  border-radius: 2px;
+  border-radius: 0;
   margin-bottom: var(--space-3);
   background: var(--bg-2);
 }
@@ -1398,7 +1404,7 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
 .article-cover-img img, .article-inline-img img {
   width: 100%;
   height: auto;
-  border-radius: 2px;
+  border-radius: 0;
   display: block;
 }
 .article-inline-img figcaption {
@@ -1410,58 +1416,94 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
 }
 
 /* =============================================================
-   24. Isotipo — 3 barras rojas + wordmark (Manual de marca)
+   24. Isotipo — ventanilla RA + wordmark (Manual de marca v2)
+   La ventanilla es geometría pura: sin imágenes ni SVG.
+   `.ra-logo-bars` se mantiene como alias del marcado anterior
+   para que las notas ya publicadas sigan mostrando la marca nueva.
    ============================================================= */
 .ra-logo {
   display: inline-flex;
-  align-items: flex-start;
-  gap: 18px;
+  align-items: center;
+  gap: 16px;
+  --mark-w: 44px;
 }
+
+.ra-mark,
 .ra-logo-bars {
+  width: var(--mark-w);
+  height: calc(var(--mark-w) * 1.3);
+  border-radius: var(--ra-ventanilla-radio);
+  background: var(--ra-noche);
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-top: 10px;
-  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--mark-w) * .085);
+  transition: background .25s var(--ease-out), border-color .25s var(--ease-out);
 }
-.ra-logo-bars span {
+.ra-mark span,
+.ra-logo-bars::before {
+  content: 'RA';
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: calc(var(--mark-w) * .44);
+  line-height: .82;
+  letter-spacing: -.02em;
+  color: #fff;
+}
+.ra-mark i,
+.ra-logo-bars::after {
+  content: '';
   display: block;
-  width: 48px;
-  height: 8px;
+  width: calc(var(--mark-w) * .44);
+  height: max(1.5px, calc(var(--mark-w) * .058));
   background: var(--ra-rojo);
 }
+/* El marcado anterior traía tres barras vacías: quedan fuera de juego. */
+.ra-logo-bars span { display: none; }
+
 .ra-logo-word {
   font-family: var(--serif);
   font-weight: 700;
   letter-spacing: var(--track-mast);
-  line-height: .98;
-  color: var(--accent-blue);
+  line-height: .95;
+  color: var(--ink);
 }
 .ra-logo-tagline {
+  display: block;
   font-family: var(--sans);
   font-size: .5625rem;
   letter-spacing: .22em;
   text-transform: uppercase;
-  color: var(--ink);
-  margin-top: .625rem;
+  color: var(--ra-pizarra);
+  margin-top: .75rem;
   line-height: 1.5;
 }
 
-/* Variante compacta — header sticky */
-.ra-logo--compact { gap: 10px; align-items: center; }
-.ra-logo--compact .ra-logo-bars { flex-direction: column; gap: 3px; margin-top: 0; }
-.ra-logo--compact .ra-logo-bars span { width: 22px; height: 4px; }
-.ra-logo--compact .ra-logo-word { font-size: 1.125rem; letter-spacing: .02em; }
+/* Variante compacta — nav, admin, footer */
+.ra-logo--compact { gap: 13px; --mark-w: 28px; }
+.ra-logo--compact .ra-logo-word { font-size: 1.25rem; }
 
-/* Variante monocromo blanco — fondos oscuros (footer) */
-.ra-logo--mono .ra-logo-bars span { background: #fff; }
+/* Variante monocromo blanco — fondos oscuros (footer, nav) */
+.ra-logo--mono .ra-mark,
+.ra-logo--mono .ra-logo-bars {
+  background: none;
+  border: 1.5px solid #fff;
+}
 .ra-logo--mono .ra-logo-word { color: #fff; }
 .ra-logo--mono .ra-logo-tagline { color: rgba(255,255,255,.55); }
 
+/* Sobre el nav azul noche la ventanilla también va en contorno */
+.main-nav .ra-mark,
+.main-nav .ra-logo-bars {
+  background: none;
+  border: 1.5px solid #fff;
+}
+.main-nav .ra-logo-word { color: #fff; }
+
 @media (max-width: 539px) {
-  .ra-logo { gap: 12px; }
-  .ra-logo-bars span { width: 32px; height: 6px; }
-  .ra-logo-bars { gap: 4px; margin-top: 6px; }
+  .ra-logo { gap: 12px; --mark-w: 34px; }
 }
 
 /* =============================================================
@@ -1489,9 +1531,9 @@ body::after {
 /* ---------- 25.3 Titular del hero: escala de diario ---------- */
 .hero-headline {
   font-size: clamp(2.25rem, 5.6vw, 4.5rem);
-  font-weight: 900;
-  line-height: .98;
-  letter-spacing: -.035em;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -.02em;
   margin-bottom: 1.25rem;
   text-wrap: balance;
 }
@@ -1511,7 +1553,7 @@ body::after {
 .hero-deck::first-letter {
   float: left;
   font-family: var(--serif);
-  font-weight: 900;
+  font-weight: 700;
   font-size: 3.4em;
   line-height: .82;
   padding: .06em .12em 0 0;
@@ -1562,8 +1604,8 @@ body::after {
 }
 .section-title {
   font-size: clamp(1.5rem, 3.2vw, 2.375rem);
-  font-weight: 900;
-  letter-spacing: -.03em;
+  font-weight: 700;
+  letter-spacing: -.02em;
 }
 
 /* ---------- 25.7 Badge de categoría del hero ---------- */
@@ -1629,7 +1671,7 @@ body::after {
   transition: box-shadow .3s var(--ease-out), background-color .3s var(--ease-out);
 }
 .main-nav.is-stuck {
-  background: rgba(0, 28, 79, .96);
+  background: rgba(11, 23, 36, .96);
   backdrop-filter: saturate(180%) blur(12px);
   -webkit-backdrop-filter: saturate(180%) blur(12px);
   box-shadow: 0 8px 28px rgba(20, 22, 26, .18);
@@ -1673,25 +1715,19 @@ body::after {
 /* ---------- 25.17 Masthead en una sola línea ---------- */
 .masthead .ra-logo {
   align-items: center;
-  gap: clamp(12px, 2vw, 22px);
-}
-.masthead .ra-logo-bars {
-  margin-top: 0;
-  gap: clamp(4px, .6vw, 7px);
-}
-.masthead .ra-logo-bars span {
-  width: clamp(30px, 4.5vw, 56px);
-  height: clamp(5px, .8vw, 9px);
+  gap: clamp(14px, 2.4vw, 30px);
+  --mark-w: clamp(42px, 5.4vw, 74px);
 }
 .masthead .ra-logo-tagline {
-  margin-top: .45rem;
+  margin-top: .8rem;
   letter-spacing: clamp(.1em, .8vw, .22em);
 }
 @media (max-width: 700px) {
   .masthead .ra-logo-word { font-size: clamp(1.35rem, 6.2vw, 2.2rem) !important; }
-  .masthead .ra-logo-tagline { font-size: .5rem; letter-spacing: .1em; }
+  .masthead .ra-logo-tagline { font-size: .5rem; letter-spacing: .1em; margin-top: .5rem; }
+  .masthead .ra-logo { --mark-w: clamp(34px, 8vw, 46px); }
 }
 @media (max-width: 400px) {
   .masthead .ra-logo-word { font-size: 1.25rem !important; }
-  .masthead .ra-logo-bars span { width: 24px; height: 4px; }
+  .masthead .ra-logo { --mark-w: 30px; }
 }

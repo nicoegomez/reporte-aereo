@@ -204,8 +204,9 @@ function renderArticleHtml({ title, dek, category, author, dateLabel, bodyHtml, 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${escapeHtml(title)} — Reporte Aéreo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../styles.css?v=20260813">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../styles.css?v=20260814">
 </head>
 <body>
   <header class="top-bar">
@@ -223,7 +224,7 @@ function renderArticleHtml({ title, dek, category, author, dateLabel, bodyHtml, 
 
   <nav class="main-nav">
     <a href="../index.html" aria-label="Reporte Aéreo — inicio" class="ra-logo ra-logo--compact">
-      <span class="ra-logo-bars" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span class="ra-mark" aria-hidden="true"><span>RA</span><i></i></span>
       <span class="ra-logo-word">REPORTE AÉREO</span>
     </a>
   </nav>
@@ -246,7 +247,7 @@ ${bodyHtml}
   <footer class="site-footer">
     <div class="footer-inner">
       <a href="../index.html" class="ra-logo ra-logo--compact ra-logo--mono" aria-label="Reporte Aéreo — inicio">
-        <span class="ra-logo-bars" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span class="ra-mark" aria-hidden="true"><span>RA</span><i></i></span>
         <span class="ra-logo-word">REPORTE AÉREO</span>
       </a>
       <p class="footer-tagline" style="margin-top:.75rem;">Aviación · Turismo · Negocios</p>

@@ -4,7 +4,10 @@
 .wrangler/**
 node_modules
 node_modules/**
+.claude
+.claude/**
 Reporte Aereo - Manual de marca.html
+Reporte Aereo - Manual de marca v2.html
 ChatGPT Image*.png
 *.psd
 worker.js

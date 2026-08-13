@@ -6,8 +6,9 @@
 <title>Página no encontrada — Reporte Aéreo</title>
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20260813">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css?v=20260814">
 <style>
   .error-page {
     min-height: 70vh;
@@ -21,7 +22,7 @@
   }
   .error-code {
     font-family: var(--serif);
-    font-weight: 900;
+    font-weight: 700;
     font-size: clamp(4rem, 12vw, 8rem);
     color: var(--accent-blue);
     line-height: 1;
@@ -42,7 +43,7 @@
     font-family: var(--sans);
     font-weight: 600;
     text-decoration: none;
-    border-radius: var(--radius, 2px);
+    border-radius: 0;
     transition: background .2s ease;
   }
   .error-back:hover { background: var(--accent-blue-dark); }
@@ -51,7 +52,7 @@
 <body>
   <main class="error-page">
     <a href="index.html" class="ra-logo" aria-label="Reporte Aéreo — inicio" style="margin-bottom: var(--space-8);">
-      <span class="ra-logo-bars" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span class="ra-mark" aria-hidden="true"><span>RA</span><i></i></span>
       <span class="ra-logo-word" style="display:block; font-size: 1.75rem;">REPORTE AÉREO</span>
     </a>
     <p class="error-code">404</p>
