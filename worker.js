@@ -521,6 +521,46 @@ async function handleMoveArticle(request, env, id) {
   return jsonResponse({ ok: true });
 }
 
+/* ---------------- newsletter ---------------- */
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+async function handleSubscribe(request, env) {
+  let email = "";
+  try {
+    const body = await request.json();
+    email = (body.email || "").trim().toLowerCase();
+  } catch (_) {
+    return jsonResponse({ error: "Solicitud inválida" }, 400);
+  }
+
+  if (!isValidEmail(email)) return jsonResponse({ error: "Ingresá un email válido" }, 400);
+
+  const res = await fetch("https://api.brevo.com/v3/contacts", {
+    method: "POST",
+    headers: {
+      "api-key": env.BREVO_API_KEY,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      email,
+      listIds: [Number(env.BREVO_LIST_ID)],
+      updateEnabled: true,
+    }),
+  });
+
+  if (res.ok || res.status === 204) return jsonResponse({ ok: true });
+
+  const errData = await res.json().catch(() => ({}));
+  /* ya suscripto: lo tratamos como éxito para el usuario */
+  if (errData.code === "duplicate_parameter") return jsonResponse({ ok: true });
+
+  return jsonResponse({ error: "No se pudo completar la suscripción. Probá de nuevo en unos minutos." }, 502);
+}
+
 /* ---------------- router ---------------- */
 
 export default {
@@ -535,6 +575,7 @@ export default {
       if (path === "/api/change-password" && request.method === "POST") return await handleChangePassword(request, env);
 
       if (path === "/api/upload-image" && request.method === "POST") return await handleUploadImage(request, env);
+      if (path === "/api/subscribe" && request.method === "POST") return await handleSubscribe(request, env);
 
       if (path === "/api/articles" && request.method === "GET") return await handleListArticles(request, env);
       if (path === "/api/articles" && request.method === "POST") return await handlePublish(request, env);

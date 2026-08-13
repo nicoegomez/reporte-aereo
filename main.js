@@ -211,16 +211,38 @@
       if (!email) return;
 
       var orig = btn.textContent;
-      btn.textContent = "¡Registrado!";
-      btn.disabled    = true;
-      btn.style.background = "#1a7a40";
+      btn.disabled = true;
+      btn.textContent = "Enviando…";
 
-      setTimeout(function () {
-        btn.textContent   = orig;
-        btn.disabled      = false;
-        btn.style.background = "";
-        input.value       = "";
-      }, 3000);
+      fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email }),
+      })
+        .then(function (res) {
+          return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+        })
+        .then(function (result) {
+          if (result.ok) {
+            btn.textContent = "¡Registrado!";
+            btn.style.background = "#1a7a40";
+            input.value = "";
+          } else {
+            btn.textContent = (result.data && result.data.error) || "Error, probá de nuevo";
+            btn.style.background = "#b3261e";
+          }
+        })
+        .catch(function () {
+          btn.textContent = "Error de conexión";
+          btn.style.background = "#b3261e";
+        })
+        .finally(function () {
+          setTimeout(function () {
+            btn.textContent = orig;
+            btn.disabled = false;
+            btn.style.background = "";
+          }, 3000);
+        });
     });
   }
 
