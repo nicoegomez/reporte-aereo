@@ -420,6 +420,9 @@ async function handlePublish(request, env) {
   const maxOrder = await env.DB.prepare("SELECT MAX(sort_order) as m FROM articles").first();
   const sortOrder = (maxOrder && maxOrder.m ? maxOrder.m : 0) + 1;
 
+  let finalCover = coverImageUrl || null;
+  if (!finalCover) finalCover = await autoPhotoForArticle(env, category, title);
+
   const insert = await env.DB.prepare(
     `INSERT INTO articles (slug, title, dek, category, author, body, cover_image_url, featured, sort_order, status, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'published', ?, ?)`
@@ -431,7 +434,7 @@ async function handlePublish(request, env) {
       category || "Actualidad",
       author || session.n,
       body,
-      coverImageUrl || null,
+      finalCover,
       featured ? 1 : 0,
       sortOrder,
       now,
@@ -457,6 +460,9 @@ async function handleUpdateArticle(request, env, id) {
   const { title, category, dek, body, author, coverImageUrl, featured } = await request.json();
   if (!title || !body) return jsonResponse({ error: "Falta título o cuerpo de la nota" }, 400);
 
+  let finalCover = coverImageUrl || existing.cover_image_url || null;
+  if (!finalCover) finalCover = await autoPhotoForArticle(env, category, title);
+
   await env.DB.prepare(
     `UPDATE articles SET title=?, dek=?, category=?, author=?, body=?, cover_image_url=?, featured=?, updated_at=? WHERE id=?`
   )
@@ -466,7 +472,7 @@ async function handleUpdateArticle(request, env, id) {
       category || "Actualidad",
       author || existing.author,
       body,
-      coverImageUrl || null,
+      finalCover,
       featured ? 1 : 0,
       new Date().toISOString(),
       id
@@ -519,6 +525,40 @@ async function handleMoveArticle(request, env, id) {
 
   await regenerateArticlesJson(env);
   return jsonResponse({ ok: true });
+}
+
+/* ---------------- selección automática de fotos (Pexels) ---------------- */
+
+async function findAutoPhoto(env, query) {
+  if (!env.PEXELS_API_KEY || !query) return null;
+  try {
+    const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(
+      query
+    )}&per_page=1&orientation=landscape`;
+    const res = await fetch(url, { headers: { Authorization: env.PEXELS_API_KEY } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.photos || !data.photos.length) return null;
+    return data.photos[0].src.large || data.photos[0].src.original || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+/* categoría + título en inglés simplificado ayuda a que Pexels devuelva
+   mejores resultados (su buscador funciona mejor en inglés) */
+const CATEGORY_QUERY = {
+  "Aerolíneas": "airline aircraft",
+  "Aeropuertos": "airport terminal",
+  "Turismo": "travel destination",
+  "Análisis": "aviation business",
+  "Entrevista": "aviation industry",
+  "Actualidad": "commercial aviation",
+};
+
+async function autoPhotoForArticle(env, category, title) {
+  const base = CATEGORY_QUERY[category] || "aviation";
+  return (await findAutoPhoto(env, base)) || (await findAutoPhoto(env, "airplane sky"));
 }
 
 /* ---------------- newsletter ---------------- */
