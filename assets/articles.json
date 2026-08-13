@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "id": 1,
+    "title": "Prueba de selecci�n autom�tica de fotos",
+    "dek": "Nota de prueba para verificar que el sistema elige una foto solo.",
+    "category": "Aerol�neas",
+    "author": "Reporte A�reo (Bot)",
+    "date": "2026-08-13T00:28:41.278Z",
+    "dateLabel": "13 de agosto de 2026",
+    "url": "notas/prueba-de-seleccin-automtica-de-fotos-2026-08-13-2q79.html",
+    "image": "https://images.pexels.com/photos/210199/pexels-photo-210199.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    "featured": false
+  }
+]
