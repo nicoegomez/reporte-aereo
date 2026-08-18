@@ -4,3 +4,12 @@ node_modules/
 *.log
 .DS_Store
 Thumbs.db
+
+# Archivos pesados / personales que no son parte del sitio
+*.pdf
+*.zip
+*.psd
+*.ai
+*.mp4
+*.mov
+Nueva carpeta/

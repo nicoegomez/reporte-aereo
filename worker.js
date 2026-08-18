@@ -975,12 +975,12 @@ async function findAutoPhoto(env, query) {
 /* categoría + título en inglés simplificado ayuda a que Pexels devuelva
    mejores resultados (su buscador funciona mejor en inglés) */
 const CATEGORY_QUERY = {
-  "Aerolíneas": "airline aircraft",
+  "Actualidad":  "commercial aviation",
   "Aeropuertos": "airport terminal",
-  "Turismo": "travel destination",
-  "Análisis": "aviation business",
-  "Entrevista": "aviation industry",
-  "Actualidad": "commercial aviation",
+  "Business":    "aviation business finance",
+  "Comercial":   "airline aircraft",
+  "Industria":   "aircraft manufacturing industry",
+  "Turismo":     "travel destination",
 };
 
 async function autoPhotoForArticle(env, category, title) {
