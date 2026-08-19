@@ -1301,6 +1301,44 @@ function parseDateSafe(s) {
   return isNaN(t) ? null : new Date(t);
 }
 
+
+/* Cuando el feed sólo trae un teaser, vamos a la nota original y
+   extraemos el texto para tener material real con el que trabajar. */
+async function fetchSourceText(url) {
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "ReporteAereoBot/1.0 (+https://reporteaereo.com)",
+        Accept: "text/html,application/xhtml+xml",
+      },
+      cf: { cacheTtl: 600 },
+    });
+    if (!res.ok) return "";
+    const html = await res.text();
+
+    /* preferimos la descripción declarada por el propio sitio */
+    const og =
+      (html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i) || [])[1] ||
+      (html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i) || [])[1] ||
+      "";
+
+    /* y sumamos los primeros párrafos del cuerpo */
+    let body = html;
+    const artMatch = body.match(/<article[\s\S]*?<\/article>/i);
+    if (artMatch) body = artMatch[0];
+
+    const paras = (body.match(/<p[^>]*>[\s\S]*?<\/p>/gi) || [])
+      .map((p) => stripTags(p))
+      .filter((t) => t.length > 60)
+      .slice(0, 6);
+
+    const text = [decodeEntities(og), paras.join(" ")].join(" ").replace(/\s+/g, " ").trim();
+    return text.slice(0, 3500);
+  } catch (_) {
+    return "";
+  }
+}
+
 /* ---------------- redacción con IA ---------------- */
 
 const BOT_SYSTEM_PROMPT = [
@@ -1349,29 +1387,43 @@ async function runAI(env, messages) {
 }
 
 async function draftFromItem(env, item, feed) {
-  const material = [
+  /* si el feed sólo trae un teaser, leemos la nota original */
+  let material = item.desc || "";
+  if (material.length < 400) {
+    const full = await fetchSourceText(item.link);
+    if (full.length > material.length) material = full;
+  }
+
+  if (material.length < 200) {
+    return { skip: "material insuficiente (" + material.length + " car.)" };
+  }
+
+  const prompt = [
     "TITULO ORIGINAL: " + item.title,
     "FUENTE: " + feed.name,
-    "RESUMEN DE LA FUENTE: " + (item.desc || "(sin resumen)"),
+    "MATERIAL DE LA FUENTE:\n" + material,
   ].join("\n\n");
-
-  if ((item.desc || "").length < 120) return null; // material insuficiente
 
   const text = await runAI(env, [
     { role: "system", content: BOT_SYSTEM_PROMPT },
-    { role: "user", content: material },
+    { role: "user", content: prompt },
   ]);
 
-  if (!text || /INSUFICIENTE/i.test(text)) return null;
+  if (!text) return { skip: "la IA no devolvió respuesta" };
+  if (/INSUFICIENTE/i.test(text)) return { skip: "la IA marcó el material como insuficiente" };
 
   const data = extractJson(text);
-  if (!data || !data.titulo || !data.cuerpo) return null;
+  if (!data || !data.titulo || !data.cuerpo) {
+    return { skip: "respuesta de la IA sin formato válido" };
+  }
 
   const titulo = String(data.titulo).trim().slice(0, 140);
   const bajada = String(data.bajada || "").trim().slice(0, 220);
   let cuerpo = String(data.cuerpo).trim();
 
-  if (titulo.length < 15 || cuerpo.length < 200) return null;
+  if (titulo.length < 15 || cuerpo.length < 200) {
+    return { skip: "texto demasiado corto (" + titulo.length + "/" + cuerpo.length + ")" };
+  }
 
   /* pie de atribución obligatorio */
   cuerpo += "\n\nCon información de " + feed.name + ". Fuente original: " + item.link;
@@ -1381,8 +1433,18 @@ async function draftFromItem(env, item, feed) {
 
 /* ---------------- ingesta ---------------- */
 
+
+function summarizeReasons(reasons) {
+  const counts = {};
+  for (const r of reasons) counts[r] = (counts[r] || 0) + 1;
+  return Object.keys(counts)
+    .map((k) => k + " x" + counts[k])
+    .join(" | ")
+    .slice(0, 400);
+}
+
 async function ingestFeed(env, feed) {
-  const stat = { feed: feed.name, seen: 0, created: 0, skipped: 0, error: null };
+  const stat = { feed: feed.name, seen: 0, created: 0, skipped: 0, error: null, reasons: [] };
 
   let xml;
   try {
@@ -1419,15 +1481,22 @@ async function ingestFeed(env, feed) {
     const dup = await env.DB.prepare("SELECT id FROM articles WHERE source_guid = ?")
       .bind(item.guid)
       .first();
-    if (dup) { stat.skipped++; continue; }
+    if (dup) { stat.skipped++; continue; }  /* ya procesado */
 
     let draft = null;
     try {
       draft = await draftFromItem(env, item, feed);
     } catch (e) {
-      stat.error = String((e && e.message) || e);
+      const msg = String((e && e.message) || e);
+      stat.reasons.push("error IA: " + msg);
+      stat.skipped++;
+      continue;
     }
-    if (!draft) { stat.skipped++; continue; }
+    if (!draft || draft.skip) {
+      stat.reasons.push(draft && draft.skip ? draft.skip : "descartado");
+      stat.skipped++;
+      continue;
+    }
 
     const now = new Date().toISOString();
     const base = slugify(draft.titulo) || "nota";
@@ -1476,7 +1545,12 @@ async function ingestFeed(env, feed) {
   await env.DB.prepare(
     "INSERT INTO bot_log (feed_name, items_seen, items_created, detail) VALUES (?, ?, ?, ?)"
   )
-    .bind(feed.name, stat.seen, stat.created, stat.error || (stat.skipped + " omitidos"))
+    .bind(
+      feed.name,
+      stat.seen,
+      stat.created,
+      stat.error || (stat.skipped + " omitidos" + (stat.reasons.length ? ": " + summarizeReasons(stat.reasons) : ""))
+    )
     .run();
 
   return stat;

@@ -1815,7 +1815,14 @@ code {
         if (!res.ok) { setMsg(msg, data.error || "Error al correr el bot", true); return; }
         var total = (data.stats || []).reduce(function (n, s) { return n + s.created; }, 0);
         var detalle = (data.stats || []).map(function (s) {
-          return s.feed + ": " + s.created + " nueva(s)" + (s.error ? " — " + s.error : "");
+          var linea = s.feed + ": " + s.created + " nueva(s) de " + s.seen + " revisadas";
+          if (s.error) linea += " — " + s.error;
+          else if (s.reasons && s.reasons.length) {
+            var counts = {};
+            s.reasons.forEach(function (r) { counts[r] = (counts[r] || 0) + 1; });
+            linea += " (" + Object.keys(counts).map(function (k) { return k + " x" + counts[k]; }).join(", ") + ")";
+          }
+          return linea;
         }).join(" · ");
         setMsg(msg, total + " nota(s) generada(s). " + detalle, false);
         loadDrafts();
