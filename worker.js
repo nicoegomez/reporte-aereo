@@ -1214,9 +1214,428 @@ async function handleImportDoc(request, env) {
   return jsonResponse({ ok: true, title, body });
 }
 
+/* =============================================================
+   BOT DE INGESTA — lee RSS de fuentes reales, redacta un
+   resumen propio con atribución y lo guarda como borrador
+   o publicado según la confianza de la fuente.
+
+   Regla dura: el modelo sólo puede usar hechos presentes en
+   el material de origen. No inventa datos.
+   ============================================================= */
+
+const BOT_AUTHOR = "Redacción Reporte Aéreo";
+const BOT_MAX_ITEMS_PER_FEED = 3;
+const BOT_MAX_AGE_HOURS = 48;
+
+function decodeEntities(s) {
+  return String(s || "")
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?39;|&apos;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&#(\d+);/g, function (_, d) { return String.fromCharCode(parseInt(d, 10)); })
+    .replace(/&amp;/g, "&");
+}
+
+function stripTags(s) {
+  return decodeEntities(String(s || "").replace(/<[^>]*>/g, " "))
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function pickTag(xml, tag) {
+  const m = xml.match(new RegExp("<" + tag + "(?:\\s[^>]*)?>([\\s\\S]*?)<\\/" + tag + ">", "i"));
+  return m ? decodeEntities(m[1]).trim() : "";
+}
+
+function pickAttr(xml, tag, attr) {
+  const m = xml.match(new RegExp("<" + tag + "[^>]*\\b" + attr + "=[\"']([^\"']+)[\"'][^>]*>", "i"));
+  return m ? decodeEntities(m[1]).trim() : "";
+}
+
+/* Parser de RSS 2.0 y Atom sin DOMParser (no existe en Workers) */
+function parseFeed(xml) {
+  const items = [];
+  const isAtom = /<feed[\s>]/i.test(xml) && /<entry[\s>]/i.test(xml);
+  const blocks = isAtom
+    ? xml.match(/<entry[\s\S]*?<\/entry>/gi) || []
+    : xml.match(/<item[\s\S]*?<\/item>/gi) || [];
+
+  for (const raw of blocks) {
+    const title = stripTags(pickTag(raw, "title"));
+    let link = pickTag(raw, "link");
+    if (isAtom && !link) link = pickAttr(raw, "link", "href");
+    if (!link) link = pickTag(raw, "guid");
+
+    const guid = pickTag(raw, "guid") || pickTag(raw, "id") || link;
+    const desc = stripTags(
+      pickTag(raw, "content:encoded") ||
+      pickTag(raw, "description") ||
+      pickTag(raw, "summary") ||
+      pickTag(raw, "content")
+    );
+    const dateRaw =
+      pickTag(raw, "pubDate") || pickTag(raw, "published") || pickTag(raw, "updated") || "";
+
+    let image =
+      pickAttr(raw, "media:content", "url") ||
+      pickAttr(raw, "media:thumbnail", "url") ||
+      pickAttr(raw, "enclosure", "url") ||
+      "";
+    if (!image) {
+      const inline = raw.match(/<img[^>]+src=["']([^"']+)["']/i);
+      if (inline) image = inline[1];
+    }
+
+    if (title && link) {
+      items.push({ title, link: link.trim(), guid: (guid || link).trim(), desc, dateRaw, image });
+    }
+  }
+  return items;
+}
+
+function parseDateSafe(s) {
+  const t = Date.parse(s);
+  return isNaN(t) ? null : new Date(t);
+}
+
+/* ---------------- redacción con IA ---------------- */
+
+const BOT_SYSTEM_PROMPT = [
+  "Sos redactor de Reporte Aéreo, un medio argentino de aviación comercial y turismo.",
+  "Reescribís material de fuentes en una nota breve, en español rioplatense, con tono sobrio y periodístico.",
+  "REGLAS ESTRICTAS:",
+  "1. Usá ÚNICAMENTE hechos presentes en el material provisto. No agregues cifras, fechas, nombres, rutas ni declaraciones que no estén.",
+  "2. Si el material es demasiado escaso para una nota, respondé exactamente: INSUFICIENTE",
+  "3. No copies frases textuales largas: reescribí con tus palabras.",
+  "4. No opines ni especules. No uses adjetivos promocionales.",
+  "5. Nunca inventes citas.",
+  "Devolvé SOLO un JSON válido con este formato, sin texto adicional:",
+  '{"titulo":"...","bajada":"...","cuerpo":"..."}',
+  "El titulo: máximo 90 caracteres, informativo, sin signos de exclamación.",
+  "La bajada: una oración de 140 a 200 caracteres que resuma el hecho.",
+  "El cuerpo: 2 a 4 párrafos separados por una línea en blanco. No incluyas el titulo dentro del cuerpo.",
+].join("\n");
+
+function extractJson(text) {
+  if (!text) return null;
+  const cleaned = String(text).replace(/```json/gi, "").replace(/```/g, "").trim();
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) return null;
+  try {
+    return JSON.parse(cleaned.slice(start, end + 1));
+  } catch (_) {
+    return null;
+  }
+}
+
+async function runAI(env, messages) {
+  const models = ["@cf/meta/llama-3.3-70b-instruct-fp8-fast", "@cf/meta/llama-3.1-8b-instruct"];
+  let lastErr = null;
+  for (const model of models) {
+    try {
+      const res = await env.AI.run(model, { messages, max_tokens: 900, temperature: 0.2 });
+      const text = res && (res.response || res.result || res.output_text);
+      if (text) return text;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  if (lastErr) throw lastErr;
+  return null;
+}
+
+async function draftFromItem(env, item, feed) {
+  const material = [
+    "TITULO ORIGINAL: " + item.title,
+    "FUENTE: " + feed.name,
+    "RESUMEN DE LA FUENTE: " + (item.desc || "(sin resumen)"),
+  ].join("\n\n");
+
+  if ((item.desc || "").length < 120) return null; // material insuficiente
+
+  const text = await runAI(env, [
+    { role: "system", content: BOT_SYSTEM_PROMPT },
+    { role: "user", content: material },
+  ]);
+
+  if (!text || /INSUFICIENTE/i.test(text)) return null;
+
+  const data = extractJson(text);
+  if (!data || !data.titulo || !data.cuerpo) return null;
+
+  const titulo = String(data.titulo).trim().slice(0, 140);
+  const bajada = String(data.bajada || "").trim().slice(0, 220);
+  let cuerpo = String(data.cuerpo).trim();
+
+  if (titulo.length < 15 || cuerpo.length < 200) return null;
+
+  /* pie de atribución obligatorio */
+  cuerpo += "\n\nCon información de " + feed.name + ". Fuente original: " + item.link;
+
+  return { titulo, bajada, cuerpo };
+}
+
+/* ---------------- ingesta ---------------- */
+
+async function ingestFeed(env, feed) {
+  const stat = { feed: feed.name, seen: 0, created: 0, skipped: 0, error: null };
+
+  let xml;
+  try {
+    const res = await fetch(feed.url, {
+      headers: {
+        "User-Agent": "ReporteAereoBot/1.0 (+https://reporteaereo.com)",
+        Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+      },
+      cf: { cacheTtl: 300 },
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    xml = await res.text();
+  } catch (e) {
+    stat.error = String((e && e.message) || e);
+    await env.DB.prepare("UPDATE feeds SET last_checked = ?, last_error = ? WHERE id = ?")
+      .bind(new Date().toISOString(), stat.error, feed.id)
+      .run();
+    return stat;
+  }
+
+  const items = parseFeed(xml);
+  stat.seen = items.length;
+
+  const cutoff = Date.now() - BOT_MAX_AGE_HOURS * 3600 * 1000;
+  let created = 0;
+
+  for (const item of items) {
+    if (created >= BOT_MAX_ITEMS_PER_FEED) break;
+
+    const d = parseDateSafe(item.dateRaw);
+    if (d && d.getTime() < cutoff) continue;
+
+    /* deduplicación por guid */
+    const dup = await env.DB.prepare("SELECT id FROM articles WHERE source_guid = ?")
+      .bind(item.guid)
+      .first();
+    if (dup) { stat.skipped++; continue; }
+
+    let draft = null;
+    try {
+      draft = await draftFromItem(env, item, feed);
+    } catch (e) {
+      stat.error = String((e && e.message) || e);
+    }
+    if (!draft) { stat.skipped++; continue; }
+
+    const now = new Date().toISOString();
+    const base = slugify(draft.titulo) || "nota";
+    const slug = base + "-" + now.slice(0, 10) + "-" + Math.random().toString(36).slice(2, 6);
+
+    /* fuentes oficiales publican directo; medios quedan en borrador */
+    const status = feed.trust === "official" ? "published" : "draft";
+
+    let cover = item.image || null;
+    if (!cover) cover = await autoPhotoForArticle(env, feed.category, draft.titulo);
+
+    const maxOrder = await env.DB.prepare("SELECT MAX(sort_order) as m FROM articles").first();
+    const sortOrder = (maxOrder && maxOrder.m ? maxOrder.m : 0) + 1;
+
+    const ins = await env.DB.prepare(
+      `INSERT INTO articles
+         (slug, title, dek, category, author, body, cover_image_url, featured, sort_order,
+          status, created_at, updated_at, created_by, updated_by,
+          source_url, source_name, source_guid, is_auto)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, 'bot', 'bot', ?, ?, ?, 1)`
+    )
+      .bind(
+        slug, draft.titulo, draft.bajada, feed.category, BOT_AUTHOR, draft.cuerpo,
+        cover, sortOrder, status, now, now,
+        item.link, feed.name, item.guid
+      )
+      .run();
+
+    /* sólo se escribe el HTML si sale publicado */
+    if (status === "published") {
+      const article = await env.DB.prepare("SELECT * FROM articles WHERE id = ?")
+        .bind(ins.meta.last_row_id)
+        .first();
+      await regenerateArticleFile(env, article);
+    }
+
+    created++;
+  }
+
+  stat.created = created;
+
+  await env.DB.prepare("UPDATE feeds SET last_checked = ?, last_error = ? WHERE id = ?")
+    .bind(new Date().toISOString(), stat.error, feed.id)
+    .run();
+
+  await env.DB.prepare(
+    "INSERT INTO bot_log (feed_name, items_seen, items_created, detail) VALUES (?, ?, ?, ?)"
+  )
+    .bind(feed.name, stat.seen, stat.created, stat.error || (stat.skipped + " omitidos"))
+    .run();
+
+  return stat;
+}
+
+async function runBot(env) {
+  const { results: feeds } = await env.DB.prepare(
+    "SELECT * FROM feeds WHERE active = 1 ORDER BY id"
+  ).all();
+
+  const stats = [];
+  let anyPublished = false;
+
+  for (const feed of feeds) {
+    const s = await ingestFeed(env, feed);
+    stats.push(s);
+    if (s.created > 0 && feed.trust === "official") anyPublished = true;
+  }
+
+  if (anyPublished) await regenerateArticlesJson(env);
+
+  return stats;
+}
+
+/* ---------------- endpoints del bot y de fuentes ---------------- */
+
+async function handleListFeeds(request, env) {
+  const session = await requireSession(request, env);
+  if (!session) return jsonResponse({ error: "No autenticado" }, 401);
+  const { results } = await env.DB.prepare("SELECT * FROM feeds ORDER BY name").all();
+  return jsonResponse({ feeds: results });
+}
+
+async function handleTestFeed(request, env) {
+  const session = await requireSession(request, env);
+  if (!session) return jsonResponse({ error: "No autenticado" }, 401);
+
+  const { url } = await request.json();
+  if (!url) return jsonResponse({ error: "Falta la URL" }, 400);
+
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "ReporteAereoBot/1.0 (+https://reporteaereo.com)",
+        Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+      },
+    });
+    if (!res.ok) return jsonResponse({ ok: false, error: "El servidor respondió " + res.status }, 200);
+
+    const xml = await res.text();
+    const items = parseFeed(xml);
+    if (!items.length) {
+      return jsonResponse({ ok: false, error: "La URL responde pero no contiene items RSS/Atom válidos." }, 200);
+    }
+    const feedTitle = stripTags(pickTag(xml.slice(0, 4000), "title"));
+    return jsonResponse({
+      ok: true,
+      feedTitle,
+      count: items.length,
+      sample: items.slice(0, 3).map((i) => ({ title: i.title, link: i.link, date: i.dateRaw })),
+    });
+  } catch (e) {
+    return jsonResponse({ ok: false, error: String((e && e.message) || e) }, 200);
+  }
+}
+
+async function handleCreateFeed(request, env) {
+  const session = await requireSession(request, env);
+  if (!session) return jsonResponse({ error: "No autenticado" }, 401);
+
+  const { name, url, category, trust } = await request.json();
+  if (!name || !url) return jsonResponse({ error: "Faltan nombre o URL" }, 400);
+
+  try {
+    await env.DB.prepare(
+      "INSERT INTO feeds (name, url, category, trust, active) VALUES (?, ?, ?, ?, 1)"
+    )
+      .bind(name.trim(), url.trim(), category || "Actualidad", trust === "official" ? "official" : "media")
+      .run();
+  } catch (e) {
+    if (/UNIQUE/i.test(String(e))) return jsonResponse({ error: "Esa URL ya está cargada" }, 409);
+    throw e;
+  }
+  return jsonResponse({ ok: true });
+}
+
+async function handleUpdateFeed(request, env, id) {
+  const session = await requireSession(request, env);
+  if (!session) return jsonResponse({ error: "No autenticado" }, 401);
+
+  const { name, category, trust, active } = await request.json();
+  await env.DB.prepare(
+    "UPDATE feeds SET name = COALESCE(?, name), category = COALESCE(?, category), trust = COALESCE(?, trust), active = COALESCE(?, active) WHERE id = ?"
+  )
+    .bind(
+      name || null,
+      category || null,
+      trust || null,
+      typeof active === "boolean" ? (active ? 1 : 0) : null,
+      id
+    )
+    .run();
+  return jsonResponse({ ok: true });
+}
+
+async function handleDeleteFeed(request, env, id) {
+  const session = await requireSession(request, env);
+  if (!session) return jsonResponse({ error: "No autenticado" }, 401);
+  await env.DB.prepare("DELETE FROM feeds WHERE id = ?").bind(id).run();
+  return jsonResponse({ ok: true });
+}
+
+async function handleRunBot(request, env) {
+  const session = await requireSession(request, env);
+  if (!session) return jsonResponse({ error: "No autenticado" }, 401);
+  const stats = await runBot(env);
+  return jsonResponse({ ok: true, stats });
+}
+
+async function handleBotLog(request, env) {
+  const session = await requireSession(request, env);
+  if (!session) return jsonResponse({ error: "No autenticado" }, 401);
+  const { results } = await env.DB.prepare(
+    "SELECT * FROM bot_log ORDER BY id DESC LIMIT 40"
+  ).all();
+  return jsonResponse({ log: results });
+}
+
+/* aprobar un borrador -> lo publica */
+async function handleApproveArticle(request, env, id) {
+  const session = await requireSession(request, env);
+  if (!session) return jsonResponse({ error: "No autenticado" }, 401);
+
+  const article = await env.DB.prepare("SELECT * FROM articles WHERE id = ?").bind(id).first();
+  if (!article) return jsonResponse({ error: "No encontrada" }, 404);
+
+  await env.DB.prepare(
+    "UPDATE articles SET status = 'published', updated_at = ?, updated_by = ? WHERE id = ?"
+  )
+    .bind(new Date().toISOString(), session.u, id)
+    .run();
+
+  const fresh = await env.DB.prepare("SELECT * FROM articles WHERE id = ?").bind(id).first();
+  await regenerateArticleFile(env, fresh);
+  await regenerateArticlesJson(env);
+
+  return jsonResponse({ ok: true, url: "/notas/" + fresh.slug + ".html" });
+}
+
 /* ---------------- router ---------------- */
 
 export default {
+  /* disparador programado: corre el bot solo */
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(
+      runBot(env).catch((e) => console.error("[bot]", e))
+    );
+  },
+
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
@@ -1252,6 +1671,21 @@ export default {
       if (singleMatch && request.method === "GET") return await handleGetArticle(request, env, singleMatch[1]);
       if (singleMatch && request.method === "PUT") return await handleUpdateArticle(request, env, singleMatch[1]);
       if (singleMatch && request.method === "DELETE") return await handleDeleteArticle(request, env, singleMatch[1]);
+
+      /* --- bot y fuentes --- */
+      if (path === "/api/feeds" && request.method === "GET") return await handleListFeeds(request, env);
+      if (path === "/api/feeds" && request.method === "POST") return await handleCreateFeed(request, env);
+      if (path === "/api/feeds/test" && request.method === "POST") return await handleTestFeed(request, env);
+
+      const feedMatch = path.match(/^\/api\/feeds\/(\d+)$/);
+      if (feedMatch && request.method === "PUT") return await handleUpdateFeed(request, env, feedMatch[1]);
+      if (feedMatch && request.method === "DELETE") return await handleDeleteFeed(request, env, feedMatch[1]);
+
+      if (path === "/api/bot/run" && request.method === "POST") return await handleRunBot(request, env);
+      if (path === "/api/bot/log" && request.method === "GET") return await handleBotLog(request, env);
+
+      const approveMatch = path.match(/^\/api\/articles\/(\d+)\/approve$/);
+      if (approveMatch && request.method === "POST") return await handleApproveArticle(request, env, approveMatch[1]);
 
       const moveMatch = path.match(/^\/api\/articles\/(\d+)\/move$/);
       if (moveMatch && request.method === "POST") return await handleMoveArticle(request, env, moveMatch[1]);

@@ -695,6 +695,25 @@ code {
         Notas publicadas
         <span class="tab-count" id="countArticles"></span>
       </button>
+      <button class="tab-btn" data-tab="drafts">
+        <svg class="ico" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M3 2h7l3 3v9H3V2z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+          <path d="M9.5 2v3.5H13" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+        </svg>
+        Borradores del bot
+        <span class="tab-count" id="countDrafts"></span>
+      </button>
+
+      <p class="cms-side-label" style="margin-top: var(--space-8);">Automatización</p>
+      <button class="tab-btn" data-tab="feeds">
+        <svg class="ico" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <circle cx="3.5" cy="12.5" r="1.4" fill="currentColor"/>
+          <path d="M2.5 8.2a5.3 5.3 0 015.3 5.3M2.5 4a9.5 9.5 0 019.5 9.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+        Fuentes RSS
+        <span class="tab-count" id="countFeeds"></span>
+      </button>
+
       <p class="cms-side-label" style="margin-top: var(--space-8);">Dirección</p>
       <button class="tab-btn hidden" data-tab="team" id="teamTabBtn">
         <svg class="ico" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -856,6 +875,71 @@ code {
       </section>
 
       <!-- ============ TAB: equipo (sólo dirección) ============ -->
+      <!-- ============ TAB: borradores del bot ============ -->
+      <section class="tab-panel hidden" id="tabDrafts">
+        <div class="cms-head">
+          <div>
+            <h1>Borradores del bot</h1>
+            <p>Notas redactadas automáticamente a partir de fuentes. Revisá antes de publicar.</p>
+          </div>
+          <button class="btn-secondary" id="runBotBtn" type="button">Buscar novedades ahora</button>
+        </div>
+        <div class="msg hidden" id="botMsg"></div>
+        <div class="articles-list" id="draftsList"></div>
+      </section>
+
+      <!-- ============ TAB: fuentes RSS ============ -->
+      <section class="tab-panel hidden" id="tabFeeds">
+        <div class="cms-head">
+          <div>
+            <h1>Fuentes RSS</h1>
+            <p>De acá saca el bot las novedades. Las fuentes oficiales publican solas; los medios quedan como borrador.</p>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-bottom: var(--space-8);">
+          <p class="panel-label">Agregar fuente</p>
+          <div class="field">
+            <label for="fUrl">URL del feed RSS o Atom</label>
+            <input id="fUrl" type="url" placeholder="https://ejemplo.com/feed/">
+            <p class="field-hint">Se prueba antes de guardar. Si el sitio no tiene RSS, no se puede usar.</p>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="fName">Nombre a mostrar</label>
+              <input id="fName" type="text" placeholder="Aviación Online">
+            </div>
+            <div class="field">
+              <label for="fCategory">Categoría</label>
+              <select id="fCategory">
+                <option>Actualidad</option>
+                <option>Aeropuertos</option>
+                <option>Business</option>
+                <option>Comercial</option>
+                <option>Industria</option>
+                <option>Turismo</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="fTrust">Confianza</label>
+              <select id="fTrust">
+                <option value="media">Medio — queda en borrador</option>
+                <option value="official">Fuente oficial — publica sola</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn-secondary" id="testFeedBtn" type="button">Probar feed</button>
+          <button class="btn-submit hidden" id="saveFeedBtn" type="button">Guardar fuente</button>
+          <div class="msg hidden" id="feedTestMsg"></div>
+        </div>
+
+        <p class="panel-label">Fuentes cargadas</p>
+        <div class="articles-list" id="feedsList"></div>
+
+        <p class="panel-label" style="margin-top: var(--space-8);">Últimas corridas del bot</p>
+        <div id="botLog" class="field-hint"></div>
+      </section>
+
       <section class="tab-panel hidden" id="tabTeam">
         <div class="cms-head">
           <div>
@@ -1130,7 +1214,7 @@ code {
   });
 
   /* ---------- navegación ---------- */
-  var tabs = { new: $("tabNew"), list: $("tabList"), team: $("tabTeam"), profile: $("tabProfile") };
+  var tabs = { new: $("tabNew"), list: $("tabList"), drafts: $("tabDrafts"), feeds: $("tabFeeds"), team: $("tabTeam"), profile: $("tabProfile") };
   document.querySelectorAll(".tab-btn").forEach(function (btn) {
     btn.addEventListener("click", function () {
       document.querySelectorAll(".tab-btn").forEach(function (b) { b.classList.remove("active"); });
@@ -1139,6 +1223,8 @@ code {
       show(tabs[btn.dataset.tab]);
       if (btn.dataset.tab === "list") loadArticles();
       if (btn.dataset.tab === "team") loadUsers();
+      if (btn.dataset.tab === "drafts") loadDrafts();
+      if (btn.dataset.tab === "feeds") { loadFeeds(); loadBotLog(); }
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
   });
@@ -1627,7 +1713,254 @@ code {
     } catch (err) { setMsg(msg, "Error de conexión", true); }
   });
 
+
+  /* ============ BOT: borradores y fuentes ============ */
+
+  function fmtDate(iso) {
+    if (!iso) return "";
+    try { return new Date(iso).toLocaleDateString("es-AR", { day: "numeric", month: "short" }); }
+    catch (_) { return ""; }
+  }
+
+  async function loadDrafts() {
+    var box = $("draftsList");
+    if (!box) return;
+    try {
+      var res = await fetch("/api/articles");
+      var data = await res.json();
+      if (!res.ok) return;
+      var drafts = (data.articles || []).filter(function (a) { return a.status === "draft"; });
+
+      var c = $("countDrafts");
+      if (c) c.textContent = drafts.length ? drafts.length : "";
+
+      if (!drafts.length) {
+        box.innerHTML = '<p class="field-hint">No hay borradores pendientes. Cuando el bot encuentre novedades, van a aparecer acá.</p>';
+        return;
+      }
+
+      box.innerHTML = drafts.map(function (a) {
+        return '<div class="article-row" data-id="' + a.id + '">' +
+          (a.cover_image_url ? '<img src="' + a.cover_image_url + '" alt="">' : '<div class="thumb-empty"></div>') +
+          '<div class="article-row-main">' +
+            '<div class="t">' + a.title + '</div>' +
+            '<div class="m"><span class="cat-chip">' + a.category + '</span><span>' + (a.source_name || 'bot') + '</span><span>·</span><span>' + fmtDate(a.created_at) + '</span></div>' +
+          '</div>' +
+          '<div class="article-row-actions">' +
+            '<button data-action="review">Revisar</button>' +
+            '<button data-action="approve">Publicar</button>' +
+            '<button data-action="discard">Descartar</button>' +
+          '</div>' +
+        '</div>';
+      }).join("");
+    } catch (_) {}
+  }
+
+  var draftsBox = $("draftsList");
+  if (draftsBox) {
+    draftsBox.addEventListener("click", async function (e) {
+      var btn = e.target.closest("button[data-action]");
+      if (!btn) return;
+      var row = btn.closest(".article-row");
+      var id = row.dataset.id;
+      var action = btn.dataset.action;
+
+      if (action === "approve") {
+        btn.disabled = true;
+        btn.textContent = "Publicando…";
+        var r = await fetch("/api/articles/" + id + "/approve", { method: "POST" });
+        if (r.ok) { loadDrafts(); loadArticles(); }
+        else { btn.disabled = false; btn.textContent = "Publicar"; }
+        return;
+      }
+
+      if (action === "discard") {
+        if (!confirm("¿Descartar este borrador?")) return;
+        await fetch("/api/articles/" + id, { method: "DELETE" });
+        loadDrafts();
+        return;
+      }
+
+      if (action === "review") {
+        var res = await fetch("/api/articles/" + id);
+        var data = await res.json();
+        if (!res.ok) return;
+        var a = data.article;
+        document.querySelector('.tab-btn[data-tab="new"]').click();
+        $("editId").value = a.id;
+        $("pTitle").value = a.title;
+        $("pCategory").value = a.category;
+        $("pAuthor").value = a.author;
+        $("pDek").value = a.dek || "";
+        $("pBody").value = a.body;
+        if ($("pFeatured")) $("pFeatured").checked = !!a.featured;
+        $("pCoverUrl").value = a.cover_image_url || "";
+        var img = $("coverPreview");
+        if (img && a.cover_image_url) { img.src = a.cover_image_url; img.classList.add("show"); }
+        if ($("formTitle")) $("formTitle").textContent = "Revisar borrador";
+      }
+    });
+  }
+
+  var runBotBtn = $("runBotBtn");
+  if (runBotBtn) {
+    runBotBtn.addEventListener("click", async function () {
+      var msg = $("botMsg");
+      runBotBtn.disabled = true;
+      runBotBtn.textContent = "Buscando…";
+      setMsg(msg, "Revisando las fuentes. Puede tardar un minuto.", false);
+      try {
+        var res = await fetch("/api/bot/run", { method: "POST" });
+        var data = await res.json();
+        if (!res.ok) { setMsg(msg, data.error || "Error al correr el bot", true); return; }
+        var total = (data.stats || []).reduce(function (n, s) { return n + s.created; }, 0);
+        var detalle = (data.stats || []).map(function (s) {
+          return s.feed + ": " + s.created + " nueva(s)" + (s.error ? " — " + s.error : "");
+        }).join(" · ");
+        setMsg(msg, total + " nota(s) generada(s). " + detalle, false);
+        loadDrafts();
+        loadBotLog();
+      } catch (err) {
+        setMsg(msg, "Error de conexión", true);
+      } finally {
+        runBotBtn.disabled = false;
+        runBotBtn.textContent = "Buscar novedades ahora";
+      }
+    });
+  }
+
+  async function loadFeeds() {
+    var box = $("feedsList");
+    if (!box) return;
+    try {
+      var res = await fetch("/api/feeds");
+      var data = await res.json();
+      if (!res.ok) return;
+      var feeds = data.feeds || [];
+
+      var c = $("countFeeds");
+      if (c) c.textContent = feeds.length ? feeds.length : "";
+
+      if (!feeds.length) {
+        box.innerHTML = '<p class="field-hint">Todavía no hay fuentes cargadas. Agregá una arriba para que el bot empiece a trabajar.</p>';
+        return;
+      }
+
+      box.innerHTML = feeds.map(function (f) {
+        var estado = f.last_error
+          ? '<span style="color:var(--accent-dark)">error: ' + f.last_error + '</span>'
+          : (f.last_checked ? 'último chequeo ' + fmtDate(f.last_checked) : 'sin chequear');
+        return '<div class="article-row" data-id="' + f.id + '">' +
+          '<div class="article-row-main">' +
+            '<div class="t">' + f.name + (f.active ? '' : ' (pausada)') +
+              (f.trust === 'official' ? ' <span class="badge-featured">Oficial</span>' : '') + '</div>' +
+            '<div class="m"><span class="cat-chip">' + f.category + '</span><span>' + estado + '</span></div>' +
+          '</div>' +
+          '<div class="article-row-actions">' +
+            '<button data-action="toggle">' + (f.active ? 'Pausar' : 'Activar') + '</button>' +
+            '<button data-action="delete">Quitar</button>' +
+          '</div>' +
+        '</div>';
+      }).join("");
+    } catch (_) {}
+  }
+
+  var feedsBox = $("feedsList");
+  if (feedsBox) {
+    feedsBox.addEventListener("click", async function (e) {
+      var btn = e.target.closest("button[data-action]");
+      if (!btn) return;
+      var id = btn.closest(".article-row").dataset.id;
+      if (btn.dataset.action === "delete") {
+        if (!confirm("¿Quitar esta fuente?")) return;
+        await fetch("/api/feeds/" + id, { method: "DELETE" });
+      } else {
+        var pausar = btn.textContent.trim() === "Pausar";
+        await fetch("/api/feeds/" + id, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ active: !pausar }),
+        });
+      }
+      loadFeeds();
+    });
+  }
+
+  var testFeedBtn = $("testFeedBtn");
+  if (testFeedBtn) {
+    testFeedBtn.addEventListener("click", async function () {
+      var msg = $("feedTestMsg");
+      var url = $("fUrl").value.trim();
+      if (!url) { setMsg(msg, "Pegá la URL del feed", true); return; }
+      testFeedBtn.disabled = true;
+      testFeedBtn.textContent = "Probando…";
+      hide($("saveFeedBtn"));
+      try {
+        var res = await fetch("/api/feeds/test", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: url }),
+        });
+        var data = await res.json();
+        if (!data.ok) { setMsg(msg, "No sirve: " + (data.error || "feed inválido"), true); return; }
+        if (!$("fName").value.trim() && data.feedTitle) $("fName").value = data.feedTitle;
+        var titulos = data.sample.map(function (s) { return "· " + s.title; }).join("\n");
+        setMsg(msg, "Feed válido — " + data.count + " items. Últimos:\n" + titulos, false);
+        show($("saveFeedBtn"));
+      } catch (err) {
+        setMsg(msg, "Error de conexión", true);
+      } finally {
+        testFeedBtn.disabled = false;
+        testFeedBtn.textContent = "Probar feed";
+      }
+    });
+  }
+
+  var saveFeedBtn = $("saveFeedBtn");
+  if (saveFeedBtn) {
+    saveFeedBtn.addEventListener("click", async function () {
+      var msg = $("feedTestMsg");
+      saveFeedBtn.disabled = true;
+      try {
+        var res = await fetch("/api/feeds", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: $("fName").value.trim(),
+            url: $("fUrl").value.trim(),
+            category: $("fCategory").value,
+            trust: $("fTrust").value,
+          }),
+        });
+        var data = await res.json();
+        if (!res.ok) { setMsg(msg, data.error || "No se pudo guardar", true); return; }
+        setMsg(msg, "Fuente agregada.", false);
+        $("fUrl").value = ""; $("fName").value = "";
+        hide(saveFeedBtn);
+        loadFeeds();
+      } finally {
+        saveFeedBtn.disabled = false;
+      }
+    });
+  }
+
+  async function loadBotLog() {
+    var box = $("botLog");
+    if (!box) return;
+    try {
+      var res = await fetch("/api/bot/log");
+      var data = await res.json();
+      if (!res.ok) return;
+      if (!data.log || !data.log.length) { box.textContent = "El bot todavía no corrió."; return; }
+      box.innerHTML = data.log.slice(0, 12).map(function (l) {
+        return '<div>' + fmtDate(l.ran_at) + ' — <strong>' + l.feed_name + '</strong>: ' +
+               l.items_created + ' de ' + l.items_seen + ' · ' + (l.detail || '') + '</div>';
+      }).join("");
+    } catch (_) {}
+  }
+
   checkSession().then(function (me) {
+    if (me) { loadDrafts(); loadFeeds(); }
     if (me) showPanel(me);
     else { showLogin(); initGoogleLogin(); }
   });
