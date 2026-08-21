@@ -1224,7 +1224,9 @@ async function handleImportDoc(request, env) {
    ============================================================= */
 
 const BOT_AUTHOR = "Redacción Reporte Aéreo";
-const BOT_MAX_ITEMS_PER_FEED = 3;
+/* Bajo a 1 para que 6 fuentes en una sola corrida no choquen contra el
+   límite gratuito de pedidos de red por invocación de Cloudflare Workers. */
+const BOT_MAX_ITEMS_PER_FEED = 1;
 const BOT_MAX_AGE_HOURS = 48;
 
 function decodeEntities(s) {
