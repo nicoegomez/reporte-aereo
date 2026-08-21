@@ -1350,66 +1350,40 @@ const BOT_SYSTEM_PROMPT = [
   "3. No copies frases textuales largas: reescribí con tus palabras.",
   "4. No opines ni especules. No uses adjetivos promocionales.",
   "5. Nunca inventes citas.",
-  "Devolvé SOLO un JSON válido con este formato, sin texto adicional:",
-  '{"titulo":"...","bajada":"...","cuerpo":"..."}',
-  "El titulo: máximo 90 caracteres, informativo, sin signos de exclamación.",
-  "La bajada: una oración de 140 a 200 caracteres que resuma el hecho.",
-  "El cuerpo: 2 a 4 párrafos separados por una línea en blanco. No incluyas el titulo dentro del cuerpo.",
+  "Devolvé la respuesta con este formato EXACTO, en texto plano (NO uses JSON ni bloques de código):",
+  "TITULO: <titulo en una sola linea, maximo 90 caracteres, sin signos de exclamacion>",
+  "BAJADA: <una oracion en una sola linea, 140 a 200 caracteres, que resuma el hecho>",
+  "CUERPO:",
+  "<2 a 4 parrafos separados por una linea en blanco. No repitas el titulo dentro del cuerpo.>",
+  "No agregues nada antes de TITULO ni después del último párrafo del cuerpo.",
 ].join("\n");
 
-/* Los modelos casi siempre devuelven el cuerpo con saltos de línea reales
-   entre párrafos en vez de "\n" escapado, lo que rompe JSON.parse. Esto
-   repara sólo los caracteres de control DENTRO de strings (respeta el resto
-   del documento tal cual). */
-function sanitizeJsonControlChars(s) {
-  let out = "";
-  let inString = false;
-  let escaped = false;
-  for (let i = 0; i < s.length; i++) {
-    const ch = s[i];
-    if (inString) {
-      if (escaped) {
-        out += ch;
-        escaped = false;
-      } else if (ch === "\\") {
-        out += ch;
-        escaped = true;
-      } else if (ch === '"') {
-        out += ch;
-        inString = false;
-      } else if (ch === "\n") {
-        out += "\\n";
-      } else if (ch === "\r") {
-        out += "\\r";
-      } else if (ch === "\t") {
-        out += "\\t";
-      } else {
-        out += ch;
-      }
-    } else {
-      if (ch === '"') inString = true;
-      out += ch;
-    }
-  }
-  return out;
-}
-
-function extractJson(text) {
+/* Formato de texto plano con etiquetas en vez de JSON: no se rompe por
+   saltos de línea dentro del cuerpo ni por comillas sin escapar, y si el
+   modelo corta la respuesta a mitad de camino igual podemos rescatar el
+   título y la bajada (o el cuerpo parcial) en vez de perder todo. */
+function parseDraftResponse(text) {
   if (!text) return null;
-  const cleaned = String(text).replace(/```json/gi, "").replace(/```/g, "").trim();
-  const start = cleaned.indexOf("{");
-  const end = cleaned.lastIndexOf("}");
-  if (start === -1 || end === -1 || end <= start) return null;
-  const slice = cleaned.slice(start, end + 1);
-  try {
-    return JSON.parse(slice);
-  } catch (_) {
-    try {
-      return JSON.parse(sanitizeJsonControlChars(slice));
-    } catch (_e) {
-      return null;
-    }
-  }
+  const cleaned = String(text)
+    .replace(/```[a-z]*\n?/gi, "")
+    .replace(/```/g, "")
+    .trim();
+
+  const tituloMatch = cleaned.match(/TITULO:\s*(.+)/i);
+  const bajadaMatch = cleaned.match(/BAJADA:\s*(.+)/i);
+  const cuerpoIdx = cleaned.search(/CUERPO:/i);
+
+  if (!tituloMatch || cuerpoIdx === -1) return null;
+
+  const titulo = tituloMatch[1].trim();
+  const bajada = bajadaMatch ? bajadaMatch[1].trim() : "";
+  const cuerpo = cleaned
+    .slice(cuerpoIdx)
+    .replace(/^CUERPO:\s*/i, "")
+    .trim();
+
+  if (!titulo || !cuerpo) return null;
+  return { titulo, bajada, cuerpo };
 }
 
 async function runAI(env, messages) {
@@ -1417,7 +1391,7 @@ async function runAI(env, messages) {
   let lastErr = null;
   for (const model of models) {
     try {
-      const res = await env.AI.run(model, { messages, max_tokens: 900, temperature: 0.2 });
+      const res = await env.AI.run(model, { messages, max_tokens: 1600, temperature: 0.2 });
       const text = res && (res.response || res.result || res.output_text);
       if (text) return text;
     } catch (e) {
@@ -1454,7 +1428,7 @@ async function draftFromItem(env, item, feed) {
   if (!text) return { skip: "la IA no devolvió respuesta" };
   if (/INSUFICIENTE/i.test(text)) return { skip: "la IA marcó el material como insuficiente" };
 
-  const data = extractJson(text);
+  const data = parseDraftResponse(text);
   if (!data || !data.titulo || !data.cuerpo) {
     return { skip: "respuesta de la IA sin formato válido" };
   }
