@@ -22,5 +22,17 @@
     "url": "notas/flybondi-is-the-new-fail-2026-08-19-x22k.html",
     "image": "https://images.pexels.com/photos/37589299/pexels-photo-37589299.png?auto=compress&cs=tinysrgb&h=650&w=940",
     "featured": true
+  },
+  {
+    "id": 4,
+    "title": "Google compra los datos de Spirit Airlines: la IA del turismo tiene nuevo combustible.",
+    "dek": "La jugada tiene lógica estratégica clara, aunque llega en un momento en que la aerolínea atraviesa serias dificultades financieras.",
+    "category": "Business",
+    "author": "Nicolás E. Gómez",
+    "date": "2026-08-21T18:27:15.193Z",
+    "dateLabel": "21 de agosto de 2026",
+    "url": "notas/google-compra-los-datos-de-spirit-airlines-la-ia-del-turismo-tiene-nuevo-combust-2026-08-21-7b60.html",
+    "image": "https://images.pexels.com/photos/1159343/pexels-photo-1159343.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    "featured": false
   }
 ]
