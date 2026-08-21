@@ -1357,16 +1357,58 @@ const BOT_SYSTEM_PROMPT = [
   "El cuerpo: 2 a 4 párrafos separados por una línea en blanco. No incluyas el titulo dentro del cuerpo.",
 ].join("\n");
 
+/* Los modelos casi siempre devuelven el cuerpo con saltos de línea reales
+   entre párrafos en vez de "\n" escapado, lo que rompe JSON.parse. Esto
+   repara sólo los caracteres de control DENTRO de strings (respeta el resto
+   del documento tal cual). */
+function sanitizeJsonControlChars(s) {
+  let out = "";
+  let inString = false;
+  let escaped = false;
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (inString) {
+      if (escaped) {
+        out += ch;
+        escaped = false;
+      } else if (ch === "\\") {
+        out += ch;
+        escaped = true;
+      } else if (ch === '"') {
+        out += ch;
+        inString = false;
+      } else if (ch === "\n") {
+        out += "\\n";
+      } else if (ch === "\r") {
+        out += "\\r";
+      } else if (ch === "\t") {
+        out += "\\t";
+      } else {
+        out += ch;
+      }
+    } else {
+      if (ch === '"') inString = true;
+      out += ch;
+    }
+  }
+  return out;
+}
+
 function extractJson(text) {
   if (!text) return null;
   const cleaned = String(text).replace(/```json/gi, "").replace(/```/g, "").trim();
   const start = cleaned.indexOf("{");
   const end = cleaned.lastIndexOf("}");
   if (start === -1 || end === -1 || end <= start) return null;
+  const slice = cleaned.slice(start, end + 1);
   try {
-    return JSON.parse(cleaned.slice(start, end + 1));
+    return JSON.parse(slice);
   } catch (_) {
-    return null;
+    try {
+      return JSON.parse(sanitizeJsonControlChars(slice));
+    } catch (_e) {
+      return null;
+    }
   }
 }
 
