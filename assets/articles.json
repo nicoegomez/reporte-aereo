@@ -1,5 +1,17 @@
 [
   {
+    "id": 3,
+    "title": "Argentina cae un 7% en Cabotaje",
+    "dek": "Es necesaria la reconfiguración del mercado",
+    "category": "Comercial",
+    "author": "Nicolás E. Gómez",
+    "date": "2026-08-21T18:23:50.198Z",
+    "dateLabel": "21 de agosto de 2026",
+    "url": "notas/argentina-cae-un-7-en-cabotaje-2026-08-21-vjey.html",
+    "image": "https://images.pexels.com/photos/12969078/pexels-photo-12969078.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    "featured": true
+  },
+  {
     "id": 2,
     "title": "Flybondi is the new fail",
     "dek": "Distintas metodologías, misma final",
