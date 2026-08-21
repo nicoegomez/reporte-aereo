@@ -1475,13 +1475,21 @@ async function ingestFeed(env, feed) {
     if (created >= BOT_MAX_ITEMS_PER_FEED) break;
 
     const d = parseDateSafe(item.dateRaw);
-    if (d && d.getTime() < cutoff) continue;
+    if (d && d.getTime() < cutoff) {
+      stat.reasons.push("muy antigua");
+      stat.skipped++;
+      continue;
+    }
 
     /* deduplicación por guid */
     const dup = await env.DB.prepare("SELECT id FROM articles WHERE source_guid = ?")
       .bind(item.guid)
       .first();
-    if (dup) { stat.skipped++; continue; }  /* ya procesado */
+    if (dup) {
+      stat.reasons.push("ya existe (duplicado)");
+      stat.skipped++;
+      continue;
+    }
 
     let draft = null;
     try {
