@@ -24,6 +24,18 @@
     "featured": true
   },
   {
+    "id": 5,
+    "title": "España acelera en los cielos: los pasajeros internacionales crecieron un 5,8% en julio",
+    "dek": "El país volvió a batir registros en plena temporada alta y consolida su liderazgo como uno de los mercados turísticos más fuertes de Europa.",
+    "category": "Industria",
+    "author": "Nicolás E. Gómez",
+    "date": "2026-08-21T20:32:03.212Z",
+    "dateLabel": "21 de agosto de 2026",
+    "url": "notas/espana-acelera-en-los-cielos-los-pasajeros-internacionales-crecieron-un-58-en-ju-2026-08-21-z4kk.html",
+    "image": "https://images.pexels.com/photos/32227369/pexels-photo-32227369.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    "featured": false
+  },
+  {
     "id": 4,
     "title": "Google compra los datos de Spirit Airlines: la inteligencia artificial del turismo suma un activo clave",
     "dek": "La adquisición del banco de datos de la aerolínea estadounidense refuerza el valor estratégico de la información de los pasajeros y reabre el debate sobre la privacidad en la industria aérea.",
