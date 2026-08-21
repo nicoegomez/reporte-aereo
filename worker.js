@@ -1387,18 +1387,21 @@ function parseDraftResponse(text) {
 }
 
 async function runAI(env, messages) {
-  const models = ["@cf/meta/llama-3.3-70b-instruct-fp8-fast", "@cf/meta/llama-3.1-8b-instruct"];
-  let lastErr = null;
+  /* "-fast" es la variante vigente; la versión sin sufijo del 8b fue dada
+     de baja por Cloudflare el 30/05/2026. */
+  const models = ["@cf/meta/llama-3.3-70b-instruct-fp8-fast", "@cf/meta/llama-3.1-8b-instruct-fast"];
+  const errors = [];
   for (const model of models) {
     try {
       const res = await env.AI.run(model, { messages, max_tokens: 1600, temperature: 0.2 });
       const text = res && (res.response || res.result || res.output_text);
       if (text) return text;
+      errors.push(model + ": respuesta vacía");
     } catch (e) {
-      lastErr = e;
+      errors.push(model + ": " + String((e && e.message) || e));
     }
   }
-  if (lastErr) throw lastErr;
+  if (errors.length) throw new Error(errors.join(" | "));
   return null;
 }
 
