@@ -1671,9 +1671,17 @@ async function handleDeleteFeed(request, env, id) {
   return jsonResponse({ ok: true });
 }
 
-async function handleRunBot(request, env) {
+async function handleRunBot(request, env, ctx) {
   const session = await requireSession(request, env);
   if (!session) return jsonResponse({ error: "No autenticado" }, 401);
+  /* Con varias fuentes, revisar todo (RSS + lectura de la nota original +
+     IA) puede tardar más de lo que un clic puede esperar sin que Cloudflare
+     corte la conexión. Lo largamos en segundo plano y el panel consulta
+     el resultado en /api/bot/log un rato después. */
+  if (ctx && ctx.waitUntil) {
+    ctx.waitUntil(runBot(env).catch((e) => console.error("[bot manual]", e)));
+    return jsonResponse({ ok: true, started: true });
+  }
   const stats = await runBot(env);
   return jsonResponse({ ok: true, stats });
 }
@@ -1763,7 +1771,7 @@ export default {
       if (feedMatch && request.method === "PUT") return await handleUpdateFeed(request, env, feedMatch[1]);
       if (feedMatch && request.method === "DELETE") return await handleDeleteFeed(request, env, feedMatch[1]);
 
-      if (path === "/api/bot/run" && request.method === "POST") return await handleRunBot(request, env);
+      if (path === "/api/bot/run" && request.method === "POST") return await handleRunBot(request, env, ctx);
       if (path === "/api/bot/log" && request.method === "GET") return await handleBotLog(request, env);
 
       const approveMatch = path.match(/^\/api\/articles\/(\d+)\/approve$/);

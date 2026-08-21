@@ -1808,11 +1808,22 @@ code {
       var msg = $("botMsg");
       runBotBtn.disabled = true;
       runBotBtn.textContent = "Buscando…";
-      setMsg(msg, "Revisando las fuentes. Puede tardar un minuto.", false);
+      setMsg(msg, "Se lanzó la búsqueda en segundo plano (con varias fuentes puede tardar uno o dos minutos). Esta pestaña se va a actualizar sola.", false);
       try {
         var res = await fetch("/api/bot/run", { method: "POST" });
         var data = await res.json();
         if (!res.ok) { setMsg(msg, data.error || "Error al correr el bot", true); return; }
+
+        if (data.started) {
+          /* Corre en segundo plano: consultamos el resultado a los 20s. */
+          setTimeout(function () {
+            loadDrafts();
+            loadBotLog();
+            setMsg(msg, "Listo. Revisá el detalle por fuente más abajo o en Borradores del bot.", false);
+          }, 20000);
+          return;
+        }
+
         var total = (data.stats || []).reduce(function (n, s) { return n + s.created; }, 0);
         var detalle = (data.stats || []).map(function (s) {
           var linea = s.feed + ": " + s.created + " nueva(s) de " + s.seen + " revisadas";
