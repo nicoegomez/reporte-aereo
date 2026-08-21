@@ -247,42 +247,113 @@
   }
 
   /* --------------------------------------------------------
-     7b. Últimas notas — fetch assets/articles.json (panel admin)
+     7b. Home dinámica — hero + laterales + secciones por
+         categoría, todo desde assets/articles.json (portada).
+         Las notas se agregan/editan desde el panel; acá sólo
+         se leen. Si una categoría no tiene notas, la sección
+         queda oculta en vez de mostrar contenido inventado.
   -------------------------------------------------------- */
-  function initLatestNotes() {
-    var list = $1("#ultimasNotasList");
-    if (!list) return;
+  var HOME_CATEGORIES = ["Actualidad", "Aeropuertos", "Business", "Comercial", "Industria", "Turismo"];
+
+  function renderHome() {
+    var heroMain = $1("#heroMain");
+    var heroSidebar = $1("#heroSidebar");
+    if (!heroMain) return; /* no estamos en la portada */
 
     fetch("assets/articles.json", { cache: "no-store" })
       .then(function (res) { return res.ok ? res.json() : []; })
       .then(function (items) {
-        if (!items || !items.length) {
-          list.innerHTML = '<p class="latest-notes-empty">Todavía no hay notas publicadas desde el panel.</p>';
-          return;
+        items = Array.isArray(items) ? items : [];
+        var hero = items[0] || null;
+        var rest = hero ? items.slice(1) : items;
+
+        if (hero) {
+          heroMain.innerHTML =
+            '<a href="' + escapeHtml(hero.url) + '" aria-label="Leer nota completa: ' + escapeHtml(hero.title) + '">' +
+              '<div class="hero-image-wrap">' +
+                (hero.image
+                  ? '<img src="' + escapeHtml(hero.image) + '" alt="" loading="eager">'
+                  : '<div class="hero-sky" role="img" aria-label=""></div>') +
+                '<span class="hero-category">' + escapeHtml(hero.category || "Reporte Aéreo") + '</span>' +
+              '</div>' +
+            '</a>' +
+            '<div class="hero-content">' +
+              '<p class="kicker">' + escapeHtml(hero.category || "") + '</p>' +
+              '<h1 class="hero-headline">' + escapeHtml(hero.title) + '</h1>' +
+              (hero.dek ? '<p class="hero-deck">' + escapeHtml(hero.dek) + '</p>' : '') +
+              '<div class="hero-meta">' +
+                '<span class="byline">Por <strong>' + escapeHtml(hero.author || "Redacción Reporte Aéreo") + '</strong></span>' +
+                '<time class="pubdate">' + escapeHtml(hero.dateLabel || "") + '</time>' +
+              '</div>' +
+              '<a href="' + escapeHtml(hero.url) + '" class="read-more">Leer nota completa' +
+                '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+              '</a>' +
+            '</div>';
         }
-        list.innerHTML = items
-          .slice(0, 6)
-          .map(function (item) {
-            var featClass = item.featured ? " is-featured" : "";
-            var thumb = item.image
-              ? '<img class="latest-note-thumb" src="' + escapeHtml(item.image) + '" alt="" loading="lazy">'
-              : "";
+
+        if (heroSidebar) {
+          if (rest.length) {
+            heroSidebar.innerHTML = rest.slice(0, 3).map(function (item, i) {
+              return (
+                '<article class="hero-side-article">' +
+                  '<div class="side-img-wrap">' +
+                    (item.image
+                      ? '<img src="' + escapeHtml(item.image) + '" alt="" loading="lazy">'
+                      : '<div class="side-sky-' + ((i % 3) + 1) + '" role="img" aria-label=""></div>') +
+                  '</div>' +
+                  '<div>' +
+                    '<p class="kicker">' + escapeHtml(item.category || "") + '</p>' +
+                    '<h2><a href="' + escapeHtml(item.url) + '">' + escapeHtml(item.title) + '</a></h2>' +
+                    '<time class="pubdate-sm">' + escapeHtml(item.dateLabel || "") + '</time>' +
+                  '</div>' +
+                '</article>'
+              );
+            }).join('<hr class="side-rule">');
+          } else {
+            heroSidebar.innerHTML = "";
+          }
+        }
+
+        HOME_CATEGORIES.forEach(function (cat) {
+          var slug = cat.toLowerCase();
+          var section = document.getElementById(slug);
+          var grid = document.getElementById("grid-" + slug);
+          if (!section || !grid) return;
+
+          var catItems = items.filter(function (a) {
+            return a.category === cat && (!hero || a.id !== hero.id);
+          });
+
+          if (!catItems.length) {
+            section.hidden = true;
+            return;
+          }
+          section.hidden = false;
+          grid.innerHTML = catItems.slice(0, 4).map(function (item, i) {
+            var big = i === 0 ? " news-card--featured" : "";
             return (
-              '<article class="latest-note-item reveal' + featClass + '">' +
-              thumb +
-              '<div>' +
-              '<p class="kicker">' + escapeHtml(item.category || "") + "</p>" +
-              '<h3><a href="' + escapeHtml(item.url) + '">' + escapeHtml(item.title) + "</a></h3>" +
-              (item.dek ? '<p class="latest-note-dek">' + escapeHtml(item.dek) + "</p>" : "") +
-              '<time class="pubdate-sm">' + escapeHtml(item.dateLabel || "") + "</time>" +
-              "</div>" +
-              "</article>"
+              '<article class="news-card' + big + '">' +
+                '<div class="card-img-wrap">' +
+                  (item.image
+                    ? '<img src="' + escapeHtml(item.image) + '" alt="" loading="lazy">'
+                    : '<div class="card-sky-' + ((i % 4) + 1) + '" role="img" aria-label=""></div>') +
+                  '<span class="card-cat">' + escapeHtml(item.category || "") + '</span>' +
+                '</div>' +
+                '<h3 class="card-title' + (i === 0 ? " card-title--lg" : "") + '">' +
+                  '<a href="' + escapeHtml(item.url) + '">' + escapeHtml(item.title) + '</a>' +
+                '</h3>' +
+                (i === 0 && item.dek ? '<p class="card-excerpt">' + escapeHtml(item.dek) + '</p>' : '') +
+                '<div class="card-meta">' +
+                  '<span class="byline-sm">' + escapeHtml(item.author || "Redacción Reporte Aéreo") + '</span>' +
+                  '<time>' + escapeHtml(item.dateLabel || "") + '</time>' +
+                '</div>' +
+              '</article>'
             );
-          })
-          .join("");
+          }).join("");
+        });
       })
       .catch(function () {
-        list.innerHTML = "";
+        /* Si falla el fetch, queda el texto de espera hardcodeado en el HTML */
       });
   }
 
@@ -424,7 +495,7 @@
     safe(initSmoothAnchors, "initSmoothAnchors");
     safe(initProgressBar,   "initProgressBar");
     safe(initNewsletter,    "initNewsletter");
-    safe(initLatestNotes,   "initLatestNotes");
+    safe(renderHome,        "renderHome");
     safe(initStickyNav,     "initStickyNav");
     safe(initSplitText,     "initSplitText");
 

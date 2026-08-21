@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "id": 2,
+    "title": "Flybondi is the new fail",
+    "dek": "Distintas metodologías, misma final",
+    "category": "Actualidad",
+    "author": "Nicolás E. Gómez",
+    "date": "2026-08-19T14:02:32.984Z",
+    "dateLabel": "19 de agosto de 2026",
+    "url": "notas/flybondi-is-the-new-fail-2026-08-19-x22k.html",
+    "image": "https://images.pexels.com/photos/37589299/pexels-photo-37589299.png?auto=compress&cs=tinysrgb&h=650&w=940",
+    "featured": true
+  }
+]
