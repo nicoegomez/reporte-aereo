@@ -484,6 +484,39 @@
   }
 
   /* --------------------------------------------------------
+     10. Aviso de cookies — banner simple e informativo.
+         No bloquea GTM/GA (Argentina no exige consentimiento
+         previo como el RGPD), pero cumple con el requisito de
+         "avisar sobre el uso de cookies" que piden la mayoría
+         de las redes publicitarias antes de aprobar un sitio.
+  -------------------------------------------------------- */
+  function initCookieBanner() {
+    var KEY = "ra_cookie_ack";
+    try { if (localStorage.getItem(KEY)) return; } catch (e) { return; }
+    if ($1(".cookie-banner")) return;
+
+    var inNota = /\/notas\//.test(location.pathname);
+    var privacyHref = (inNota ? "../" : "") + "privacidad.html";
+
+    var bar = document.createElement("div");
+    bar.className = "cookie-banner";
+    bar.setAttribute("role", "region");
+    bar.setAttribute("aria-label", "Aviso de cookies");
+    bar.innerHTML =
+      '<p>Usamos cookies propias y de terceros (Google Analytics) para medir el uso del sitio y mejorar tu experiencia. Más información en nuestra <a href="' +
+      privacyHref +
+      '">Política de Privacidad</a>.</p>' +
+      '<button type="button">Entendido</button>';
+
+    document.body.appendChild(bar);
+
+    bar.querySelector("button").addEventListener("click", function () {
+      try { localStorage.setItem(KEY, "1"); } catch (e) {}
+      bar.remove();
+    });
+  }
+
+  /* --------------------------------------------------------
      Boot
   -------------------------------------------------------- */
   function boot() {
@@ -498,6 +531,7 @@
     safe(renderHome,        "renderHome");
     safe(initStickyNav,     "initStickyNav");
     safe(initSplitText,     "initSplitText");
+    safe(initCookieBanner,  "initCookieBanner");
 
     if (window.gsap && window.ScrollTrigger) {
       try { gsap.registerPlugin(ScrollTrigger); } catch (_) {}

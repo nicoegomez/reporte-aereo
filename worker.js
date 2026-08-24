@@ -458,7 +458,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../styles.css?v=20260814">
+<link rel="stylesheet" href="../styles.css?v=20260824">
 </head>
 <body>
   <!-- Google Tag Manager (noscript) -->
@@ -507,11 +507,14 @@ ${bodyHtml}
         <span class="ra-logo-word">REPORTE AÉREO</span>
       </a>
       <p class="footer-tagline" style="margin-top:.75rem;">Aviación · Turismo · Negocios</p>
+      <p class="footer-legal-links">
+        <a href="../terminos.html">Términos de uso</a> · <a href="../privacidad.html">Política de privacidad</a> · <a href="../contacto.html">Contacto</a>
+      </p>
     </div>
   </footer>
 
-  <script defer src="../lib/manifest.js"></script>
-  <script defer src="../main.js"></script>
+  <script defer src="../lib/manifest.js?v=20260824"></script>
+  <script defer src="../main.js?v=20260824"></script>
 </body>
 </html>
 `;

@@ -1780,3 +1780,108 @@ body::after {
 
 /* Pie reducido de las notas */
 .site-footer .footer-inner > .ra-logo { align-self: flex-start; }
+
+/* Link legal opcional dentro del pie reducido de las notas */
+.footer-legal-links {
+  margin-top: .5rem;
+  font-family: var(--sans);
+  font-size: .8rem;
+}
+.footer-legal-links a { color: inherit; }
+.footer-legal-links a:hover { color: var(--ink); }
+
+/* ==========================================
+   PÁGINAS LEGALES (Contacto / Privacidad / Términos)
+   Reutiliza la tipografía de .article-body pero sin
+   la letra capital, más listas y subtítulos h2/h3.
+=========================================== */
+.legal-body {
+  max-width: 700px;
+  margin-inline: auto;
+  font-family: var(--body-serif);
+  font-size: clamp(1rem, 1.5vw, 1.125rem);
+  line-height: 1.8;
+  color: var(--ink-soft);
+}
+.legal-body > * + * { margin-top: 1.5rem; }
+.legal-body h2 {
+  font-family: var(--serif);
+  font-size: clamp(1.25rem, 2.2vw, 1.5rem);
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -.02em;
+  margin-top: 2.5rem;
+  margin-bottom: .75rem;
+}
+.legal-body h3 {
+  font-family: var(--serif);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-top: 1.75rem;
+  margin-bottom: .5rem;
+}
+.legal-body ul, .legal-body ol { padding-left: 1.4rem; }
+.legal-body li + li { margin-top: .5rem; }
+.legal-body strong { font-weight: 700; color: var(--ink); }
+.legal-body em { font-style: italic; }
+.legal-body a { color: var(--accent-blue); text-decoration: underline; }
+.legal-body a:hover { text-decoration: none; }
+.legal-updated {
+  font-size: .85rem;
+  color: var(--ink-soft);
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+.legal-contact-block {
+  background: var(--paper-2, var(--bg-alt, #f6f4ef));
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+.legal-contact-block h3 { margin-top: 0; }
+.legal-contact-block p { margin: 0; }
+.legal-contact-block p + p { margin-top: .5rem; }
+
+/* ==========================================
+   AVISO DE COOKIES
+=========================================== */
+.cookie-banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  background: var(--ink);
+  color: #fff;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: .75rem 1.5rem;
+  font-family: var(--sans);
+  font-size: .875rem;
+  line-height: 1.5;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, .18);
+}
+.cookie-banner p { margin: 0; max-width: 640px; }
+.cookie-banner a { color: #fff; text-decoration: underline; }
+.cookie-banner a:hover { text-decoration: none; }
+.cookie-banner button {
+  flex-shrink: 0;
+  background: var(--gold);
+  color: var(--ink);
+  border: none;
+  padding: .6rem 1.4rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: .8125rem;
+  font-family: var(--sans);
+  cursor: pointer;
+}
+.cookie-banner button:hover { opacity: .88; }
+@media (max-width: 599px) {
+  .cookie-banner { flex-direction: column; align-items: stretch; text-align: center; }
+}
