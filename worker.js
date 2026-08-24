@@ -285,8 +285,17 @@ function bodyToHtml(body) {
         }</figure>`;
       }
 
-      if (/^#{2,3}\s+/.test(p) && !p.includes("\n")) {
-        return `<h2>${inlineMarks(escapeHtml(p.replace(/^#{2,3}\s+/, "")))}</h2>`;
+      if (/^#{2,3}\s+/.test(p)) {
+        /* El subtítulo puede venir mezclado con más texto en el mismo bloque
+           (por ejemplo si el editor no separó bien los párrafos). Igual lo
+           reconozco: la primera línea es el subtítulo y el resto, si hay, se
+           renderiza como párrafo aparte. */
+        const headingMatch = p.match(/^#{2,3}\s+(.*)(?:\n([\s\S]*))?$/);
+        const headingText = headingMatch[1].trim();
+        const rest = (headingMatch[2] || "").trim();
+        let html = `<h2>${inlineMarks(escapeHtml(headingText))}</h2>`;
+        if (rest) html += `<p>${inlineMarks(escapeHtml(rest)).replace(/\n/g, "<br>")}</p>`;
+        return html;
       }
 
       if (/^>\s?/.test(p)) {

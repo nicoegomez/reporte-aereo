@@ -1264,8 +1264,19 @@ code {
   });
 
   /* ---------- marcas de formato en el cuerpo ---------- */
+  function focusBodyAt(ta, scrollTop, selStart, selEnd) {
+    // preventScroll evita que el navegador "salte" a otra parte de la
+    // página al devolver el foco al textarea; scrollTop lo restauro a mano
+    // para que el cursor quede a la vista sin mover la ventana.
+    if (ta.focus) {
+      try { ta.focus({ preventScroll: true }); } catch (e) { ta.focus(); }
+    }
+    ta.setSelectionRange(selStart, selEnd == null ? selStart : selEnd);
+    ta.scrollTop = scrollTop;
+  }
   function wrapSelection(before, after) {
     var ta = $("pBody");
+    var scrollTop = ta.scrollTop;
     var start = ta.selectionStart, end = ta.selectionEnd;
     var raw = ta.value.slice(start, end) || "texto";
     // los espacios de los extremos quedan fuera de la marca
@@ -1273,18 +1284,39 @@ code {
     var trail = raw.match(/\s*$/)[0];
     var core = raw.slice(lead.length, raw.length - trail.length) || "texto";
     ta.value = ta.value.slice(0, start) + lead + before + core + after + trail + ta.value.slice(end);
-    ta.focus();
     var coreStart = start + lead.length + before.length;
-    ta.setSelectionRange(coreStart, coreStart + core.length);
+    focusBodyAt(ta, scrollTop, coreStart, coreStart + core.length);
     updatePreview();
   }
   function prefixParagraph(prefix) {
     var ta = $("pBody");
+    var scrollTop = ta.scrollTop;
+    var value = ta.value;
     var start = ta.selectionStart;
-    var lineStart = ta.value.lastIndexOf("\n", start - 1) + 1;
-    ta.value = ta.value.slice(0, lineStart) + prefix + ta.value.slice(lineStart);
-    ta.focus();
-    ta.setSelectionRange(start + prefix.length, start + prefix.length);
+    var lineStart = value.lastIndexOf("\n", start - 1) + 1;
+    var lineEnd = value.indexOf("\n", lineStart);
+    if (lineEnd === -1) lineEnd = value.length;
+    var line = value.slice(lineStart, lineEnd);
+    var before = value.slice(0, lineStart);
+    var after = value.slice(lineEnd);
+    var caret;
+
+    if (line.slice(0, prefix.length) === prefix) {
+      // ya tenía la marca puesta: el mismo botón la saca (interruptor)
+      ta.value = before + line.slice(prefix.length) + after;
+      caret = Math.max(lineStart, start - prefix.length);
+    } else {
+      // aíslo la línea en su propio párrafo (línea en blanco antes y
+      // después) para que el sitio la reconozca como bloque separado y la
+      // muestre como subtítulo en vez de texto plano con "##".
+      var leadBlank = before ? before.replace(/\n*$/, "\n\n") : "";
+      var trailBlank = after ? after.replace(/^\n*/, "\n\n") : "";
+      var newLine = prefix + line;
+      ta.value = leadBlank + newLine + trailBlank;
+      caret = leadBlank.length + newLine.length;
+    }
+
+    focusBodyAt(ta, scrollTop, caret);
     updatePreview();
   }
   document.querySelectorAll(".body-toolbar button[data-mark]").forEach(function (btn) {
