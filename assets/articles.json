@@ -60,6 +60,18 @@
     "featured": false
   },
   {
+    "id": 26,
+    "title": "Aviación avanzada",
+    "dek": "La aviación avanzada promete revolucionar el transporte aéreo con nuevas tecnologías y aeronaves, y la FAA está desarrollando regulaciones para su implementación.",
+    "category": "Actualidad",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-08-24T14:00:54.695Z",
+    "dateLabel": "24 de agosto de 2026",
+    "url": "notas/aviacion-avanzada-2026-08-24-ronu.html",
+    "image": "https://www.flyingmag.com/wp-content/uploads/2023/05/FLY0924.jpg?w=222",
+    "featured": false
+  },
+  {
     "id": 6,
     "title": "La inversión global en turismo alcanzó los US$ 862.000 millones y marca un nuevo récord en 2025",
     "dek": "El capital destinado al sector creció un 8,5% durante el año y confirma que la industria de los viajes sigue siendo uno de los motores más resilientes de la economía mundial.",
