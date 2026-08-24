@@ -1,5 +1,17 @@
 [
   {
+    "id": 24,
+    "title": "American Airlines renueva su flota con pantallas 4K individuales y más asientos premium",
+    "dek": "La compañía aérea encarará una de las mayores inversiones de su historia para transformar la experiencia a bordo. La reconfiguración abarcará aviones de fuselaje angosto, la incorporación de Wi-Fi Starlink de alta veloci",
+    "category": "Comercial",
+    "author": "Nicolás E. Gómez",
+    "date": "2026-08-24T13:14:33.800Z",
+    "dateLabel": "24 de agosto de 2026",
+    "url": "notas/american-airlines-renueva-su-flota-con-pantallas-4k-individuales-y-mas-asientos--2026-08-24-tx28.html",
+    "image": "/assets/notas-img/1787577055674-9zcswe.jpg",
+    "featured": true
+  },
+  {
     "id": 3,
     "title": "Argentina cae un 7% en Cabotaje",
     "dek": "Es necesaria la reconfiguración del mercado",
@@ -22,18 +34,6 @@
     "url": "notas/flybondi-is-the-new-fail-2026-08-19-x22k.html",
     "image": "/assets/notas-img/1787577375411-whll2o.jpg",
     "featured": true
-  },
-  {
-    "id": 24,
-    "title": "American Airlines renueva su flota con pantallas 4K individuales y más asientos premium",
-    "dek": "La compañía aérea encarará una de las mayores inversiones de su historia para transformar la experiencia a bordo. La reconfiguración abarcará aviones de fuselaje angosto, la incorporación de Wi-Fi Starlink de alta veloci",
-    "category": "Comercial",
-    "author": "Nicolás E. Gómez",
-    "date": "2026-08-24T13:14:33.800Z",
-    "dateLabel": "24 de agosto de 2026",
-    "url": "notas/american-airlines-renueva-su-flota-con-pantallas-4k-individuales-y-mas-asientos--2026-08-24-tx28.html",
-    "image": "/assets/notas-img/1787577055674-9zcswe.jpg",
-    "featured": false
   },
   {
     "id": 6,
