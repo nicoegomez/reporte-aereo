@@ -376,6 +376,19 @@ body::after { display: none; }   /* sin grano de papel dentro del panel */
 }
 .article-row:last-child { border-bottom: 1px solid var(--ra-niebla); }
 .article-row:hover { background: var(--ra-papel); }
+.article-row.dragging { opacity: .4; background: var(--ra-papel); }
+.drag-handle {
+  flex-shrink: 0;
+  width: 1.25rem;
+  text-align: center;
+  color: var(--ra-acero);
+  font-size: 1.125rem;
+  line-height: 1;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+.drag-handle:active { cursor: grabbing; }
 .article-row img, .article-row .thumb-empty {
   width: 72px; height: 52px;
   object-fit: cover;
@@ -436,7 +449,6 @@ body::after { display: none; }   /* sin grano de papel dentro del panel */
 }
 .article-row-actions button:hover { background: var(--ra-noche); color: #fff; border-color: var(--ra-noche); }
 .article-row-actions button[data-action="delete"]:hover { background: var(--ra-rojo); border-color: var(--ra-rojo); }
-.article-row-actions .move { font-size: .8125rem; line-height: 1; padding: .35rem .5rem; }
 
 .empty-state {
   background: var(--ra-blanco);
@@ -1503,6 +1515,9 @@ code {
           var mine = data.isDirector || a.created_by === data.me;
           return (
             '<div class="article-row" data-id="' + a.id + '">' +
+            (canOrder
+              ? '<span class="drag-handle" draggable="true" title="Arrastrá para reordenar" aria-label="Reordenar">⠿</span>'
+              : "") +
             (a.cover_image_url
               ? '<img src="' + escapeHtml(a.cover_image_url) + '" alt="">'
               : '<div class="thumb-empty"></div>') +
@@ -1517,10 +1532,6 @@ code {
               "</div>" +
             "</div>" +
             '<div class="article-row-actions">' +
-              (canOrder
-                ? '<button class="move" data-action="up" title="Subir en el orden" aria-label="Subir">↑</button>' +
-                  '<button class="move" data-action="down" title="Bajar en el orden" aria-label="Bajar">↓</button>'
-                : "") +
               '<button data-action="view" title="Ver publicada">Ver</button>' +
               (mine
                 ? '<button data-action="edit">Editar</button>' +
@@ -1534,22 +1545,71 @@ code {
     } catch (err) { setMsg(msg, "Error de conexión", true); }
   }
 
+  /* ---------- reordenar arrastrando ----------
+     HTML5 drag & drop nativo: se agarra por el handle "⠿", se suelta sobre
+     otra fila y esa fila pasa a esa posición. Al soltar, se manda el orden
+     final (todos los ids visibles, de arriba a abajo) a
+     /api/articles/reorder en un solo pedido — más robusto que mover de a
+     una posición con los viejos botones ↑/↓, que además tenían un bug
+     (podían "chocar" con notas en borrador que comparten la numeración
+     interna de orden y no se ven en esta lista). */
+  (function initDragReorder() {
+    var container = $("articlesList");
+    var dragging = null;
+
+    container.addEventListener("dragstart", function (e) {
+      /* Sólo arranca el arrastre si se agarró del handle "⠿", no desde
+         cualquier punto de la fila (así no interfiere con los botones
+         Ver/Editar/Borrar ni con la selección de texto del título). */
+      if (!e.target.closest(".drag-handle")) { e.preventDefault(); return; }
+      var row = e.target.closest(".article-row");
+      if (!row) { e.preventDefault(); return; }
+      dragging = row;
+      row.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      try { e.dataTransfer.setData("text/plain", row.dataset.id); } catch (_) {}
+    });
+
+    container.addEventListener("dragover", function (e) {
+      if (!dragging) return;
+      e.preventDefault();
+      var over = e.target.closest(".article-row");
+      if (!over || over === dragging) return;
+      var rect = over.getBoundingClientRect();
+      var before = (e.clientY - rect.top) < rect.height / 2;
+      container.insertBefore(dragging, before ? over : over.nextSibling);
+    });
+
+    container.addEventListener("drop", function (e) { e.preventDefault(); });
+
+    container.addEventListener("dragend", async function () {
+      if (!dragging) return;
+      dragging.classList.remove("dragging");
+      dragging = null;
+
+      var ids = Array.prototype.map.call(
+        container.querySelectorAll(".article-row"),
+        function (row) { return Number(row.dataset.id); }
+      );
+      if (!ids.length) return;
+
+      try {
+        var res = await fetch("/api/articles/reorder", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: ids }),
+        });
+        if (!res.ok) { loadArticles(); return; } // si falla, se recarga el orden real del server
+      } catch (_) { loadArticles(); }
+    });
+  })();
+
   $("articlesList").addEventListener("click", async function (e) {
     var btn = e.target.closest("button[data-action]");
     if (!btn) return;
     var row = btn.closest(".article-row");
     var id = row.dataset.id;
     var action = btn.dataset.action;
-
-    if (action === "up" || action === "down") {
-      await fetch("/api/articles/" + id + "/move", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ direction: action === "up" ? "up" : "down" }),
-      });
-      loadArticles();
-      return;
-    }
 
     if (action === "delete") {
       if (!confirm("¿Borrar esta nota? Esta acción no se puede deshacer.")) return;

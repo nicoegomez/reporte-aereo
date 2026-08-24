@@ -988,10 +988,15 @@ async function handleMoveArticle(request, env, id) {
   const current = await env.DB.prepare("SELECT * FROM articles WHERE id = ?").bind(id).first();
   if (!current) return jsonResponse({ error: "No encontrada" }, 404);
 
+  /* El vecino tiene que ser otra nota PUBLICADA: si no se filtra por status,
+     puede tocarle el turno a un borrador del bot que comparte la misma
+     secuencia de sort_order, y como los borradores no se listan en
+     "Notas publicadas" el swap queda invisible (el bug que reportó Nico:
+     "no se reordenan las notas"). */
   const neighbor = await env.DB.prepare(
     direction === "up"
-      ? "SELECT * FROM articles WHERE sort_order > ? ORDER BY sort_order ASC LIMIT 1"
-      : "SELECT * FROM articles WHERE sort_order < ? ORDER BY sort_order DESC LIMIT 1"
+      ? "SELECT * FROM articles WHERE status = 'published' AND sort_order > ? ORDER BY sort_order ASC LIMIT 1"
+      : "SELECT * FROM articles WHERE status = 'published' AND sort_order < ? ORDER BY sort_order DESC LIMIT 1"
   )
     .bind(current.sort_order)
     .first();
@@ -1002,6 +1007,48 @@ async function handleMoveArticle(request, env, id) {
     env.DB.prepare("UPDATE articles SET sort_order = ? WHERE id = ?").bind(neighbor.sort_order, current.id),
     env.DB.prepare("UPDATE articles SET sort_order = ? WHERE id = ?").bind(current.sort_order, neighbor.id),
   ]);
+
+  await regenerateArticlesJson(env);
+  return jsonResponse({ ok: true });
+}
+
+/* Reordenamiento por arrastre: recibe la lista completa de ids de notas
+   publicadas en el orden final (de arriba a abajo tal como debe quedar en
+   la portada) y reasigna sort_order de forma descendente para que coincida
+   exactamente, en un solo batch. Reemplaza al swap par-a-par de /move, que
+   sólo servía para mover una posición a la vez y era frágil frente a
+   borradores intercalados en la misma secuencia de sort_order. */
+async function handleReorderArticles(request, env) {
+  const guard = await requireDirector(request, env);
+  if (guard.error) return guard.error;
+
+  let ids;
+  try {
+    const body = await request.json();
+    ids = Array.isArray(body.ids) ? body.ids.map((n) => Number(n)).filter((n) => Number.isInteger(n)) : null;
+  } catch (_) {
+    return jsonResponse({ error: "Solicitud inválida" }, 400);
+  }
+  if (!ids || !ids.length) return jsonResponse({ error: "Falta la lista de ids" }, 400);
+
+  /* Sólo se reordenan notas publicadas: si llega un id que no es de una
+     nota publicada (borrador, id inexistente), se ignora en vez de romper
+     el resto del batch. */
+  const placeholders = ids.map(() => "?").join(",");
+  const { results: existing } = await env.DB.prepare(
+    `SELECT id FROM articles WHERE status = 'published' AND id IN (${placeholders})`
+  )
+    .bind(...ids)
+    .all();
+  const validIds = new Set(existing.map((r) => r.id));
+  const orderedIds = ids.filter((id) => validIds.has(id));
+  if (!orderedIds.length) return jsonResponse({ error: "Ninguna de las notas es válida" }, 400);
+
+  const n = orderedIds.length;
+  const stmts = orderedIds.map((id, i) =>
+    env.DB.prepare("UPDATE articles SET sort_order = ? WHERE id = ?").bind(n - i, id)
+  );
+  await env.DB.batch(stmts);
 
   await regenerateArticlesJson(env);
   return jsonResponse({ ok: true });
@@ -1853,6 +1900,8 @@ export default {
 
       const moveMatch = path.match(/^\/api\/articles\/(\d+)\/move$/);
       if (moveMatch && request.method === "POST") return await handleMoveArticle(request, env, moveMatch[1]);
+
+      if (path === "/api/articles/reorder" && request.method === "POST") return await handleReorderArticles(request, env);
     } catch (e) {
       return jsonResponse({ error: String((e && e.message) || e) }, 500);
     }
