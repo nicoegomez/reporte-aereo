@@ -12,18 +12,6 @@
     "featured": true
   },
   {
-    "id": 32,
-    "title": "Flexjet recibe su primer Gulfstream G500",
-    "dek": "Flexjet incorporó su primer Gulfstream G500, un avión privado de alta gama con características de lujo y tecnología avanzada.",
-    "category": "Business",
-    "author": "Redacción Reporte Aéreo",
-    "date": "2026-08-24T19:01:05.335Z",
-    "dateLabel": "24 de agosto de 2026",
-    "url": "notas/flexjet-recibe-su-primer-gulfstream-g500-2026-08-24-glnt.html",
-    "image": "/assets/notas-img/1787601622681-msu9j7.jpg",
-    "featured": true
-  },
-  {
     "id": 3,
     "title": "Argentina cae un 7% en Cabotaje",
     "dek": "Es necesaria la reconfiguración del mercado",
@@ -45,6 +33,18 @@
     "dateLabel": "19 de agosto de 2026",
     "url": "notas/flybondi-is-the-new-fail-2026-08-19-x22k.html",
     "image": "/assets/notas-img/1787577375411-whll2o.jpg",
+    "featured": true
+  },
+  {
+    "id": 32,
+    "title": "Flexjet recibe su primer Gulfstream G500",
+    "dek": "Flexjet incorporó su primer Gulfstream G500, un avión privado de alta gama con características de lujo y tecnología avanzada.",
+    "category": "Business",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-08-24T19:01:05.335Z",
+    "dateLabel": "24 de agosto de 2026",
+    "url": "notas/flexjet-recibe-su-primer-gulfstream-g500-2026-08-24-glnt.html",
+    "image": "/assets/notas-img/1787601622681-msu9j7.jpg",
     "featured": true
   },
   {
