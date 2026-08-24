@@ -1452,16 +1452,20 @@ code {
       var data = await res.json();
       if (!res.ok) { setMsg(msg, data.error || "Error al cargar", true); return; }
 
-      $("countArticles").textContent = data.articles.length || "";
+      /* /api/articles devuelve todo (publicadas + borradores del bot);
+         acá sólo mostramos lo que está realmente publicado. */
+      var published = (data.articles || []).filter(function (a) { return a.status === "published"; });
 
-      if (!data.articles.length) {
+      $("countArticles").textContent = published.length || "";
+
+      if (!published.length) {
         container.innerHTML =
           '<div class="empty-state"><p>Todavía no hay notas publicadas.</p>' +
           '<span>Empezá por «Escribir nota» en el menú de la izquierda.</span></div>';
         return;
       }
       var canOrder = !!data.isDirector;
-      container.innerHTML = data.articles
+      container.innerHTML = published
         .map(function (a) {
           /* Un redactor sólo ve las acciones sobre lo que escribió. */
           var mine = data.isDirector || a.created_by === data.me;
