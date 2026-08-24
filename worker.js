@@ -285,16 +285,32 @@ function bodyToHtml(body) {
         }</figure>`;
       }
 
-      if (/^#{2,3}\s+/.test(p)) {
-        /* El subtítulo puede venir mezclado con más texto en el mismo bloque
-           (por ejemplo si el editor no separó bien los párrafos). Igual lo
-           reconozco: la primera línea es el subtítulo y el resto, si hay, se
-           renderiza como párrafo aparte. */
-        const headingMatch = p.match(/^#{2,3}\s+(.*)(?:\n([\s\S]*))?$/);
-        const headingText = headingMatch[1].trim();
-        const rest = (headingMatch[2] || "").trim();
-        let html = `<h2>${inlineMarks(escapeHtml(headingText))}</h2>`;
-        if (rest) html += `<p>${inlineMarks(escapeHtml(rest)).replace(/\n/g, "<br>")}</p>`;
+      /* La marca de subtítulo ("##" o "###") puede aparecer en cualquier
+         línea del bloque, no solo al principio (si el editor no separó bien
+         los párrafos, puede venir después de texto normal). También puede
+         venir sin espacio ("##Texto" en vez de "## Texto") si se escribió a
+         mano en vez de usar el botón Subtítulo, o con el texto del título en
+         la línea siguiente ("##" sola y el título debajo). Se reconoce en
+         todos los casos: lo anterior a la marca queda como párrafo, la marca
+         (más su línea siguiente si vino vacía) se vuelve <h2>, y lo que
+         quede después sigue como párrafo. */
+      const headingLineMatch = p.match(/^#{2,3}[ \t]*(.*)$/m);
+      if (headingLineMatch) {
+        const before = p.slice(0, headingLineMatch.index).trim();
+        let headingText = headingLineMatch[1].trim();
+        let rest = p.slice(headingLineMatch.index + headingLineMatch[0].length).replace(/^\n/, "");
+        if (!headingText) {
+          const nextLineMatch = rest.match(/^(.*)$/m);
+          if (nextLineMatch && nextLineMatch[1].trim()) {
+            headingText = nextLineMatch[1].trim();
+            rest = rest.slice(nextLineMatch[0].length).replace(/^\n/, "");
+          }
+        }
+        rest = rest.trim();
+        let html = "";
+        if (before) html += `<p>${inlineMarks(escapeHtml(before)).replace(/\n/g, "<br>")}</p>\n`;
+        html += `<h2>${inlineMarks(escapeHtml(headingText))}</h2>`;
+        if (rest) html += `\n<p>${inlineMarks(escapeHtml(rest)).replace(/\n/g, "<br>")}</p>`;
         return html;
       }
 
