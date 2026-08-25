@@ -192,6 +192,18 @@
     "featured": false
   },
   {
+    "id": 8,
+    "title": "Accidente aéreo en Alaska",
+    "dek": "Un avión charter se estrelló en una zona remota de Alaska, causando la muerte de ocho personas a bordo, incluyendo dos pilotos y seis pasajeros.",
+    "category": "Industria",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-08-22T10:00:43.045Z",
+    "dateLabel": "22 de agosto de 2026",
+    "url": "notas/accidente-aereo-en-alaska-2026-08-22-wdcd.html",
+    "image": "/assets/notas-img/1787675518800-r0ch6s.jpg",
+    "featured": false
+  },
+  {
     "id": 25,
     "title": "Muerte de azafata de Southwest",
     "dek": "Una azafata de Southwest Airlines murió tras caer de un balcón de hotel en Hawái durante una escala.",
