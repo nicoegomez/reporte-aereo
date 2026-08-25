@@ -1,5 +1,29 @@
 [
   {
+    "id": 42,
+    "title": "Phenom 300EV certificado",
+    "dek": "La aeronave Phenom 300EV de Embraer obtuvo certificación de la FAA, EASA y ANAC de Brasil, destacando mejoras operativas y seguridad.",
+    "category": "Industria",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-08-25T16:49:11.432Z",
+    "dateLabel": "25 de agosto de 2026",
+    "url": "notas/phenom-300ev-certificado-2026-08-25-hv53.html",
+    "image": "/assets/notas-img/1787676702307-ifvdvb.jpg",
+    "featured": true
+  },
+  {
+    "id": 41,
+    "title": "AMAE Lounge en Florianópolis",
+    "dek": "La empresa argentina AMAE Lounge inició operaciones en el aeropuerto de Florianópolis en Brasil, ofreciendo servicios de lounge y accesos rápidos.",
+    "category": "Turismo",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-08-25T16:49:06.925Z",
+    "dateLabel": "25 de agosto de 2026",
+    "url": "notas/amae-lounge-en-florianopolis-2026-08-25-r6d9.html",
+    "image": "https://flex-assets.tadevel-cdn.com/6a8daf0be913f1a23b9967cf/720.jpeg",
+    "featured": true
+  },
+  {
     "id": 36,
     "title": "Un tribunal de EEUU dice que \"el Joint Venture de Delta-Aeroméxico se puede hacer\"",
     "dek": "Un tribunal federal de apelaciones permitió que continúe la alianza entre Delta y Aeroméxico, rechazando una orden del Departamento de Transporte que buscaba limitar la cooperación entre ambas aerolíneas.",
