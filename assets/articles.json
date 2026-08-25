@@ -204,6 +204,18 @@
     "featured": false
   },
   {
+    "id": 7,
+    "title": "Incendio en vuelo de American Airlines",
+    "dek": "Un laptop se incendió en un vuelo de American Airlines de Atlanta a Dallas, posiblemente quemando a varios pasajeros.",
+    "category": "Comercial",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-08-22T10:00:36.845Z",
+    "dateLabel": "22 de agosto de 2026",
+    "url": "notas/incendio-en-vuelo-de-american-airlines-2026-08-22-tmou.html",
+    "image": "https://static0.simpleflyingimages.com/wordpress/wp-content/uploads/2026/08/731-american-airlines-airbus-a321-the-global-guy-_-shutterstock-1.jpg",
+    "featured": false
+  },
+  {
     "id": 23,
     "title": "Diferencias en manejo de F-22 y F-35",
     "dek": "Los aviones F-22 Raptor y F-35 Lightning II son fundamentales para la fuerza aérea estadounidense y tienen diferencias en su manejo en combate.",
