@@ -1,5 +1,17 @@
 [
   {
+    "id": 33,
+    "title": "Un vuelo de Plus Ultra, entre Buenos Aires y Madrid, aterrizó de emergencia en Brasil y dejó a cientos de pasajeros varados",
+    "dek": "La aeronave, que había despegado de Ezeiza rumbo a Madrid, debió desviarse hacia Natal tras registrarse una falla técnica durante el vuelo. Más de 400 pasajeros permanecen en Brasil varados",
+    "category": "Actualidad",
+    "author": "Nicolás E. Gómez",
+    "date": "2026-08-24T22:15:54.533Z",
+    "dateLabel": "24 de agosto de 2026",
+    "url": "notas/un-vuelo-de-plus-ultra-entre-buenos-aires-y-madrid-aterrizo-de-emergencia-en-bra-2026-08-24-zmyx.html",
+    "image": "/assets/notas-img/1787609747137-3aqixf.jpg",
+    "featured": true
+  },
+  {
     "id": 42,
     "title": "Phenom 300EV certificado",
     "dek": "La aeronave Phenom 300EV de Embraer obtuvo certificación de la FAA, EASA y ANAC de Brasil, destacando mejoras operativas y seguridad.",
@@ -45,18 +57,6 @@
     "dateLabel": "25 de agosto de 2026",
     "url": "notas/united-suma-10-ciudades-internacionales-2026-08-25-ev97.html",
     "image": "/assets/notas-img/1787673687023-j3ek04.jpg",
-    "featured": true
-  },
-  {
-    "id": 33,
-    "title": "Un vuelo de Plus Ultra, entre Buenos Aires y Madrid, aterrizó de emergencia en Brasil y dejó a cientos de pasajeros varados",
-    "dek": "La aeronave, que había despegado de Ezeiza rumbo a Madrid, debió desviarse hacia Natal tras registrarse una falla técnica durante el vuelo. Más de 400 pasajeros permanecen en Brasil varados",
-    "category": "Actualidad",
-    "author": "Nicolás E. Gómez",
-    "date": "2026-08-24T22:15:54.533Z",
-    "dateLabel": "24 de agosto de 2026",
-    "url": "notas/un-vuelo-de-plus-ultra-entre-buenos-aires-y-madrid-aterrizo-de-emergencia-en-bra-2026-08-24-zmyx.html",
-    "image": "/assets/notas-img/1787609747137-3aqixf.jpg",
     "featured": true
   },
   {
