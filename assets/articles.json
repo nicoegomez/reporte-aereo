@@ -96,6 +96,18 @@
     "featured": false
   },
   {
+    "id": 18,
+    "title": "Accidente de avioneta en Washington",
+    "dek": "Un de Havilland DHC-3 Otter se estrelló en Washington mientras intentaba evitar mal tiempo, dejando heridos al piloto y varios pasajeros.",
+    "category": "Actualidad",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-08-23T10:00:46.141Z",
+    "dateLabel": "23 de agosto de 2026",
+    "url": "notas/accidente-de-avioneta-en-washington-2026-08-23-k26g.html",
+    "image": "/assets/notas-img/1787675792351-05quy4.jpg",
+    "featured": false
+  },
+  {
     "id": 16,
     "title": "Historia del livery de Singapore Airlines",
     "dek": "La aerolínea presenta un diseño clásico con un ave amarilla sobre un estabilizador vertical azul oscuro.",
