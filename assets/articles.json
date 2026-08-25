@@ -84,6 +84,18 @@
     "featured": true
   },
   {
+    "id": 16,
+    "title": "Historia del livery de Singapore Airlines",
+    "dek": "La aerolínea presenta un diseño clásico con un ave amarilla sobre un estabilizador vertical azul oscuro.",
+    "category": "Comercial",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-08-22T19:00:56.567Z",
+    "dateLabel": "22 de agosto de 2026",
+    "url": "notas/livery-de-singapore-airlines-2026-08-22-xkcn.html",
+    "image": "/assets/notas-img/1787675348844-9vnumm.jpg",
+    "featured": false
+  },
+  {
     "id": 39,
     "title": "JetBlue abre segunda lounge BlueHouse",
     "dek": "JetBlue inaugurará su segunda lounge BlueHouse en el aeropuerto de Boston Logan con servicios y diseño inspirado en la ciudad.",
