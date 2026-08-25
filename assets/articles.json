@@ -144,6 +144,18 @@
     "featured": false
   },
   {
+    "id": 44,
+    "title": "AMAE Lounge en Florianópolis",
+    "dek": "AMAE Lounge inició operaciones en el aeropuerto de Florianópolis con servicios de lounge, habitaciones y FastPass.",
+    "category": "Turismo",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-08-25T19:01:04.795Z",
+    "dateLabel": "25 de agosto de 2026",
+    "url": "notas/amae-lounge-en-florianopolis-2026-08-25-q8tr.html",
+    "image": "https://flex-assets.tadevel-cdn.com/6a8daf0be913f1a23b9967cf/720.jpeg",
+    "featured": false
+  },
+  {
     "id": 35,
     "title": "SyberJet reclama récord de velocidad transcontinental",
     "dek": "SyberJet anunció que su avión SJ30-2 estableció un récord de velocidad transcontinental en la categoría C-1.f, con una velocidad promedio de 505.3 mph.",
