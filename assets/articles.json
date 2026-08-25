@@ -1,17 +1,5 @@
 [
   {
-    "id": 40,
-    "title": "United suma 10 ciudades internacionales",
-    "dek": "United agregará 10 nuevas ciudades a su mapa de rutas, seis de las cuales no tienen servicio desde Estados Unidos actualmente, con un total de 14 nuevas rutas que tocan cinco de sus hubs.",
-    "category": "Comercial",
-    "author": "Redacción Reporte Aéreo",
-    "date": "2026-08-25T14:01:44.441Z",
-    "dateLabel": "25 de agosto de 2026",
-    "url": "notas/united-suma-10-ciudades-internacionales-2026-08-25-ev97.html",
-    "image": "/assets/notas-img/1787673687023-j3ek04.jpg",
-    "featured": true
-  },
-  {
     "id": 36,
     "title": "Joint Venture Delta-Aeroméxico Salvada",
     "dek": "Un tribunal federal de apelaciones permitió que continúe la alianza entre Delta y Aeroméxico, rechazando una orden del Departamento de Transporte que buscaba limitar la cooperación entre ambas aerolíneas.",
@@ -21,6 +9,18 @@
     "dateLabel": "25 de agosto de 2026",
     "url": "notas/joint-venture-delta-aeromexico-salvada-2026-08-25-sdu4.html",
     "image": "/assets/notas-img/1787674670190-cr4f1w.png",
+    "featured": true
+  },
+  {
+    "id": 40,
+    "title": "United suma 10 ciudades internacionales",
+    "dek": "United agregará 10 nuevas ciudades a su mapa de rutas, seis de las cuales no tienen servicio desde Estados Unidos actualmente, con un total de 14 nuevas rutas que tocan cinco de sus hubs.",
+    "category": "Comercial",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-08-25T14:01:44.441Z",
+    "dateLabel": "25 de agosto de 2026",
+    "url": "notas/united-suma-10-ciudades-internacionales-2026-08-25-ev97.html",
+    "image": "/assets/notas-img/1787673687023-j3ek04.jpg",
     "featured": true
   },
   {
