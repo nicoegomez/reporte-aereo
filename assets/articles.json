@@ -144,6 +144,30 @@
     "featured": true
   },
   {
+    "id": 51,
+    "title": "LATAM Airlines con buenos números",
+    "dek": "La aerolínea aumentó su capacidad consolidada en un 8,2% y transportó 8,06 millones de pasajeros en julio, un 2% más que en el mismo mes del año anterior.",
+    "category": "Actualidad",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-08-26T14:01:13.984Z",
+    "dateLabel": "26 de agosto de 2026",
+    "url": "notas/latam-airlines-en-julio-2026-08-26-32vq.html",
+    "image": "https://flex-assets.tadevel-cdn.com/6a8ee925c15f31d9fa8cdc1d/720.jpeg",
+    "featured": false
+  },
+  {
+    "id": 50,
+    "title": "Avión híbrido-eléctrico para aeropuertos pequeños",
+    "dek": "La FAA y Electra realizaron vuelos de demostración con un avión híbrido-eléctrico para conectar aeropuertos pequeños con grandes centros de distribución, utilizando pistas cortas y reduciendo el tramo terrestre para los",
+    "category": "Industria",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-08-26T10:01:38.504Z",
+    "dateLabel": "26 de agosto de 2026",
+    "url": "notas/avion-hibrido-electrico-para-aeropuertos-pequenos-2026-08-26-9ok6.html",
+    "image": "https://aeromarket.com.ar/wp-content/uploads/2025/12/Electra-2-scaled.jpg",
+    "featured": false
+  },
+  {
     "id": 47,
     "title": "Air Arabia llega a Frankfurt",
     "dek": "La aerolínea comenzará a operar una ruta regular entre Sharjah y Frankfurt con una frecuencia diaria y aviones Airbus A320neo.",
