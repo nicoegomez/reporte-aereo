@@ -120,6 +120,18 @@
     "featured": true
   },
   {
+    "id": 47,
+    "title": "Air Arabia llega a Frankfurt",
+    "dek": "La aerolínea comenzará a operar una ruta regular entre Sharjah y Frankfurt con una frecuencia diaria y aviones Airbus A320neo.",
+    "category": "Comercial",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-08-26T10:01:02.883Z",
+    "dateLabel": "26 de agosto de 2026",
+    "url": "notas/air-arabia-llega-a-frankfurt-2026-08-26-flt8.html",
+    "image": "https://flex-assets.tadevel-cdn.com/6924faba44f9b700e8fd40ed/720.jpeg",
+    "featured": false
+  },
+  {
     "id": 46,
     "title": "La hélice sigue siendo relevante",
     "dek": "A pesar de la percepción de que los aviones con hélices son cosa del pasado, la tecnología sigue siendo valiosa en el transporte aéreo regional y de corta distancia.",
