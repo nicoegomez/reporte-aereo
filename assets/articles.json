@@ -204,6 +204,18 @@
     "featured": false
   },
   {
+    "id": 62,
+    "title": "Aeropuerto de Punta Cana incorpora inteligencia artificial",
+    "dek": "El Aeropuerto de Punta Cana implementó una plataforma de inteligencia artificial para detectar narcóticos y divisas no declaradas en los puntos de control de pasajeros con tecnología de SeeTrue y Leidos.",
+    "category": "Actualidad",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-08-27T14:01:06.263Z",
+    "dateLabel": "27 de agosto de 2026",
+    "url": "notas/aeropuerto-de-punta-cana-incorpora-inteligencia-artificial-2026-08-27-js2e.html",
+    "image": "https://flex-assets.tadevel-cdn.com/6960739fda6f060b4664d1b8/720.jpeg",
+    "featured": false
+  },
+  {
     "id": 51,
     "title": "LATAM Airlines con buenos números",
     "dek": "La aerolínea aumentó su capacidad consolidada en un 8,2% y transportó 8,06 millones de pasajeros en julio, un 2% más que en el mismo mes del año anterior.",
