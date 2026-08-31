@@ -228,6 +228,42 @@
     "featured": false
   },
   {
+    "id": 59,
+    "title": "Wingo aumenta frecuencias",
+    "dek": "La aerolínea Wingo incrementó su oferta en la ruta entre Bucaramanga y Santa Marta con más frecuencias semanales y asientos adicionales.",
+    "category": "Actualidad",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-08-27T10:01:23.540Z",
+    "dateLabel": "27 de agosto de 2026",
+    "url": "notas/wingo-aumenta-frecuencias-2026-08-27-jg55.html",
+    "image": "https://images.pexels.com/photos/37589299/pexels-photo-37589299.png?auto=compress&cs=tinysrgb&h=650&w=940",
+    "featured": false
+  },
+  {
+    "id": 58,
+    "title": "EGYPTAIR patrocina a FC Barcelona",
+    "dek": "EGYPTAIR se convirtió en la aerolínea oficial de FC Barcelona en un acuerdo comercial de tres temporadas que incluye la presencia de su marca en la camiseta del equipo de baloncesto.",
+    "category": "Actualidad",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-08-27T10:01:12.231Z",
+    "dateLabel": "27 de agosto de 2026",
+    "url": "notas/egyptair-patrocina-a-fc-barcelona-2026-08-27-8hth.html",
+    "image": "https://flex-assets.tadevel-cdn.com/6902699893a52319db83339b/image.jpg",
+    "featured": false
+  },
+  {
+    "id": 57,
+    "title": "Jet SyberJet SJ30-2 establece récord",
+    "dek": "Un SyberJet SJ30-2 voló sin escalas de Jacksonville a San Diego en 4 horas y 7 minutos, a una velocidad media de 505,3 mph, y podría establecer un nuevo récord estadounidense transcontinental.",
+    "category": "Business",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-08-26T19:01:48.415Z",
+    "dateLabel": "26 de agosto de 2026",
+    "url": "notas/jet-syberjet-sj30-2-establece-record-2026-08-26-824x.html",
+    "image": "https://aeromarket.com.ar/wp-content/uploads/2026/08/syberjet_sj30_6-scaled.jpg",
+    "featured": false
+  },
+  {
     "id": 54,
     "title": "España y Polonia compran A330 MRTT",
     "dek": "España y Polonia avanzan en la compra conjunta de aviones cisterna Airbus A330 MRTT, con cuatro unidades destinadas a Polonia antes de 2030.",
