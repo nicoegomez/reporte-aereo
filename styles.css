@@ -391,6 +391,7 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
   flex-shrink: 0;
 }
 .ticker-dot { opacity: .5; }
+.ticker-track a:hover { text-decoration: underline; }
 
 @keyframes tickerScroll {
   from { transform: translateX(0); }

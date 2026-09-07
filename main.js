@@ -105,14 +105,22 @@
     var track = $1(".ticker-track");
     if (!track) return;
 
-    /* Clone the track for seamless looping */
-    var clone = track.cloneNode(true);
-    clone.setAttribute("aria-hidden", "true");
-    track.parentElement.appendChild(clone);
-
-    /* Pause on hover */
     var wrap = $1(".ticker-inner");
     if (!wrap) return;
+
+    /* Clona el track para el loop continuo. Se vuelve a invocar cada
+       vez que cambia el contenido (por ej. al llegar los titulares
+       reales) para que la copia nunca quede desactualizada. */
+    var clone = null;
+    function mountClone() {
+      if (clone) clone.remove();
+      clone = track.cloneNode(true);
+      clone.setAttribute("aria-hidden", "true");
+      track.parentElement.appendChild(clone);
+    }
+    mountClone();
+
+    /* Pause on hover */
     wrap.addEventListener("mouseenter", function () {
       track.style.animationPlayState = "paused";
       clone.style.animationPlayState = "paused";
@@ -121,6 +129,25 @@
       track.style.animationPlayState = "running";
       clone.style.animationPlayState = "running";
     });
+
+    /* El texto de arriba es un placeholder de diseño: acá se
+       reemplaza por los titulares reales de las últimas notas
+       publicadas. Si falla el fetch o todavía no hay notas, queda
+       el placeholder tal cual estaba en el HTML. */
+    fetch("assets/articles.json", { cache: "no-store" })
+      .then(function (res) { return res.ok ? res.json() : []; })
+      .then(function (items) {
+        items = Array.isArray(items) ? items : [];
+        if (!items.length) return;
+        track.innerHTML = items.slice(0, 8).map(function (item) {
+          return '<span><a href="' + escapeHtml(item.url) + '">' + escapeHtml(item.title) + '</a></span>' +
+                 '<span class="ticker-dot" aria-hidden="true">⬤</span>';
+        }).join("");
+        mountClone();
+      })
+      .catch(function () {
+        /* si falla, queda el texto de espera hardcodeado en el HTML */
+      });
   }
 
   /* --------------------------------------------------------
