@@ -12,3 +12,7 @@ ChatGPT Image*.png
 *.psd
 worker.js
 wrangler.jsonc
+*.pdf
+*.zip
+*.mp4
+*.mov
