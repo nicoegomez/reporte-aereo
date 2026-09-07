@@ -276,6 +276,18 @@
     "featured": true
   },
   {
+    "id": 93,
+    "title": "Vuelos directos a Florianópolis",
+    "dek": "La aerolínea GOL ofrecerá vuelos directos desde Asunción a Florianópolis en enero y febrero de 2027 para atender la demanda turística.",
+    "category": "Business",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-09-02T14:01:13.556Z",
+    "dateLabel": "2 de septiembre de 2026",
+    "url": "notas/vuelos-directos-a-florianopolis-2026-09-02-ujnf.html",
+    "image": "/assets/notas-img/1788802504131-an7lef.jpg",
+    "featured": false
+  },
+  {
     "id": 88,
     "title": "FAA ensaya operaciones AAM",
     "dek": "La Administración Federal de Aviación de Estados Unidos realizó un vuelo con una aeronave pilotada a distancia en Luisiana como parte de su programa de integración de eVTOL.",
