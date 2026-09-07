@@ -240,6 +240,18 @@
     "featured": false
   },
   {
+    "id": 107,
+    "title": "Accidente de F-4 Phantom II en Grecia",
+    "dek": "Un avión F-4E Phantom II de la Fuerza Aérea Helénica se estrelló durante un espectáculo aéreo en Grecia, causando la muerte de sus dos tripulantes.",
+    "category": "Actualidad",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-09-05T19:01:01.980Z",
+    "dateLabel": "5 de septiembre de 2026",
+    "url": "notas/accidente-de-f-4-phantom-ii-en-grecia-2026-09-05-7pda.html",
+    "image": "https://flex-assets.tadevel-cdn.com/6a9c5c53ff4353f8818ac451/720.jpeg",
+    "featured": false
+  },
+  {
     "id": 78,
     "title": "Carga aérea global crece 3,9 por ciento",
     "dek": "La demanda de carga aérea aumentó 3,9 por ciento en julio, con un crecimiento del 4,7 por ciento en operaciones internacionales y una mayor capacidad en Latinoamérica.",
