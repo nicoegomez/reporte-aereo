@@ -1,0 +1,14 @@
+{
+  "name": "Reporte Aéreo",
+  "short_name": "Reporte Aéreo",
+  "description": "Cobertura periodística de aviación comercial, aerolíneas, aeropuertos y turismo aéreo en Argentina y la región.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0B1724",
+  "theme_color": "#0B1724",
+  "lang": "es-AR",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

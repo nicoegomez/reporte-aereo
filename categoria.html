@@ -26,6 +26,8 @@
 
   <!-- Favicon — ventanilla RA -->
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0B1724">
 
   <!-- CSS -->
   <link rel="stylesheet" href="styles.css?v=20260824">
@@ -42,11 +44,13 @@
     <div class="top-bar-inner">
       <span class="js-date"></span>
       <div class="top-bar-right">
-        <a href="mailto:publicidad@reporteaereo.com?subject=Publicidad%20en%20Reporte%20A%C3%A9reo">Publicidad</a>
+        <a href="/buscar.html">Buscar</a>
+        <span class="top-bar-sep">·</span>
+        <a href="/anunciate.html">Publicidad</a>
         <span class="top-bar-sep">·</span>
         <a href="mailto:redaccion@reporteaereo.com">redaccion@reporteaereo.com</a>
         <span class="top-bar-sep">·</span>
-        <a href="index.html#newsletter">Newsletter</a>
+        <a href="/#newsletter">Newsletter</a>
       </div>
     </div>
   </header>
@@ -66,6 +70,10 @@
       <p class="article-dek" id="catEmpty" hidden>Todavía no hay notas publicadas en esta categoría.</p>
 
       <div class="news-grid" id="catGrid" style="margin-top:2rem;"></div>
+
+      <div class="load-more-wrap">
+        <button type="button" class="load-more-btn" id="catMore" hidden>Ver más</button>
+      </div>
 
       <p style="margin-top:3rem;"><a href="/">&larr; Volver a la portada</a></p>
     </div>

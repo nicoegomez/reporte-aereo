@@ -312,7 +312,7 @@
               '<h1 class="hero-headline">' + escapeHtml(hero.title) + '</h1>' +
               (hero.dek ? '<p class="hero-deck">' + escapeHtml(hero.dek) + '</p>' : '') +
               '<div class="hero-meta">' +
-                '<span class="byline">Por <strong>' + escapeHtml(hero.author || "Redacción Reporte Aéreo") + '</strong></span>' +
+                '<span class="byline">Por <strong><a class="author-link" href="' + authorUrl(hero.author) + '">' + escapeHtml(hero.author || "Redacción Reporte Aéreo") + '</a></strong></span>' +
                 '<time class="pubdate">' + escapeHtml(hero.dateLabel || "") + '</time>' +
               '</div>' +
               '<a href="' + escapeHtml(hero.url) + '" class="read-more">Leer nota completa' +
@@ -378,7 +378,7 @@
                 '</h3>' +
                 (i === 0 && item.dek ? '<p class="card-excerpt">' + escapeHtml(item.dek) + '</p>' : '') +
                 '<div class="card-meta">' +
-                  '<span class="byline-sm">' + escapeHtml(item.author || "Redacción Reporte Aéreo") + '</span>' +
+                  '<a class="byline-sm author-link" href="' + authorUrl(item.author) + '">' + escapeHtml(item.author || "Redacción Reporte Aéreo") + '</a>' +
                   '<time>' + escapeHtml(item.dateLabel || "") + '</time>' +
                 '</div>' +
               '</article>'
@@ -405,6 +405,39 @@
          de la home, que sólo muestra las primeras 4). Así
          ninguna nota queda inaccesible.
   -------------------------------------------------------- */
+  var PAGE_SIZE = 12;
+
+  /* Firma como link: usada por newsCardHtml y por las tarjetas de la
+     home. Cae en "Redacción Reporte Aéreo" si la nota no tiene autor
+     propio (borradores viejos, notas anteriores a los roles). */
+  function authorUrl(name) {
+    return "autor.html?nombre=" + encodeURIComponent(name || "Redacción Reporte Aéreo");
+  }
+
+  /* Tarjeta de nota compartida por categoría, búsqueda y autor — antes
+     cada página tenía su propia copia casi idéntica de este bloque. */
+  function newsCardHtml(item, i, isFeatured) {
+    var big = isFeatured ? " news-card--featured" : "";
+    return (
+      '<article class="news-card' + big + '">' +
+        '<div class="card-img-wrap">' +
+          (item.image
+            ? '<img src="' + escapeHtml(item.image) + '" alt="' + escapeHtml(item.title || "") + '" loading="lazy">'
+            : '<div class="card-sky-' + ((i % 4) + 1) + '" role="img" aria-label=""></div>') +
+          '<span class="card-cat">' + escapeHtml(item.category || "") + '</span>' +
+        '</div>' +
+        '<h3 class="card-title' + (isFeatured ? " card-title--lg" : "") + '">' +
+          '<a href="' + escapeHtml(item.url) + '">' + escapeHtml(item.title) + '</a>' +
+        '</h3>' +
+        (isFeatured && item.dek ? '<p class="card-excerpt">' + escapeHtml(item.dek) + '</p>' : '') +
+        '<div class="card-meta">' +
+          '<a class="byline-sm author-link" href="' + authorUrl(item.author) + '">' + escapeHtml(item.author || "Redacción Reporte Aéreo") + '</a>' +
+          '<time>' + escapeHtml(item.dateLabel || "") + '</time>' +
+        '</div>' +
+      '</article>'
+    );
+  }
+
   function renderCategoryPage() {
     var grid = $1("#catGrid");
     if (!grid) return; /* no estamos en categoria.html */
@@ -412,6 +445,7 @@
     var titleEl = $1("#catTitle");
     var countEl = $1("#catCount");
     var emptyEl = $1("#catEmpty");
+    var moreBtn = $1("#catMore");
     var params = new URLSearchParams(location.search);
     var requested = (params.get("cat") || "").trim();
 
@@ -435,6 +469,7 @@
           grid.innerHTML = "";
           if (countEl) countEl.textContent = "";
           if (emptyEl) emptyEl.hidden = false;
+          if (moreBtn) moreBtn.hidden = true;
           return;
         }
 
@@ -445,26 +480,149 @@
             : catItems.length + " notas publicadas";
         }
 
-        grid.innerHTML = catItems.map(function (item, i) {
-          var big = i === 0 ? " news-card--featured" : "";
-          return (
-            '<article class="news-card' + big + '">' +
-              '<div class="card-img-wrap">' +
-                (item.image
-                  ? '<img src="' + escapeHtml(item.image) + '" alt="' + escapeHtml(item.title || "") + '" loading="lazy">'
-                  : '<div class="card-sky-' + ((i % 4) + 1) + '" role="img" aria-label=""></div>') +
-                '<span class="card-cat">' + escapeHtml(item.category || "") + '</span>' +
-              '</div>' +
-              '<h3 class="card-title' + (i === 0 ? " card-title--lg" : "") + '">' +
-                '<a href="' + escapeHtml(item.url) + '">' + escapeHtml(item.title) + '</a>' +
-              '</h3>' +
-              (i === 0 && item.dek ? '<p class="card-excerpt">' + escapeHtml(item.dek) + '</p>' : '') +
-              '<div class="card-meta">' +
-                '<span class="byline-sm">' + escapeHtml(item.author || "Redacción Reporte Aéreo") + '</span>' +
-                '<time>' + escapeHtml(item.dateLabel || "") + '</time>' +
-              '</div>' +
-            '</article>'
-          );
+        /* Todo ya está en memoria (un solo fetch): "Ver más" sólo
+           revela la próxima tanda, sin pedir nada de nuevo a la red. */
+        var shown = 0;
+        function renderNextPage() {
+          var next = catItems.slice(shown, shown + PAGE_SIZE);
+          grid.insertAdjacentHTML("beforeend", next.map(function (item, i) {
+            return newsCardHtml(item, shown + i, shown + i === 0);
+          }).join(""));
+          shown += next.length;
+          if (moreBtn) moreBtn.hidden = shown >= catItems.length;
+        }
+
+        grid.innerHTML = "";
+        renderNextPage();
+        if (moreBtn) moreBtn.onclick = renderNextPage;
+      })
+      .catch(function () {
+        if (emptyEl) emptyEl.hidden = false;
+        if (moreBtn) moreBtn.hidden = true;
+      });
+  }
+
+  /* --------------------------------------------------------
+     7b-ter. Buscador — buscar.html?q=texto
+         Filtra en memoria sobre el mismo articles.json: no hay
+         backend de búsqueda, así que no pega contra la red de
+         nuevo con cada letra que se tipea.
+  -------------------------------------------------------- */
+  function renderSearchPage() {
+    var grid = $1("#searchGrid");
+    if (!grid) return; /* no estamos en buscar.html */
+
+    var input = $1("#searchInput");
+    var countEl = $1("#searchCount");
+    var emptyEl = $1("#searchEmpty");
+    var promptEl = $1("#searchPrompt");
+    var items = [];
+
+    function norm(s) {
+      return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    }
+
+    function renderResults(query) {
+      query = (query || "").trim();
+      if (!query) {
+        grid.innerHTML = "";
+        if (countEl) countEl.textContent = "";
+        if (emptyEl) emptyEl.hidden = true;
+        if (promptEl) promptEl.hidden = false;
+        return;
+      }
+      if (promptEl) promptEl.hidden = true;
+
+      var nq = norm(query);
+      var results = items.filter(function (a) {
+        return norm(a.title).indexOf(nq) !== -1 || norm(a.dek).indexOf(nq) !== -1;
+      });
+
+      if (!results.length) {
+        grid.innerHTML = "";
+        if (countEl) countEl.textContent = "";
+        if (emptyEl) emptyEl.hidden = false;
+        return;
+      }
+
+      if (emptyEl) emptyEl.hidden = true;
+      if (countEl) {
+        countEl.textContent = results.length === 1
+          ? "1 resultado para \u201c" + query + "\u201d"
+          : results.length + " resultados para \u201c" + query + "\u201d";
+      }
+      grid.innerHTML = results.map(function (item, i) { return newsCardHtml(item, i, false); }).join("");
+    }
+
+    var params = new URLSearchParams(location.search);
+    var initialQuery = params.get("q") || "";
+    if (input) input.value = initialQuery;
+
+    fetch("assets/articles.json", { cache: "no-store" })
+      .then(function (res) { return res.ok ? res.json() : []; })
+      .then(function (data) {
+        items = Array.isArray(data) ? data : [];
+        renderResults(initialQuery);
+      })
+      .catch(function () {
+        if (promptEl) promptEl.hidden = true;
+        if (emptyEl) { emptyEl.hidden = false; emptyEl.textContent = "No se pudo cargar la búsqueda. Probá de nuevo en un rato."; }
+      });
+
+    if (input) {
+      input.addEventListener("input", function () {
+        var q = input.value;
+        var url = new URL(location.href);
+        if (q) url.searchParams.set("q", q); else url.searchParams.delete("q");
+        history.replaceState(null, "", url);
+        renderResults(q);
+      });
+    }
+  }
+
+  /* --------------------------------------------------------
+     7b-quater. Página de autor — autor.html?nombre=Firma
+  -------------------------------------------------------- */
+  function renderAuthorPage() {
+    var grid = $1("#authorGrid");
+    if (!grid) return; /* no estamos en autor.html */
+
+    var titleEl = $1("#authorTitle");
+    var countEl = $1("#authorCount");
+    var emptyEl = $1("#authorEmpty");
+    var params = new URLSearchParams(location.search);
+    var requested = (params.get("nombre") || "").trim();
+
+    if (titleEl) titleEl.textContent = requested || "Autor";
+    document.title = (requested ? requested + " — " : "") + "Reporte Aéreo";
+
+    fetch("assets/articles.json", { cache: "no-store" })
+      .then(function (res) { return res.ok ? res.json() : []; })
+      .then(function (items) {
+        items = Array.isArray(items) ? items : [];
+        var authorItems = items.filter(function (a) {
+          return (a.author || "Redacción Reporte Aéreo").toLowerCase() === requested.toLowerCase();
+        });
+
+        if (!authorItems.length) {
+          grid.innerHTML = "";
+          if (countEl) countEl.textContent = "";
+          if (emptyEl) emptyEl.hidden = false;
+          return;
+        }
+
+        if (emptyEl) emptyEl.hidden = true;
+        var canonicalName = authorItems[0].author || requested;
+        if (titleEl) titleEl.textContent = canonicalName;
+        document.title = canonicalName + " — Reporte Aéreo";
+        if (countEl) {
+          countEl.textContent = authorItems.length === 1
+            ? "1 nota publicada"
+            : authorItems.length + " notas publicadas";
+        }
+
+        grid.innerHTML = authorItems.map(function (item, i) {
+          return newsCardHtml(item, i, i === 0);
         }).join("");
       })
       .catch(function () {
@@ -637,6 +795,8 @@
     safe(initNewsletter,    "initNewsletter");
     safe(renderHome,        "renderHome");
     safe(renderCategoryPage, "renderCategoryPage");
+    safe(renderSearchPage,  "renderSearchPage");
+    safe(renderAuthorPage,  "renderAuthorPage");
     safe(initStickyNav,     "initStickyNav");
     safe(initSplitText,     "initSplitText");
     safe(initCookieBanner,  "initCookieBanner");

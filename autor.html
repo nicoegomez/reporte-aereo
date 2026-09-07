@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es-AR" data-page="contacto">
+<html lang="es-AR" data-page="autor">
 <head>
   <!-- Google Tag Manager -->
   <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -10,23 +10,26 @@
   <!-- End Google Tag Manager -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contacto — Reporte Aéreo</title>
-  <meta name="description" content="Contactate con la redacción de Reporte Aéreo para consultas editoriales, prensa o publicidad.">
+  <title>Autor — Reporte Aéreo</title>
+  <meta name="description" content="Notas publicadas por este autor en Reporte Aéreo: aviación comercial, aeropuertos, turismo y negocios.">
   <meta name="author" content="Nicolás E. Gómez">
-  <meta property="og:title" content="Contacto — Reporte Aéreo">
-  <meta property="og:description" content="Contactate con la redacción de Reporte Aéreo para consultas editoriales, prensa o publicidad.">
-  <meta property="og:type" content="website">
+  <meta property="og:type" content="profile">
   <meta property="og:site_name" content="Reporte Aéreo">
   <meta property="og:locale" content="es_AR">
-  <meta property="og:url" content="https://www.reporteaereo.com/contacto.html">
-  <link rel="canonical" href="https://www.reporteaereo.com/contacto.html">
+  <meta name="robots" content="noindex, follow">
+  <link rel="canonical" href="https://www.reporteaereo.com/autor.html">
 
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400;1,8..60,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Favicon — ventanilla RA -->
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0B1724">
+
+  <!-- CSS -->
   <link rel="stylesheet" href="styles.css?v=20260824">
 </head>
 <body>
@@ -34,6 +37,8 @@
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KWFHSKQX"
   height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
+
+  <a href="#main-content" class="skip-link">Ir al contenido principal</a>
 
   <header class="top-bar">
     <div class="top-bar-inner">
@@ -57,32 +62,17 @@
     </a>
   </nav>
 
-  <main class="article-page">
-    <article class="article-body-wrap">
-      <p class="article-cat-label">Reporte Aéreo</p>
-      <h1 class="article-title">Contacto</h1>
-      <p class="article-dek">Distintas vías según el motivo de tu consulta — todas las lee directamente la redacción.</p>
+  <main class="article-page" id="main-content">
+    <div class="container">
+      <p class="article-cat-label"><a href="/" style="color:inherit;">Reporte Aéreo</a></p>
+      <h1 class="article-title" id="authorTitle">Autor</h1>
+      <p class="article-dek" id="authorCount"></p>
+      <p class="article-dek" id="authorEmpty" hidden>Todavía no hay notas publicadas de este autor.</p>
 
-      <div class="legal-body">
-        <div class="legal-contact-block">
-          <h3>Redacción y prensa</h3>
-          <p>Para enviar información, correcciones, gacetillas de prensa o proponer una cobertura:</p>
-          <p><a href="mailto:redaccion@reporteaereo.com">redaccion@reporteaereo.com</a></p>
-        </div>
+      <div class="news-grid" id="authorGrid" style="margin-top:2rem;"></div>
 
-        <div class="legal-contact-block">
-          <h3>Publicidad y auspicios</h3>
-          <p>Para consultar sobre espacios publicitarios, contenido patrocinado o alianzas comerciales:</p>
-          <p><a href="mailto:publicidad@reporteaereo.com?subject=Publicidad%20en%20Reporte%20A%C3%A9reo">publicidad@reporteaereo.com</a></p>
-        </div>
-
-        <h2>Sobre el medio</h2>
-        <p>Reporte Aéreo es un medio digital de cobertura periodística sobre aviación comercial, aerolíneas, aeropuertos y turismo aéreo en Argentina y la región, con sede en Buenos Aires, Argentina.</p>
-        <p>Director Editorial: <strong><a class="author-link" href="https://www.linkedin.com/in/nicolasezequielgomez/" target="_blank" rel="noopener">Nicolás E. Gómez</a></strong></p>
-
-        <p><a href="/">← Volver a la portada</a></p>
-      </div>
-    </article>
+      <p style="margin-top:3rem;"><a href="/">&larr; Volver a la portada</a></p>
+    </div>
   </main>
 
   <footer class="site-footer">

@@ -488,6 +488,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#0B1724">
 <link rel="stylesheet" href="../styles.css?v=20260824">
 </head>
 <body>
@@ -499,7 +501,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <div class="top-bar-inner">
       <span class="js-date"></span>
       <div class="top-bar-right">
-        <a href="mailto:publicidad@reporteaereo.com?subject=Publicidad%20en%20Reporte%20A%C3%A9reo">Publicidad</a>
+        <a href="/buscar.html">Buscar</a>
+        <span class="top-bar-sep">·</span>
+        <a href="/anunciate.html">Publicidad</a>
         <span class="top-bar-sep">·</span>
         <a href="mailto:redaccion@reporteaereo.com">redaccion@reporteaereo.com</a>
         <span class="top-bar-sep">·</span>
@@ -520,7 +524,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       <p class="article-cat-label">${escapeHtml(category)}</p>
       <h1 class="article-title">${escapeHtml(title)}</h1>
       <p class="article-dek">${escapeHtml(dek || "")}</p>
-      <p class="article-byline">Por <a class="author-link" href="https://www.linkedin.com/in/nicolasezequielgomez/" target="_blank" rel="noopener">${escapeHtml(
+      <p class="article-byline">Por <a class="author-link" href="${
+        author === "Nicolás E. Gómez"
+          ? "https://www.linkedin.com/in/nicolasezequielgomez/"
+          : `../autor.html?nombre=${encodeURIComponent(author)}`
+      }"${author === "Nicolás E. Gómez" ? ' target="_blank" rel="noopener"' : ""}>${escapeHtml(
         author
       )}</a> · <time datetime="${isoDate}">${escapeHtml(dateLabel)}</time></p>
       ${coverImageUrl ? `<figure class="article-cover-img"><img src="${escapeHtml(coverImageUrl)}" alt="${escapeHtml(title)}"></figure>` : ""}
@@ -1227,6 +1235,53 @@ async function handleSitemap(env) {
   return new Response(xml, {
     headers: {
       "content-type": "application/xml; charset=utf-8",
+      "cache-control": "public, max-age=600",
+    },
+  });
+}
+
+/* ---------------- RSS: feed propio para lectores y agregadores ---------------- */
+
+/* Igual que el sitemap, se arma en vivo desde D1 (no es un archivo
+   commiteado) así nunca queda desfasado. Orden cronológico normal —
+   a diferencia de articles.json, acá no interesa qué está destacado. */
+async function handleFeed(env) {
+  const { results } = await env.DB.prepare(
+    "SELECT slug, title, dek, body, category, author, created_at FROM articles WHERE status = 'published' ORDER BY created_at DESC LIMIT 30"
+  ).all();
+
+  const items = results.map((a) => {
+    const link = `${SITE_ORIGIN}/notas/${xmlEscape(a.slug)}.html`;
+    const pubDate = new Date(a.created_at).toUTCString();
+    const desc = metaDescription(a.dek, a.body);
+    return (
+      `  <item>\n` +
+      `    <title>${xmlEscape(a.title)}</title>\n` +
+      `    <link>${link}</link>\n` +
+      `    <guid isPermaLink="true">${link}</guid>\n` +
+      `    <pubDate>${pubDate}</pubDate>\n` +
+      `    <category>${xmlEscape(a.category || "")}</category>\n` +
+      `    <description>${xmlEscape(desc)}</description>\n` +
+      `  </item>`
+    );
+  });
+
+  const xml =
+    `<?xml version="1.0" encoding="UTF-8"?>\n` +
+    `<rss version="2.0">\n` +
+    `<channel>\n` +
+    `  <title>${xmlEscape(SITE_NAME)}</title>\n` +
+    `  <link>${SITE_ORIGIN}/</link>\n` +
+    `  <description>${xmlEscape(
+      "Cobertura periodística de aviación comercial, aerolíneas, aeropuertos y turismo aéreo en Argentina y la región."
+    )}</description>\n` +
+    `  <language>es-AR</language>\n` +
+    `${items.join("\n")}\n` +
+    `</channel>\n</rss>\n`;
+
+  return new Response(xml, {
+    headers: {
+      "content-type": "application/rss+xml; charset=utf-8",
       "cache-control": "public, max-age=600",
     },
   });
@@ -1959,9 +2014,10 @@ export default {
     try {
       /* Las columnas de roles y autoría se agregan solas la primera vez
          que el worker toca la base después de desplegar. */
-      if (path.startsWith("/api/") || path === "/sitemap.xml") await ensureSchema(env);
+      if (path.startsWith("/api/") || path === "/sitemap.xml" || path === "/feed.xml") await ensureSchema(env);
 
       if (path === "/sitemap.xml" && request.method === "GET") return await handleSitemap(env);
+      if (path === "/feed.xml" && request.method === "GET") return await handleFeed(env);
       if (path === "/api/config" && request.method === "GET") return handleConfig(env);
 
       const userMatch = path.match(/^\/api\/users\/([a-z0-9._-]{3,32})$/);

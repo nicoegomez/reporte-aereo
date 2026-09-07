@@ -1886,3 +1886,39 @@ body::after {
 @media (max-width: 599px) {
   .cookie-banner { flex-direction: column; align-items: stretch; text-align: center; }
 }
+
+/* =============================================================
+   24. Buscador y paginación ("Ver más") en categoría/búsqueda/autor
+   ============================================================= */
+.search-form { display: flex; max-width: 480px; margin: 1.75rem 0 2rem; }
+.search-form input[type="search"] {
+  width: 100%;
+  font-family: var(--sans);
+  font-size: 1rem;
+  padding: .8rem 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+}
+.search-form input[type="search"]:focus { outline: none; border-color: var(--ink); }
+.search-form input[type="search"]::placeholder { color: var(--ink-mute); }
+
+.load-more-wrap { display: flex; justify-content: center; margin-top: 2.5rem; }
+.load-more-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: .875rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  padding: .8rem 1.75rem;
+  cursor: pointer;
+  transition: background .2s var(--ease-out), color .2s;
+}
+.load-more-btn:hover { background: var(--ink); color: #fff; }
