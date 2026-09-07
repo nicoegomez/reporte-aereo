@@ -329,6 +329,10 @@
             return;
           }
           section.hidden = false;
+
+          var moreLink = document.getElementById("more-" + slug);
+          if (moreLink) moreLink.hidden = catItems.length <= 4;
+
           grid.innerHTML = catItems.slice(0, 4).map(function (item, i) {
             var big = i === 0 ? " news-card--featured" : "";
             return (
@@ -363,6 +367,79 @@
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
+  }
+
+  /* --------------------------------------------------------
+     7b-bis. Página de categoría — categoria.html?cat=Nombre
+         Lista TODAS las notas de una categoría (a diferencia
+         de la home, que sólo muestra las primeras 4). Así
+         ninguna nota queda inaccesible.
+  -------------------------------------------------------- */
+  function renderCategoryPage() {
+    var grid = $1("#catGrid");
+    if (!grid) return; /* no estamos en categoria.html */
+
+    var titleEl = $1("#catTitle");
+    var countEl = $1("#catCount");
+    var emptyEl = $1("#catEmpty");
+    var params = new URLSearchParams(location.search);
+    var requested = (params.get("cat") || "").trim();
+
+    var known = ["Actualidad", "Aeropuertos", "Business", "Comercial", "Industria", "Turismo"];
+    var match = known.filter(function (c) {
+      return c.toLowerCase() === requested.toLowerCase();
+    })[0] || requested;
+
+    if (titleEl) titleEl.textContent = match || "Todas las notas";
+    document.title = (match ? match + " — " : "") + "Reporte Aéreo";
+
+    fetch("assets/articles.json", { cache: "no-store" })
+      .then(function (res) { return res.ok ? res.json() : []; })
+      .then(function (items) {
+        items = Array.isArray(items) ? items : [];
+        var catItems = match
+          ? items.filter(function (a) { return (a.category || "").toLowerCase() === match.toLowerCase(); })
+          : items;
+
+        if (!catItems.length) {
+          grid.innerHTML = "";
+          if (countEl) countEl.textContent = "";
+          if (emptyEl) emptyEl.hidden = false;
+          return;
+        }
+
+        if (emptyEl) emptyEl.hidden = true;
+        if (countEl) {
+          countEl.textContent = catItems.length === 1
+            ? "1 nota publicada"
+            : catItems.length + " notas publicadas";
+        }
+
+        grid.innerHTML = catItems.map(function (item, i) {
+          var big = i === 0 ? " news-card--featured" : "";
+          return (
+            '<article class="news-card' + big + '">' +
+              '<div class="card-img-wrap">' +
+                (item.image
+                  ? '<img src="' + escapeHtml(item.image) + '" alt="" loading="lazy">'
+                  : '<div class="card-sky-' + ((i % 4) + 1) + '" role="img" aria-label=""></div>') +
+                '<span class="card-cat">' + escapeHtml(item.category || "") + '</span>' +
+              '</div>' +
+              '<h3 class="card-title' + (i === 0 ? " card-title--lg" : "") + '">' +
+                '<a href="' + escapeHtml(item.url) + '">' + escapeHtml(item.title) + '</a>' +
+              '</h3>' +
+              (i === 0 && item.dek ? '<p class="card-excerpt">' + escapeHtml(item.dek) + '</p>' : '') +
+              '<div class="card-meta">' +
+                '<span class="byline-sm">' + escapeHtml(item.author || "Redacción Reporte Aéreo") + '</span>' +
+                '<time>' + escapeHtml(item.dateLabel || "") + '</time>' +
+              '</div>' +
+            '</article>'
+          );
+        }).join("");
+      })
+      .catch(function () {
+        if (emptyEl) emptyEl.hidden = false;
+      });
   }
 
   /* --------------------------------------------------------
@@ -529,6 +606,7 @@
     safe(initProgressBar,   "initProgressBar");
     safe(initNewsletter,    "initNewsletter");
     safe(renderHome,        "renderHome");
+    safe(renderCategoryPage, "renderCategoryPage");
     safe(initStickyNav,     "initStickyNav");
     safe(initSplitText,     "initSplitText");
     safe(initCookieBanner,  "initCookieBanner");
