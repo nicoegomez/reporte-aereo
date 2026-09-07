@@ -1837,6 +1837,35 @@ async function handleApproveArticle(request, env, id) {
   return jsonResponse({ ok: true, url: "/notas/" + fresh.slug + ".html" });
 }
 
+/* Marca/desmarca una nota como destacada sin tocar el resto del
+   contenido. Útil para destacar un borrador del bot desde la lista,
+   sin tener que abrir "Revisar" y volver a guardar todo el formulario.
+   Igual que approve, no exige que la nota sea "tuya": los borradores
+   del bot son de todo el equipo. */
+async function handleToggleFeatured(request, env, id) {
+  const session = await requireSession(request, env);
+  if (!session) return jsonResponse({ error: "No autenticado" }, 401);
+
+  const article = await env.DB.prepare("SELECT * FROM articles WHERE id = ?").bind(id).first();
+  if (!article) return jsonResponse({ error: "No encontrada" }, 404);
+
+  const { featured } = await request.json();
+
+  await env.DB.prepare(
+    "UPDATE articles SET featured = ?, updated_at = ?, updated_by = ? WHERE id = ?"
+  )
+    .bind(featured ? 1 : 0, new Date().toISOString(), session.u, id)
+    .run();
+
+  if (article.status === "published") {
+    const fresh2 = await env.DB.prepare("SELECT * FROM articles WHERE id = ?").bind(id).first();
+    await regenerateArticleFile(env, fresh2);
+    await regenerateArticlesJson(env);
+  }
+
+  return jsonResponse({ ok: true, featured: !!featured });
+}
+
 /* ---------------- router ---------------- */
 
 export default {
@@ -1897,6 +1926,9 @@ export default {
 
       const approveMatch = path.match(/^\/api\/articles\/(\d+)\/approve$/);
       if (approveMatch && request.method === "POST") return await handleApproveArticle(request, env, approveMatch[1]);
+
+      const featureMatch = path.match(/^\/api\/articles\/(\d+)\/feature$/);
+      if (featureMatch && request.method === "POST") return await handleToggleFeatured(request, env, featureMatch[1]);
 
       const moveMatch = path.match(/^\/api\/articles\/(\d+)\/move$/);
       if (moveMatch && request.method === "POST") return await handleMoveArticle(request, env, moveMatch[1]);
