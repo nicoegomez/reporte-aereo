@@ -1,17 +1,5 @@
 [
   {
-    "id": 113,
-    "title": "TEST",
-    "dek": "TEST",
-    "category": "Actualidad",
-    "author": "Nicolás E. Gómez",
-    "date": "2026-09-07T17:30:37.624Z",
-    "dateLabel": "7 de septiembre de 2026",
-    "url": "notas/test-2026-09-07-1hyb.html",
-    "image": "/assets/notas-img/1788802229090-m5rxxw.jpg",
-    "featured": true
-  },
-  {
     "id": 105,
     "title": "Mexico regula slots en aeropuertos",
     "dek": "La Agencia Federal de Aviación Civil de México publicó pautas para asignar slots en aeropuertos con riesgo de saturación para mejorar la seguridad y reducir demoras.",
