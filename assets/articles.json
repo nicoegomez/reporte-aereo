@@ -1,5 +1,17 @@
 [
   {
+    "id": 69,
+    "title": "Aerolíneas Argentinas anuncia su oferta de verano",
+    "dek": "La compañía incorpora vuelos a Curazao y Cartagena de Indias, y refuerza la operación en destinos turísticos nacionales e internacionales.",
+    "category": "Comercial",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-08-28T14:01:26.435Z",
+    "dateLabel": "28 de agosto de 2026",
+    "url": "notas/aerolineas-argentinas-anuncia-su-oferta-de-verano-2026-08-28-zx70.html",
+    "image": "https://aviacionenargentina.com.ar/wp-content/uploads/2026/08/VERANO-2-1024x683.jpeg",
+    "featured": true
+  },
+  {
     "id": 56,
     "title": "Nueva terminal en Aeropuerto de Salta",
     "dek": "La nueva terminal del Aeropuerto Internacional de Salta comenzará a operar con un 65% más de capacidad y nuevos servicios, tras una inversión de 110 millones de dólares.",
@@ -180,6 +192,18 @@
     "featured": true
   },
   {
+    "id": 111,
+    "title": "Ryanair critica control fronterizo de la UE",
+    "dek": "Ryanair solicita prórroga de la exención del Sistema de Entrada/Salida tras problemas en los controles fronterizos de aeropuertos europeos.",
+    "category": "Actualidad",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-09-07T10:00:34.547Z",
+    "dateLabel": "7 de septiembre de 2026",
+    "url": "notas/ryanair-critica-control-fronterizo-de-la-ue-2026-09-07-g23t.html",
+    "image": "https://flex-assets.tadevel-cdn.com/6a3d0ef39cabf625adad62cf/720.jpeg",
+    "featured": false
+  },
+  {
     "id": 78,
     "title": "Carga aérea global crece 3,9 por ciento",
     "dek": "La demanda de carga aérea aumentó 3,9 por ciento en julio, con un crecimiento del 4,7 por ciento en operaciones internacionales y una mayor capacidad en Latinoamérica.",
@@ -216,6 +240,30 @@
     "featured": false
   },
   {
+    "id": 66,
+    "title": "Copa Airlines crece en Brasilia",
+    "dek": "Copa Airlines aumentará la frecuencia de vuelos en Brasilia un 57% hacia fin de año y principios de 2027, ofreciendo más opciones a los viajeros.",
+    "category": "Actualidad",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-08-28T10:01:04.785Z",
+    "dateLabel": "28 de agosto de 2026",
+    "url": "notas/copa-airlines-crece-en-brasilia-2026-08-28-pgw9.html",
+    "image": "/assets/notas-img/1788797057018-g5y25s.jpg",
+    "featured": false
+  },
+  {
+    "id": 63,
+    "title": "Travel Sale 2026",
+    "dek": "La plataforma registra más de 1.000 usuarios por minuto y una alta intención de compra en sus primeras horas, con Aerolíneas Argentinas vendiendo un 40% más que en el año anterior.",
+    "category": "Comercial",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-08-27T14:01:39.788Z",
+    "dateLabel": "27 de agosto de 2026",
+    "url": "notas/travel-sale-2026-2026-08-27-qutv.html",
+    "image": "http://aviacionenargentina.com.ar/wp-content/uploads/2017/10/cataratas-2017-07-30-5r6mdns10uo0-1024x576.jpeg",
+    "featured": false
+  },
+  {
     "id": 62,
     "title": "Aeropuerto de Punta Cana incorpora inteligencia artificial",
     "dek": "El Aeropuerto de Punta Cana implementó una plataforma de inteligencia artificial para detectar narcóticos y divisas no declaradas en los puntos de control de pasajeros con tecnología de SeeTrue y Leidos.",
@@ -225,6 +273,30 @@
     "dateLabel": "27 de agosto de 2026",
     "url": "notas/aeropuerto-de-punta-cana-incorpora-inteligencia-artificial-2026-08-27-js2e.html",
     "image": "https://flex-assets.tadevel-cdn.com/6960739fda6f060b4664d1b8/720.jpeg",
+    "featured": false
+  },
+  {
+    "id": 61,
+    "title": "Aeroclubes en la mira",
+    "dek": "La Administración Nacional de Aviación Civil convocó a varios aeroclubes a una reunión en su sede, lo que generó suspicacias sobre posibles intereses inmobiliarios en las tierras de estos clubes.",
+    "category": "Business",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-08-27T10:01:53.981Z",
+    "dateLabel": "27 de agosto de 2026",
+    "url": "notas/aeroclubes-en-la-mira-2026-08-27-k5tz.html",
+    "image": "/assets/notas-img/1788796332329-gy0hiw.webp",
+    "featured": false
+  },
+  {
+    "id": 60,
+    "title": "JetSMART anuncia ruta a Porto Seguro",
+    "dek": "La aerolínea JetSMART lanzó una nueva ruta directa entre Buenos Aires y Porto Seguro en Brasil, con vuelos desde el 5 de enero de 2027.",
+    "category": "Comercial",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-08-27T10:01:35.580Z",
+    "dateLabel": "27 de agosto de 2026",
+    "url": "notas/jetsmart-anuncia-ruta-a-porto-seguro-2026-08-27-hl7l.html",
+    "image": "http://aviacionenargentina.com.ar/wp-content/uploads/2025/02/JetSmart-0828-1024x683.jpg",
     "featured": false
   },
   {
