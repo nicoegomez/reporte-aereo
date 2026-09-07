@@ -625,6 +625,48 @@ code {
   .article-row { flex-wrap: wrap; }
   .article-row-actions { width: 100%; }
 }
+.cat-select {
+  font-family: var(--sans);
+  font-size: .625rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ra-noche);
+  border: 1px solid var(--ra-niebla);
+  background: var(--ra-blanco);
+  padding: .1rem .3rem;
+  cursor: pointer;
+}
+.undo-bar {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-8);
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  background: var(--ra-noche);
+  color: #fff;
+  font-family: var(--sans);
+  font-size: .8125rem;
+  padding: .7rem var(--space-6);
+  box-shadow: 0 6px 24px rgba(0,0,0,.25);
+}
+.undo-bar .undo-btn {
+  font-family: var(--sans);
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--ra-rojo);
+  border: 0;
+  padding: .4rem .8rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.undo-bar .undo-btn:hover { background: #fff; color: var(--ra-rojo); }
 </style>
 </head>
 <body>
@@ -1068,6 +1110,47 @@ code {
     el.classList.remove("hidden", "error", "ok");
     el.classList.add(isError ? "error" : "ok");
   }
+  /* Barra de "Publicando en 5s... Deshacer" antes de disparar una accion
+     que deja algo online. Devuelve una Promise<boolean>: true si paso
+     el tiempo (hay que seguir con la accion real), false si el usuario
+     toco "Deshacer" (todavia no se llamo a ninguna API, asi que no hay
+     nada que revertir). */
+  function runWithUndo(message) {
+    var SECONDS = 5;
+    return new Promise(function (resolve) {
+      var bar = document.createElement("div");
+      bar.className = "undo-bar";
+      var text = document.createElement("span");
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "undo-btn";
+      btn.textContent = "Deshacer";
+      bar.appendChild(text);
+      bar.appendChild(btn);
+      document.body.appendChild(bar);
+
+      var remaining = SECONDS;
+      function render() { text.textContent = message + " en " + remaining + "s\u2026"; }
+      render();
+
+      var timer = setInterval(function () {
+        remaining -= 1;
+        if (remaining <= 0) {
+          clearInterval(timer);
+          bar.remove();
+          resolve(true);
+          return;
+        }
+        render();
+      }, 1000);
+
+      btn.addEventListener("click", function () {
+        clearInterval(timer);
+        bar.remove();
+        resolve(false);
+      });
+    });
+  }
   function escapeHtml(str) {
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;")
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -1445,9 +1528,18 @@ code {
     var msg = $("publishMsg");
     var btn = $("publishBtn");
     hide(msg);
-    btn.disabled = true;
     var editId = $("editId").value;
     var wasDraft = $("editId").dataset.wasDraft === "1";
+    var willPublish = !editId || wasDraft;
+
+    if (willPublish) {
+      var prevLabel = btn.textContent;
+      btn.disabled = true;
+      var proceedSubmit = await runWithUndo("Publicando la nota");
+      if (!proceedSubmit) { btn.disabled = false; btn.textContent = prevLabel; return; }
+    }
+
+    btn.disabled = true;
     btn.textContent = editId && !wasDraft ? "Guardando…" : "Publicando…";
 
     var payload = {
@@ -1827,6 +1919,15 @@ code {
 
   /* ============ BOT: borradores y fuentes ============ */
 
+  var CATEGORY_OPTIONS = ["Actualidad", "Aeropuertos", "Business", "Comercial", "Industria", "Turismo"];
+  function categorySelectHtml(current) {
+    return '<select class="cat-select" data-action="category" data-current="' + current + '">' +
+      CATEGORY_OPTIONS.map(function (cat) {
+        return '<option' + (cat === current ? " selected" : "") + '>' + cat + '</option>';
+      }).join("") +
+      '</select>';
+  }
+
   function fmtDate(iso) {
     if (!iso) return "";
     try { return new Date(iso).toLocaleDateString("es-AR", { day: "numeric", month: "short" }); }
@@ -1855,7 +1956,7 @@ code {
           (a.cover_image_url ? '<img src="' + a.cover_image_url + '" alt="">' : '<div class="thumb-empty"></div>') +
           '<div class="article-row-main">' +
             '<div class="t">' + a.title + (a.featured ? '<span class="badge-featured">Destacada</span>' : "") + '</div>' +
-            '<div class="m"><span class="cat-chip">' + a.category + '</span><span>' + (a.source_name || 'bot') + '</span><span>·</span><span>' + fmtDate(a.created_at) + '</span></div>' +
+            '<div class="m">' + categorySelectHtml(a.category) + '<span>' + (a.source_name || 'bot') + '</span><span>·</span><span>' + fmtDate(a.created_at) + '</span></div>' +
           '</div>' +
           '<div class="article-row-actions">' +
             '<button data-action="feature">' + (a.featured ? "Quitar destaque" : "Destacar") + '</button>' +
@@ -1892,6 +1993,8 @@ code {
 
       if (action === "approve") {
         btn.disabled = true;
+        var proceedApprove = await runWithUndo("Publicando la nota");
+        if (!proceedApprove) { btn.disabled = false; return; }
         btn.textContent = "Publicando…";
         var r = await fetch("/api/articles/" + id + "/approve", { method: "POST" });
         if (r.ok) { loadDrafts(); loadArticles(); }
@@ -1927,6 +2030,29 @@ code {
         $("publishBtn").textContent = "Guardar y publicar";
         show($("cancelEditBtn"));
         updatePreview();
+      }
+    });
+
+    draftsBox.addEventListener("change", async function (e) {
+      var select = e.target.closest("select.cat-select");
+      if (!select) return;
+      var row = select.closest(".article-row");
+      var id = row.dataset.id;
+      var previous = select.dataset.current || select.value;
+      var next = select.value;
+      select.disabled = true;
+      try {
+        var rc = await fetch("/api/articles/" + id + "/category", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ category: next }),
+        });
+        if (rc.ok) { select.dataset.current = next; }
+        else { select.value = previous; }
+      } catch (_) {
+        select.value = previous;
+      } finally {
+        select.disabled = false;
       }
     });
   }

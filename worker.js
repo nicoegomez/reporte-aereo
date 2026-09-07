@@ -944,7 +944,7 @@ async function handleUpdateArticle(request, env, id) {
       title,
       dek || "",
       category || "Actualidad",
-      author || existing.author,
+      author || session.n,
       body,
       finalCover,
       featured ? 1 : 0,
@@ -1913,6 +1913,35 @@ async function handleToggleFeatured(request, env, id) {
   return jsonResponse({ ok: true, featured: !!featured });
 }
 
+/* Cambia la sección de un borrador (o nota) sin tener que abrir
+   "Revisar" y volver a guardar todo el formulario. Mismo patrón que
+   handleToggleFeatured: cualquiera del equipo puede reclasificar un
+   borrador del bot. */
+async function handleUpdateCategory(request, env, id) {
+  const session = await requireSession(request, env);
+  if (!session) return jsonResponse({ error: "No autenticado" }, 401);
+
+  const article = await env.DB.prepare("SELECT * FROM articles WHERE id = ?").bind(id).first();
+  if (!article) return jsonResponse({ error: "No encontrada" }, 404);
+
+  const { category } = await request.json();
+  if (!category) return jsonResponse({ error: "Falta la categoría" }, 400);
+
+  await env.DB.prepare(
+    "UPDATE articles SET category = ?, updated_at = ?, updated_by = ? WHERE id = ?"
+  )
+    .bind(category, new Date().toISOString(), session.u, id)
+    .run();
+
+  if (article.status === "published") {
+    const fresh2 = await env.DB.prepare("SELECT * FROM articles WHERE id = ?").bind(id).first();
+    await regenerateArticleFile(env, fresh2);
+    await regenerateArticlesJson(env);
+  }
+
+  return jsonResponse({ ok: true, category });
+}
+
 /* ---------------- router ---------------- */
 
 export default {
@@ -1976,6 +2005,9 @@ export default {
 
       const featureMatch = path.match(/^\/api\/articles\/(\d+)\/feature$/);
       if (featureMatch && request.method === "POST") return await handleToggleFeatured(request, env, featureMatch[1]);
+
+      const categoryMatch = path.match(/^\/api\/articles\/(\d+)\/category$/);
+      if (categoryMatch && request.method === "POST") return await handleUpdateCategory(request, env, categoryMatch[1]);
 
       const moveMatch = path.match(/^\/api\/articles\/(\d+)\/move$/);
       if (moveMatch && request.method === "POST") return await handleMoveArticle(request, env, moveMatch[1]);
