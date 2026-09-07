@@ -288,6 +288,18 @@
     "featured": false
   },
   {
+    "id": 104,
+    "title": "Aterrizaje de emergencia en Mendoza",
+    "dek": "Un avión IA-63 Pampa II de la Fuerza Aérea Argentina aterrizó de emergencia en Mendoza debido a una falla en la indicación del tren de aterrizaje durante un vuelo de mantenimiento.",
+    "category": "Aeropuertos",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-09-04T19:01:02.742Z",
+    "dateLabel": "4 de septiembre de 2026",
+    "url": "notas/aterrizaje-de-emergencia-en-mendoza-2026-09-04-iyhe.html",
+    "image": "https://flex-assets.tadevel-cdn.com/6a9ae97c6affff1c749b0122/720.jpeg",
+    "featured": false
+  },
+  {
     "id": 92,
     "title": "Clic renueva certificación IOSA",
     "dek": "La aerolínea Clic renovó su certificación de seguridad operacional IOSA, otorgada por la Asociación de Transporte Aéreo Internacional, bajo el nuevo modelo de auditoría basado en riesgos.",
