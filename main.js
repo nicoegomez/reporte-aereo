@@ -40,10 +40,13 @@
       });
     }
 
-    /* Active link (by href matching current page) */
+    /* Active link (by href matching current page). El link de
+       "Inicio" apunta a "/" — con eso, split("/").pop() da "" tanto
+       para la home como para el propio "/", así que el fallback a
+       "index.html" cubre los dos lados de la comparación. */
     var path = location.pathname.split("/").pop() || "index.html";
     links.forEach(function (link) {
-      var href = (link.getAttribute("href") || "").split("/").pop();
+      var href = (link.getAttribute("href") || "").split("/").pop() || "index.html";
       if (href === path) link.classList.add("is-active");
     });
 
@@ -272,7 +275,7 @@
             '<a href="' + escapeHtml(hero.url) + '" aria-label="Leer nota completa: ' + escapeHtml(hero.title) + '">' +
               '<div class="hero-image-wrap">' +
                 (hero.image
-                  ? '<img src="' + escapeHtml(hero.image) + '" alt="" loading="eager">'
+                  ? '<img src="' + escapeHtml(hero.image) + '" alt="' + escapeHtml(hero.title || "") + '" loading="eager">'
                   : '<div class="hero-sky" role="img" aria-label=""></div>') +
                 '<span class="hero-category">' + escapeHtml(hero.category || "Reporte Aéreo") + '</span>' +
               '</div>' +
@@ -298,7 +301,7 @@
                 '<article class="hero-side-article">' +
                   '<div class="side-img-wrap">' +
                     (item.image
-                      ? '<img src="' + escapeHtml(item.image) + '" alt="" loading="lazy">'
+                      ? '<img src="' + escapeHtml(item.image) + '" alt="' + escapeHtml(item.title || "") + '" loading="lazy">'
                       : '<div class="side-sky-' + ((i % 3) + 1) + '" role="img" aria-label=""></div>') +
                   '</div>' +
                   '<div>' +
@@ -339,7 +342,7 @@
               '<article class="news-card' + big + '">' +
                 '<div class="card-img-wrap">' +
                   (item.image
-                    ? '<img src="' + escapeHtml(item.image) + '" alt="" loading="lazy">'
+                    ? '<img src="' + escapeHtml(item.image) + '" alt="' + escapeHtml(item.title || "") + '" loading="lazy">'
                     : '<div class="card-sky-' + ((i % 4) + 1) + '" role="img" aria-label=""></div>') +
                   '<span class="card-cat">' + escapeHtml(item.category || "") + '</span>' +
                 '</div>' +
@@ -421,7 +424,7 @@
             '<article class="news-card' + big + '">' +
               '<div class="card-img-wrap">' +
                 (item.image
-                  ? '<img src="' + escapeHtml(item.image) + '" alt="" loading="lazy">'
+                  ? '<img src="' + escapeHtml(item.image) + '" alt="' + escapeHtml(item.title || "") + '" loading="lazy">'
                   : '<div class="card-sky-' + ((i % 4) + 1) + '" role="img" aria-label=""></div>') +
                 '<span class="card-cat">' + escapeHtml(item.category || "") + '</span>' +
               '</div>' +
