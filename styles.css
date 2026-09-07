@@ -1093,6 +1093,38 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
 .article-body a { color: var(--accent-blue); text-decoration: underline; }
 .article-body a:hover { text-decoration: none; }
 
+.article-share {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+.article-share-label {
+  font-family: var(--sans);
+  font-size: .6875rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-soft, #6b7280);
+}
+.article-share-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  transition: color .2s, border-color .2s, background-color .2s;
+}
+.article-share-link:hover {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
 /* Pull quote within article */
 .pull-quote {
   margin-block: 2.5rem;

@@ -992,6 +992,11 @@ code {
 
         <p class="panel-label" style="margin-top: var(--space-8);">Últimas corridas del bot</p>
         <div id="botLog" class="field-hint"></div>
+
+        <p class="panel-label" style="margin-top: var(--space-8);">Mantenimiento</p>
+        <p class="field-hint">Reescribe el HTML de las notas ya publicadas con la plantilla actual (firma, botones de compartir, etc). Puede tardar uno o dos minutos.</p>
+        <button class="btn-secondary" id="regenerateAllBtn" type="button">Regenerar todas las notas publicadas</button>
+        <div class="msg hidden" id="regenerateAllMsg"></div>
       </section>
 
       <section class="tab-panel hidden" id="tabTeam">
@@ -1639,6 +1644,7 @@ code {
             "</div>" +
             '<div class="article-row-actions">' +
               '<button data-action="view" title="Ver publicada">Ver</button>' +
+              '<button data-action="linkedin" title="Copiar texto para postear en LinkedIn">LinkedIn</button>' +
               (mine
                 ? '<button data-action="edit">Editar</button>' +
                   '<button data-action="delete">Borrar</button>'
@@ -1724,7 +1730,7 @@ code {
       return;
     }
 
-    if (action === "view" || action === "edit") {
+    if (action === "view" || action === "edit" || action === "linkedin") {
       var res = await fetch("/api/articles/" + id);
       var data = await res.json();
       if (!res.ok) return;
@@ -1732,6 +1738,20 @@ code {
 
       if (action === "view") {
         window.open("/notas/" + a.slug + ".html", "_blank", "noopener");
+        return;
+      }
+
+      if (action === "linkedin") {
+        var url = "https://www.reporteaereo.com/notas/" + a.slug + ".html";
+        var texto = a.title + (a.dek ? "\n\n" + a.dek : "") + "\n\n" + url;
+        try {
+          await navigator.clipboard.writeText(texto);
+          var original = btn.textContent;
+          btn.textContent = "¡Copiado!";
+          setTimeout(function () { btn.textContent = original; }, 2000);
+        } catch (_) {
+          prompt("Copiá el texto para postear en LinkedIn:", texto);
+        }
         return;
       }
 
@@ -2213,6 +2233,29 @@ code {
         loadFeeds();
       } finally {
         saveFeedBtn.disabled = false;
+      }
+    });
+  }
+
+  var regenerateAllBtn = $("regenerateAllBtn");
+  if (regenerateAllBtn) {
+    regenerateAllBtn.addEventListener("click", async function () {
+      var msg = $("regenerateAllMsg");
+      if (!confirm("Esto va a reescribir el HTML de todas las notas publicadas. ¿Seguimos?")) return;
+      regenerateAllBtn.disabled = true;
+      regenerateAllBtn.textContent = "Regenerando…";
+      setMsg(msg, "Se lanzó en segundo plano. Puede tardar uno o dos minutos; el resultado va a aparecer abajo, en Últimas corridas del bot.", false);
+      try {
+        var res = await fetch("/api/admin/regenerate-all", { method: "POST" });
+        var data = await res.json();
+        if (!res.ok) { setMsg(msg, data.error || "Error al regenerar", true); return; }
+        setTimeout(loadBotLog, 30000);
+        setTimeout(loadBotLog, 90000);
+      } catch (err) {
+        setMsg(msg, "Error de conexión", true);
+      } finally {
+        regenerateAllBtn.disabled = false;
+        regenerateAllBtn.textContent = "Regenerar todas las notas publicadas";
       }
     });
   }

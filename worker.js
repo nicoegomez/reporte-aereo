@@ -537,6 +537,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       <div class="article-body">
 ${bodyHtml}
       </div>
+      <div class="article-share">
+        <span class="article-share-label">Compartir</span>
+        <a class="article-share-link" href="https://api.whatsapp.com/send?text=${encodeURIComponent(title + " " + canonical)}" target="_blank" rel="noopener" aria-label="Compartir en WhatsApp"><svg width="16" height="16" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/></svg></a>
+        <a class="article-share-link" href="https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(canonical)}" target="_blank" rel="noopener" aria-label="Compartir en X"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+        <a class="article-share-link" href="https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(canonical)}" target="_blank" rel="noopener" aria-label="Compartir en LinkedIn"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12ZM7.12 20.45H3.56V9h3.56v11.45ZM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0Z"/></svg></a>
+      </div>
     </article>
   </main>
 
@@ -872,7 +878,7 @@ async function handleListArticles(request, env) {
   if (!session) return jsonResponse({ error: "No autenticado" }, 401);
 
   const { results } = await env.DB.prepare(
-    "SELECT id, slug, title, category, author, cover_image_url, featured, sort_order, status, created_at, created_by FROM articles ORDER BY featured DESC, sort_order DESC, id DESC"
+    "SELECT id, slug, title, dek, category, author, cover_image_url, featured, sort_order, status, created_at, created_by FROM articles ORDER BY featured DESC, sort_order DESC, id DESC"
   ).all();
   /* La interfaz usa esto para mostrar sólo las acciones permitidas. */
   return jsonResponse({ articles: results, me: session.u, isDirector: isDirector(session) });
@@ -1794,6 +1800,35 @@ async function ingestFeed(env, feed) {
   return stat;
 }
 
+/* Avisa por mail (transaccional, vía Brevo) si alguna fuente no se
+   pudo leer en la última corrida del bot, o si el bot entero se cayó.
+   Así Nico se entera sin tener que entrar a revisar el panel. */
+async function sendBotAlert(env, failures) {
+  if (!failures || !failures.length) return;
+  const detail = failures.map((f) => `${f.feed}: ${f.error}`).join("\n");
+  try {
+    await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "api-key": env.BREVO_API_KEY,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        sender: { name: "Reporte Aéreo — Bot", email: "redaccion@reporteaereo.com" },
+        to: [{ email: "redaccion@reporteaereo.com" }],
+        subject: `Reporte Aéreo — el bot tuvo problemas (${failures.length})`,
+        htmlContent:
+          "<p>La última corrida del bot no pudo leer una o más fuentes:</p><pre>" +
+          detail.replace(/</g, "&lt;") +
+          "</pre><p>Revisá el detalle en el panel, pestaña Fuentes RSS.</p>",
+      }),
+    });
+  } catch (e) {
+    console.error("[bot-alert]", e);
+  }
+}
+
 async function runBot(env) {
   const { results: feeds } = await env.DB.prepare(
     "SELECT * FROM feeds WHERE active = 1 ORDER BY id"
@@ -1925,6 +1960,47 @@ async function handleBotLog(request, env) {
   return jsonResponse({ log: results });
 }
 
+/* Herramienta de mantenimiento: reescribe el HTML de TODAS las notas
+   publicadas con la plantilla actual (firma correcta, botones de
+   compartir, etc). Corre en segundo plano porque son muchas notas;
+   el resultado queda anotado en bot_log como una corrida más. */
+async function handleRegenerateAll(request, env, ctx) {
+  const session = await requireSession(request, env);
+  if (!session) return jsonResponse({ error: "No autenticado" }, 401);
+
+  const { results } = await env.DB.prepare(
+    "SELECT * FROM articles WHERE status = 'published'"
+  ).all();
+
+  const job = (async () => {
+    let ok = 0;
+    const errores = [];
+    for (const article of results) {
+      try {
+        await regenerateArticleFile(env, article);
+        ok++;
+      } catch (e) {
+        errores.push(`${article.slug}: ${(e && e.message) || e}`);
+      }
+    }
+    try {
+      await regenerateArticlesJson(env);
+    } catch (e) {
+      errores.push(`articles.json: ${(e && e.message) || e}`);
+    }
+    const detail = errores.length
+      ? `${errores.length} error(es): ${errores.slice(0, 5).join(" | ")}`
+      : "Listo, sin errores";
+    await env.DB.prepare(
+      "INSERT INTO bot_log (feed_name, items_seen, items_created, detail) VALUES (?, ?, ?, ?)"
+    ).bind("regenerar_todo", results.length, ok, detail).run();
+  })().catch((e) => console.error("[regenerate-all]", e));
+
+  if (ctx && ctx.waitUntil) ctx.waitUntil(job);
+
+  return jsonResponse({ ok: true, started: true, total: results.length });
+}
+
 /* aprobar un borrador -> lo publica */
 async function handleApproveArticle(request, env, id) {
   const session = await requireSession(request, env);
@@ -2010,7 +2086,12 @@ export default {
   /* disparador programado: corre el bot solo */
   async scheduled(event, env, ctx) {
     ctx.waitUntil(
-      runBot(env).catch((e) => console.error("[bot]", e))
+      runBot(env)
+        .then((stats) => sendBotAlert(env, stats.filter((s) => s.error)))
+        .catch((e) => {
+          console.error("[bot]", e);
+          return sendBotAlert(env, [{ feed: "runBot (corrida completa)", error: String((e && e.message) || e) }]);
+        })
     );
   },
 
@@ -2062,6 +2143,7 @@ export default {
 
       if (path === "/api/bot/run" && request.method === "POST") return await handleRunBot(request, env, ctx);
       if (path === "/api/bot/log" && request.method === "GET") return await handleBotLog(request, env);
+      if (path === "/api/admin/regenerate-all" && request.method === "POST") return await handleRegenerateAll(request, env, ctx);
 
       const approveMatch = path.match(/^\/api\/articles\/(\d+)\/approve$/);
       if (approveMatch && request.method === "POST") return await handleApproveArticle(request, env, approveMatch[1]);
