@@ -1,5 +1,17 @@
 [
   {
+    "id": 96,
+    "title": "Embraer de LATAM despega por primera vez",
+    "dek": "Un Embraer E195-E2 de LATAM Brasil realizó su vuelo inaugural desde São José dos Campos con pilotos de prueba del fabricante.",
+    "category": "Comercial",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-09-03T10:01:01.275Z",
+    "dateLabel": "3 de septiembre de 2026",
+    "url": "notas/embraer-de-latam-despega-por-primera-vez-2026-09-03-21h0.html",
+    "image": "https://flex-assets.tadevel-cdn.com/6a28361903d1047930bb0a2b/720.jpeg",
+    "featured": true
+  },
+  {
     "id": 105,
     "title": "Mexico regula slots en aeropuertos",
     "dek": "La Agencia Federal de Aviación Civil de México publicó pautas para asignar slots en aeropuertos con riesgo de saturación para mejorar la seguridad y reducir demoras.",
@@ -33,18 +45,6 @@
     "dateLabel": "3 de septiembre de 2026",
     "url": "notas/espacio-iberia-en-madrid-2026-09-03-4yj3.html",
     "image": "/assets/notas-img/1788797775204-q4yfvl.jpg",
-    "featured": true
-  },
-  {
-    "id": 96,
-    "title": "Embraer de LATAM despega por primera vez",
-    "dek": "Un Embraer E195-E2 de LATAM Brasil realizó su vuelo inaugural desde São José dos Campos con pilotos de prueba del fabricante.",
-    "category": "Comercial",
-    "author": "Redacción Reporte Aéreo",
-    "date": "2026-09-03T10:01:01.275Z",
-    "dateLabel": "3 de septiembre de 2026",
-    "url": "notas/embraer-de-latam-despega-por-primera-vez-2026-09-03-21h0.html",
-    "image": "https://flex-assets.tadevel-cdn.com/6a28361903d1047930bb0a2b/720.jpeg",
     "featured": true
   },
   {
