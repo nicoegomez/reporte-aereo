@@ -217,6 +217,14 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
   transition: color .2s;
 }
 .top-bar-right a:hover { color: #fff; }
+.top-bar-social {
+  display: inline-flex;
+  align-items: center;
+  color: rgba(255,255,255,.75);
+  transition: color .2s;
+}
+.top-bar-social:hover { color: #fff; }
+.top-bar-social svg { display: block; }
 
 /* =============================================================
    6. Masthead
