@@ -48,6 +48,18 @@
     "featured": true
   },
   {
+    "id": 94,
+    "title": "Problemas en la aviación estadounidense",
+    "dek": "La aviación comercial en Estados Unidos enfrenta desafíos con demoras y cancelaciones de vuelos debido a cuestiones técnicas, meteorología y falta de personal.",
+    "category": "Business",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-09-02T14:01:53.269Z",
+    "dateLabel": "2 de septiembre de 2026",
+    "url": "notas/problemas-en-la-aviacion-estadounidense-2026-09-02-lgey.html",
+    "image": "https://aeromarket.com.ar/wp-content/uploads/2026/08/Alma-dibujo.jpg",
+    "featured": true
+  },
+  {
     "id": 69,
     "title": "Aerolíneas Argentinas anuncia su oferta de verano",
     "dek": "La compañía incorpora vuelos a Curazao y Cartagena de Indias, y refuerza la operación en destinos turísticos nacionales e internacionales.",
