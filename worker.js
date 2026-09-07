@@ -1088,6 +1088,52 @@ async function autoPhotoForArticle(env, category, title) {
   return (await findAutoPhoto(env, base)) || (await findAutoPhoto(env, "airplane sky"));
 }
 
+/* Convierte un Uint8Array a base64 sin cargar todo en un solo string
+   de una: spreadear un array grande entero rompe por límite de stack,
+   y concatenar byte a byte es mucho más lento. Se hace en bloques. */
+function bytesToBase64Chunked(bytes) {
+  const CHUNK = 0x8000;
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(bin);
+}
+
+/* Baja una imagen que vive en un servidor de terceros (la fuente que
+   scrapeó el bot, o el resultado de Pexels) y la sube a nuestro propio
+   repo, para que la portada de la nota no dependa de que ese tercero
+   la siga sirviendo. Sólo se usa para notas nuevas del bot — nunca
+   toca lo ya publicado. Cualquier problema (red, tamaño, tipo de
+   contenido) devuelve la URL original tal cual: nunca debe cortar la
+   creación de una nota por esto. */
+async function rehostExternalImage(env, url) {
+  if (!url) return url;
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; ReporteAereoBot/1.0)" },
+    });
+    if (!res.ok) return url;
+
+    const contentType = (res.headers.get("content-type") || "").split(";")[0].trim();
+    if (!contentType.startsWith("image/")) return url;
+
+    const buf = await res.arrayBuffer();
+    if (buf.byteLength > 4 * 1024 * 1024) return url; // portada rara vez necesita pesar esto
+
+    const dataBase64 = bytesToBase64Chunked(new Uint8Array(buf));
+    const ext = extFromMime(contentType || "image/jpeg");
+    const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const path = `assets/notas-img/${filename}`;
+
+    await githubPutFile(env, path, dataBase64, `Alojar imagen: ${filename}`, null, true);
+
+    return `${SITE_ORIGIN}/assets/notas-img/${filename}`;
+  } catch (_) {
+    return url;
+  }
+}
+
 /* ---------------- newsletter ---------------- */
 
 function isValidEmail(email) {
@@ -1636,6 +1682,7 @@ async function ingestFeed(env, feed) {
 
     let cover = item.image || null;
     if (!cover) cover = await autoPhotoForArticle(env, feed.category, draft.titulo);
+    if (cover) cover = await rehostExternalImage(env, cover);
 
     const maxOrder = await env.DB.prepare("SELECT MAX(sort_order) as m FROM articles").first();
     const sortOrder = (maxOrder && maxOrder.m ? maxOrder.m : 0) + 1;
