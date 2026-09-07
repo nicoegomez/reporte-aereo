@@ -1428,6 +1428,7 @@ code {
   function resetForm() {
     $("publishForm").reset();
     $("editId").value = "";
+    $("editId").dataset.wasDraft = "";
     setCover("");
     $("formTitle").textContent = "Nueva nota";
     $("publishBtn").textContent = "Publicar nota";
@@ -1446,7 +1447,8 @@ code {
     hide(msg);
     btn.disabled = true;
     var editId = $("editId").value;
-    btn.textContent = editId ? "Guardando…" : "Publicando…";
+    var wasDraft = $("editId").dataset.wasDraft === "1";
+    btn.textContent = editId && !wasDraft ? "Guardando…" : "Publicando…";
 
     var payload = {
       title: $("pTitle").value.trim(),
@@ -1475,9 +1477,21 @@ code {
       }
       data = await res.json();
       if (!res.ok) { setMsg(msg, data.error || "Error al guardar", true); return; }
-      setMsg(msg, (editId ? "Actualizada. " : "Publicada. ") + "Va a verse en unos minutos en " + data.url, false);
+
+      /* Un borrador del bot que se revisa y se guarda queda publicado
+         directamente acá — antes había que guardar y después ir a
+         "Borradores del bot" a apretar "Publicar" de nuevo. */
+      if (editId && wasDraft) {
+        var apRes = await fetch("/api/articles/" + editId + "/approve", { method: "POST" });
+        var apData = await apRes.json();
+        if (!apRes.ok) { setMsg(msg, apData.error || "Se guardaron los cambios pero no se pudo publicar", true); return; }
+        data = apData;
+      }
+
+      setMsg(msg, (editId && !wasDraft ? "Actualizada. " : "Publicada. ") + "Va a verse en unos minutos en " + data.url, false);
       resetForm();
       loadArticles();
+      loadDrafts();
     } catch (err) {
       setMsg(msg, "Error de conexión", true);
     } finally {
@@ -1631,6 +1645,7 @@ code {
 
       document.querySelector('.tab-btn[data-tab="new"]').click();
       $("editId").value = a.id;
+      $("editId").dataset.wasDraft = "";
       $("pTitle").value = a.title;
       $("pCategory").value = a.category;
       $("pAuthor").value = a.author;
@@ -1884,6 +1899,7 @@ code {
         var a = data.article;
         document.querySelector('.tab-btn[data-tab="new"]').click();
         $("editId").value = a.id;
+        $("editId").dataset.wasDraft = "1";
         $("pTitle").value = a.title;
         $("pCategory").value = a.category;
         $("pAuthor").value = a.author;
@@ -1894,6 +1910,9 @@ code {
         var img = $("coverPreview");
         if (img && a.cover_image_url) { img.src = a.cover_image_url; img.classList.add("show"); }
         if ($("formTitle")) $("formTitle").textContent = "Revisar borrador";
+        $("publishBtn").textContent = "Guardar y publicar";
+        show($("cancelEditBtn"));
+        updatePreview();
       }
     });
   }
