@@ -192,6 +192,18 @@
     "featured": true
   },
   {
+    "id": 112,
+    "title": "Expansión de Heathrow",
+    "dek": "La construcción de una tercera pista en el aeropuerto de Heathrow generará más de 108.000 empleos en el Reino Unido según las proyecciones de la administración.",
+    "category": "Actualidad",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-09-07T14:00:38.916Z",
+    "dateLabel": "7 de septiembre de 2026",
+    "url": "notas/expansion-de-heathrow-2026-09-07-ad9h.html",
+    "image": "/assets/notas-img/1788797155245-tk1wbc.jpg",
+    "featured": false
+  },
+  {
     "id": 111,
     "title": "Ryanair critica control fronterizo de la UE",
     "dek": "Ryanair solicita prórroga de la exención del Sistema de Entrada/Salida tras problemas en los controles fronterizos de aeropuertos europeos.",
