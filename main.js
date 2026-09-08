@@ -257,6 +257,7 @@
             btn.textContent = "¡Registrado!";
             btn.style.background = "#1a7a40";
             input.value = "";
+            track("newsletter_alta", { ubicacion: location.pathname });
           } else {
             btn.textContent = (result.data && result.data.error) || "Error, probá de nuevo";
             btn.style.background = "#b3261e";
@@ -749,6 +750,60 @@
   }
 
   /* --------------------------------------------------------
+     9b. Eventos de negocio -> dataLayer (GTM/GA4)
+         Empuja los hechos que importan para vender y para
+         entender el sitio: altas al newsletter, uso de los
+         botones de compartir y clics comerciales. Si GTM no
+         cargó (bloqueador), track() no rompe nada.
+  -------------------------------------------------------- */
+  function track(evento, datos) {
+    try {
+      window.dataLayer = window.dataLayer || [];
+      var payload = { event: evento };
+      if (datos) {
+        for (var k in datos) {
+          if (Object.prototype.hasOwnProperty.call(datos, k)) payload[k] = datos[k];
+        }
+      }
+      window.dataLayer.push(payload);
+    } catch (e) {}
+  }
+
+  function initEventTracking() {
+    document.addEventListener("click", function (e) {
+      var a = e.target && e.target.closest ? e.target.closest("a") : null;
+      if (!a) return;
+
+      /* botones de compartir de la nota */
+      if (a.classList.contains("article-share-link")) {
+        var label = a.getAttribute("aria-label") || "";
+        var red = label.replace(/^Compartir en\s*/i, "").trim() || "desconocida";
+        track("compartir_nota", { red: red, nota: location.pathname });
+        return;
+      }
+
+      var href = a.getAttribute("href") || "";
+
+      /* contacto por mail */
+      if (href.indexOf("mailto:") === 0) {
+        var dir = href.slice(7).split("?")[0];
+        track("clic_email", {
+          destino: dir,
+          tipo: dir.indexOf("publicidad@") === 0 ? "comercial" : "redaccion"
+        });
+        return;
+      }
+
+      /* páginas comerciales */
+      if (/anunciate\.html/.test(href)) { track("clic_anunciate"); return; }
+      if (/contacto\.html/.test(href))  { track("clic_contacto");  return; }
+
+      /* LinkedIn de la marca */
+      if (/linkedin\.com\/company/.test(href)) { track("clic_linkedin"); return; }
+    });
+  }
+
+  /* --------------------------------------------------------
      10. Aviso de cookies — banner simple e informativo.
          No bloquea GTM/GA (Argentina no exige consentimiento
          previo como el RGPD), pero cumple con el requisito de
@@ -793,6 +848,7 @@
     safe(initSmoothAnchors, "initSmoothAnchors");
     safe(initProgressBar,   "initProgressBar");
     safe(initNewsletter,    "initNewsletter");
+    safe(initEventTracking, "initEventTracking");
     safe(renderHome,        "renderHome");
     safe(renderCategoryPage, "renderCategoryPage");
     safe(renderSearchPage,  "renderSearchPage");

@@ -2242,20 +2242,55 @@ code {
     regenerateAllBtn.addEventListener("click", async function () {
       var msg = $("regenerateAllMsg");
       if (!confirm("Esto va a reescribir el HTML de todas las notas publicadas. ¿Seguimos?")) return;
+
       regenerateAllBtn.disabled = true;
-      regenerateAllBtn.textContent = "Regenerando…";
-      setMsg(msg, "Se lanzó en segundo plano. Puede tardar uno o dos minutos; el resultado va a aparecer abajo, en Últimas corridas del bot.", false);
+      var textoOriginal = "Regenerar todas las notas publicadas";
+      var offset = 0, okTotal = 0, total = null, lotes = 0;
+      var erroresVistos = [];
+
       try {
-        var res = await fetch("/api/admin/regenerate-all", { method: "POST" });
-        var data = await res.json();
-        if (!res.ok) { setMsg(msg, data.error || "Error al regenerar", true); return; }
-        setTimeout(loadBotLog, 30000);
-        setTimeout(loadBotLog, 90000);
+        /* El worker procesa de a 15 notas por invocación para no chocar
+           contra el límite de subrequests. Acá encadenamos los lotes
+           hasta que responde done: true. */
+        while (true) {
+          regenerateAllBtn.textContent = total
+            ? "Regenerando… " + Math.min(offset, total) + "/" + total
+            : "Regenerando…";
+          setMsg(msg, total
+            ? "Procesando lote " + (lotes + 1) + " — " + Math.min(offset, total) + " de " + total + " notas."
+            : "Arrancando…", false);
+
+          var res = await fetch("/api/admin/regenerate-all", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ offset: offset, okPrevio: okTotal })
+          });
+          var data = await res.json();
+          if (!res.ok) { setMsg(msg, data.error || "Error al regenerar", true); return; }
+
+          lotes++;
+          total = data.total;
+          okTotal = data.okTotal;
+          offset = data.siguienteOffset;
+          if (data.errores && data.errores.length) {
+            erroresVistos = erroresVistos.concat(data.errores);
+          }
+
+          if (data.done) break;
+          if (lotes > 60) { setMsg(msg, "Se cortó por seguridad tras 60 lotes. Volvé a apretar para continuar.", true); return; }
+        }
+
+        if (erroresVistos.length) {
+          setMsg(msg, "Terminado con avisos: " + okTotal + "/" + total + " notas regeneradas. " + erroresVistos.slice(0, 3).join(" | "), true);
+        } else {
+          setMsg(msg, "Listo: " + okTotal + " de " + total + " notas regeneradas en " + lotes + " lote(s).", false);
+        }
+        loadBotLog();
       } catch (err) {
-        setMsg(msg, "Error de conexión", true);
+        setMsg(msg, "Error de conexión. Se regeneraron " + okTotal + " notas; volvé a apretar para seguir desde donde quedó.", true);
       } finally {
         regenerateAllBtn.disabled = false;
-        regenerateAllBtn.textContent = "Regenerar todas las notas publicadas";
+        regenerateAllBtn.textContent = textoOriginal;
       }
     });
   }

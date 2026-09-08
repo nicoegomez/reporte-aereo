@@ -1968,37 +1968,65 @@ async function handleRegenerateAll(request, env, ctx) {
   const session = await requireSession(request, env);
   if (!session) return jsonResponse({ error: "No autenticado" }, 401);
 
-  const { results } = await env.DB.prepare(
-    "SELECT * FROM articles WHERE status = 'published'"
-  ).all();
+  /* Se procesa por lotes: cada nota son 2 llamadas a la API de GitHub
+     (leer sha + escribir) y un Worker tiene un techo de 50 subrequests
+     por invocacion. Con 15 notas por lote quedan ~30, con margen para
+     las consultas a D1 y el cierre. El panel llama a este endpoint en
+     bucle hasta que responde done: true. */
+  const LOTE = 15;
 
-  const job = (async () => {
-    let ok = 0;
-    const errores = [];
-    for (const article of results) {
-      try {
-        await regenerateArticleFile(env, article);
-        ok++;
-      } catch (e) {
-        errores.push(`${article.slug}: ${(e && e.message) || e}`);
-      }
+  let body = {};
+  try { body = await request.json(); } catch (_) {}
+  const offset = Math.max(0, parseInt(body.offset, 10) || 0);
+  const okPrevio = Math.max(0, parseInt(body.okPrevio, 10) || 0);
+
+  const fila = await env.DB.prepare(
+    "SELECT COUNT(*) AS n FROM articles WHERE status = 'published'"
+  ).first();
+  const total = (fila && fila.n) || 0;
+
+  const { results } = await env.DB.prepare(
+    "SELECT * FROM articles WHERE status = 'published' ORDER BY id LIMIT ? OFFSET ?"
+  ).bind(LOTE, offset).all();
+
+  let ok = 0;
+  const errores = [];
+  for (const article of results) {
+    try {
+      await regenerateArticleFile(env, article);
+      ok++;
+    } catch (e) {
+      errores.push(`${article.slug}: ${(e && e.message) || e}`);
     }
+  }
+
+  const procesadas = offset + results.length;
+  const okTotal = okPrevio + ok;
+  const done = results.length === 0 || procesadas >= total;
+
+  if (done) {
     try {
       await regenerateArticlesJson(env);
     } catch (e) {
       errores.push(`articles.json: ${(e && e.message) || e}`);
     }
     const detail = errores.length
-      ? `${errores.length} error(es): ${errores.slice(0, 5).join(" | ")}`
+      ? `${errores.length} error(es) en el ultimo lote: ${errores.slice(0, 3).join(" | ")}`
       : "Listo, sin errores";
     await env.DB.prepare(
       "INSERT INTO bot_log (feed_name, items_seen, items_created, detail) VALUES (?, ?, ?, ?)"
-    ).bind("regenerar_todo", results.length, ok, detail).run();
-  })().catch((e) => console.error("[regenerate-all]", e));
+    ).bind("regenerar_todo", total, okTotal, detail).run();
+  }
 
-  if (ctx && ctx.waitUntil) ctx.waitUntil(job);
-
-  return jsonResponse({ ok: true, started: true, total: results.length });
+  return jsonResponse({
+    ok: true,
+    done,
+    total,
+    procesadas,
+    okTotal,
+    siguienteOffset: procesadas,
+    errores: errores.slice(0, 5),
+  });
 }
 
 /* aprobar un borrador -> lo publica */
