@@ -1459,7 +1459,24 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
 .article-cover-img, .article-inline-img {
   margin: var(--space-6) 0;
 }
-.article-cover-img img, .article-inline-img img {
+/* La portada reserva su alto vía aspect-ratio (16/9, igual que el hero
+   de portada) para que el layout no salte mientras la foto carga --
+   arregla el CLS que afectaba a las 98 notas por igual. Las imagenes
+   dentro del cuerpo (article-inline-img) quedan con alto automatico:
+   son fotos editoriales elegidas por el redactor y forzarlas a un
+   recorte fijo podria cortar contenido importante de la imagen. */
+.article-cover-img {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+.article-cover-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0;
+  display: block;
+}
+.article-inline-img img {
   width: 100%;
   height: auto;
   border-radius: 0;
