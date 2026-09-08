@@ -336,6 +336,18 @@
     "featured": true
   },
   {
+    "id": 120,
+    "title": "FAA propone flexibilizar requisitos para pilotos diabéticos",
+    "dek": "La FAA publicó una propuesta para modificar los requisitos aplicables a pilotos con diabetes mellitus no insulinodependiente, permitiéndoles obtener certificados médicos sin pasar por el procedimiento de Special Issuance",
+    "category": "Industria",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-09-08T10:00:51.300Z",
+    "dateLabel": "8 de septiembre de 2026",
+    "url": "notas/faa-propone-flexibilizar-requisitos-para-pilotos-diabeticos-2026-09-08-g3wa.html",
+    "image": "https://www.reporteaereo.com/assets/notas-img/1788861652894-dgmcbc.jpg",
+    "featured": false
+  },
+  {
     "id": 118,
     "title": "Antena satelital para drones",
     "dek": "Honeywell Aerospace validó en vuelo una antena satelital para operaciones de drones más allá de la vista del operador, resolviendo un punto crítico para la expansión comercial de estos sistemas.",
