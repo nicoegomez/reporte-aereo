@@ -72,6 +72,18 @@
     "featured": false
   },
   {
+    "id": 130,
+    "title": "Aviación argentina en movimiento",
+    "dek": "La semana aeronáutica trae decisiones y anuncios que impactan en la industria, desde la recuperación de los derechos argentinos sobre las Islas Malvinas hasta la creación de una mesa de trabajo para modernizar el espacio",
+    "category": "Industria",
+    "author": "Nicolás E. Gómez",
+    "date": "2026-09-10T10:01:49.140Z",
+    "dateLabel": "10 de septiembre de 2026",
+    "url": "notas/aviacion-argentina-en-movimiento-2026-09-10-ivhe.html",
+    "image": "/assets/notas-img/1789158732501-yh5rkt.jpg",
+    "featured": false
+  },
+  {
     "id": 129,
     "title": "Vuelos a destino desconocido",
     "dek": "Wingo lanza la tercera edición de Destino Oculto, donde los pasajeros no saben su destino hasta el aterrizaje.",
