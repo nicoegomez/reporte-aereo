@@ -285,6 +285,7 @@
          queda oculta en vez de mostrar contenido inventado.
   -------------------------------------------------------- */
   var HOME_CATEGORIES = ["Actualidad", "Aeropuertos", "Business", "Comercial", "Industria", "Turismo"];
+  var HOME_CAT_LIMIT = 8; // notas por categoria en portada antes de "Ver mas"
 
   function renderHome() {
     var heroMain = $1("#heroMain");
@@ -362,9 +363,9 @@
           section.hidden = false;
 
           var moreLink = document.getElementById("more-" + slug);
-          if (moreLink) moreLink.hidden = catItems.length <= 4;
+          if (moreLink) moreLink.hidden = catItems.length <= HOME_CAT_LIMIT;
 
-          grid.innerHTML = catItems.slice(0, 4).map(function (item, i) {
+          grid.innerHTML = catItems.slice(0, HOME_CAT_LIMIT).map(function (item, i) {
             var big = i === 0 ? " news-card--featured" : "";
             return (
               '<article class="news-card' + big + '">' +
