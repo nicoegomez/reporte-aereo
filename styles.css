@@ -1295,7 +1295,7 @@ h1,h2,h3,h4,h5,h6 { text-wrap: balance; line-height: 1.05; }
   .hero-grid { grid-template-columns: 3fr 1.4fr; gap: 2.5rem; }
   .hero-image-wrap { aspect-ratio: 16/9; }
   .news-grid { grid-template-columns: repeat(4, 1fr); }
-  .news-card--featured { grid-column: span 2; grid-row: span 1; }
+  .news-card--featured { grid-column: span 2; grid-row: span 2; }
   .news-card--featured .card-img-wrap { aspect-ratio: 4/3; }
   .newsletter-inner { flex-direction: row; align-items: center; gap: 4rem; }
   .newsletter-text { flex: 1; }

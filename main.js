@@ -285,7 +285,7 @@
          queda oculta en vez de mostrar contenido inventado.
   -------------------------------------------------------- */
   var HOME_CATEGORIES = ["Actualidad", "Aeropuertos", "Business", "Comercial", "Industria", "Turismo"];
-  var HOME_CAT_LIMIT = 8; // notas por categoria en portada antes de "Ver mas"
+  var HOME_CAT_LIMIT = 9; // notas por categoria en portada antes de "Ver mas"
 
   function renderHome() {
     var heroMain = $1("#heroMain");
