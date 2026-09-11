@@ -1,5 +1,29 @@
 [
   {
+    "id": 131,
+    "title": "Qatar Airways supera los 170 destinos",
+    "dek": "La aerolínea aumenta su capacidad a casi 1.800 servicios semanales para diciembre con la reactivación de vuelos y aumento de frecuencias en varias rutas.",
+    "category": "Business",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-09-10T14:00:12.580Z",
+    "dateLabel": "10 de septiembre de 2026",
+    "url": "notas/qatar-airways-supera-los-170-destinos-2026-09-10-gh97.html",
+    "image": "https://www.reporteaereo.com/assets/notas-img/1789048813457-7qwjm0.jpg",
+    "featured": true
+  },
+  {
+    "id": 127,
+    "title": "Buenos Aires supera los 8 millones de pasajeros",
+    "dek": "El mercado aéreo de Buenos Aires concentró el 76% de los ingresos internacionales en el primer semestre del año con 8,6 millones de pasajeros.",
+    "category": "Actualidad",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-09-09T19:00:57.347Z",
+    "dateLabel": "9 de septiembre de 2026",
+    "url": "notas/buenos-aires-supera-los-8-millones-de-pasajeros-2026-09-09-l392.html",
+    "image": "/assets/notas-img/1789141885861-cjmd2g.jpg",
+    "featured": true
+  },
+  {
     "id": 125,
     "title": "Aeroméxico suma rutas a Europa",
     "dek": "Aeroméxico lanzará vuelos directos a París y Milán desde Guadalajara y Ciudad de México para la temporada 2027.",
@@ -346,6 +370,66 @@
     "url": "notas/flexjet-recibe-su-primer-gulfstream-g500-2026-08-24-glnt.html",
     "image": "/assets/notas-img/1787601622681-msu9j7.jpg",
     "featured": true
+  },
+  {
+    "id": 136,
+    "title": "Vuelos directos a Colombia desde Iquitos",
+    "dek": "El Ministerio de Transportes y Comunicaciones del Perú habilitó vuelos directos entre Iquitos y destinos en Colombia, sin anunciar la aerolínea operadora.",
+    "category": "Aeropuertos",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-09-11T14:01:28.680Z",
+    "dateLabel": "11 de septiembre de 2026",
+    "url": "notas/vuelos-directos-a-colombia-desde-iquitos-2026-09-11-e3l4.html",
+    "image": "https://www.reporteaereo.com/assets/notas-img/1789135288735-1cehk5.jpg",
+    "featured": false
+  },
+  {
+    "id": 134,
+    "title": "United apunta a Miami",
+    "dek": "El CEO de United Airlines quiere instalar un hub en el Aeropuerto Internacional de Miami para impulsar sus vuelos a Sudamérica, pero el control de American Airlines sobre los slots es un obstáculo.",
+    "category": "Actualidad",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-09-11T10:01:06.273Z",
+    "dateLabel": "11 de septiembre de 2026",
+    "url": "notas/united-apunta-a-miami-2026-09-11-jrou.html",
+    "image": "https://www.reporteaereo.com/assets/notas-img/1789120867635-45xza9.jpg",
+    "featured": false
+  },
+  {
+    "id": 133,
+    "title": "Tocumen invertirá B/.526.5 millones en 2027",
+    "dek": "El Aeropuerto Internacional de Tocumen presentó un anteproyecto de presupuesto con fuerte foco en obras de infraestructura para 2027, con un monto de B/.225.6 millones destinado a inversiones.",
+    "category": "Aeropuertos",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-09-10T19:00:20.157Z",
+    "dateLabel": "10 de septiembre de 2026",
+    "url": "notas/tocumen-invertira-b5265-millones-en-2027-2026-09-10-sgqx.html",
+    "image": "https://www.reporteaereo.com/assets/notas-img/1789066821758-ahynek.jpg",
+    "featured": false
+  },
+  {
+    "id": 129,
+    "title": "Vuelos a destino desconocido",
+    "dek": "Wingo lanza la tercera edición de Destino Oculto, donde los pasajeros no saben su destino hasta el aterrizaje.",
+    "category": "Comercial",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-09-10T10:01:21.198Z",
+    "dateLabel": "10 de septiembre de 2026",
+    "url": "notas/vuelos-a-destino-desconocido-2026-09-10-1j1o.html",
+    "image": "https://www.reporteaereo.com/assets/notas-img/1789034482603-g77boc.jpg",
+    "featured": false
+  },
+  {
+    "id": 128,
+    "title": "Motores Lycoming bajo la lupa",
+    "dek": "La FAA emitió una directiva de aeronavegabilidad para determinados motores Lycoming debido a problemas con pernos de pistón que podrían causar fallas de motor.",
+    "category": "Business",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-09-09T19:01:23.532Z",
+    "dateLabel": "9 de septiembre de 2026",
+    "url": "notas/motores-lycoming-bajo-la-lupa-2026-09-09-bvsr.html",
+    "image": "/assets/notas-img/1789141986156-6iabn4.jpg",
+    "featured": false
   },
   {
     "id": 126,
