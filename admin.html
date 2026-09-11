@@ -1625,7 +1625,7 @@ code {
           /* Un redactor sólo ve las acciones sobre lo que escribió. */
           var mine = data.isDirector || a.created_by === data.me;
           return (
-            '<div class="article-row" data-id="' + a.id + '">' +
+            '<div class="article-row" data-id="' + a.id + '" data-featured="' + (a.featured ? "1" : "0") + '">' +
             (canOrder
               ? '<span class="drag-handle" draggable="true" title="Arrastrá para reordenar" aria-label="Reordenar">⠿</span>'
               : "") +
@@ -1634,7 +1634,7 @@ code {
               : '<div class="thumb-empty"></div>') +
             '<div class="article-row-main">' +
               '<div class="t">' + escapeHtml(a.title) +
-                (a.featured ? '<span class="badge-featured">Destacada</span>' : "") +
+                (a.featured ? '<span class="badge-featured">★ Hero de portada</span>' : "") +
               "</div>" +
               '<div class="m">' +
                 '<span class="cat-chip">' + escapeHtml(a.category) + "</span>" +
@@ -1643,6 +1643,7 @@ code {
               "</div>" +
             "</div>" +
             '<div class="article-row-actions">' +
+              '<button data-action="feature" title="Sólo puede haber una nota HERO a la vez: ésta pasa a ser la portada principal">' + (a.featured ? "Quitar HERO" : "Marcar HERO") + '</button>' +
               '<button data-action="view" title="Ver publicada">Ver</button>' +
               '<button data-action="linkedin" title="Copiar texto para postear en LinkedIn">LinkedIn</button>' +
               (mine
@@ -1722,6 +1723,19 @@ code {
     var row = btn.closest(".article-row");
     var id = row.dataset.id;
     var action = btn.dataset.action;
+
+    if (action === "feature") {
+      var willFeature = row.dataset.featured !== "1";
+      btn.disabled = true;
+      var rf = await fetch("/api/articles/" + id + "/feature", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ featured: willFeature }),
+      });
+      if (rf.ok) { loadArticles(); }
+      else { btn.disabled = false; }
+      return;
+    }
 
     if (action === "delete") {
       if (!confirm("¿Borrar esta nota? Esta acción no se puede deshacer.")) return;
