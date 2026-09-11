@@ -910,6 +910,13 @@ async function handlePublish(request, env) {
   let finalCover = coverImageUrl || null;
   if (!finalCover) finalCover = await autoPhotoForArticle(env, category, title);
 
+  /* Sólo puede haber una nota destacada a la vez: es la que se usa como
+     HERO de portada. Al marcar ésta, se desmarcan todas las demás para
+     que la elección del editor sea la que manda, no la fecha. */
+  if (featured) {
+    await env.DB.prepare("UPDATE articles SET featured = 0 WHERE featured = 1").run();
+  }
+
   const insert = await env.DB.prepare(
     `INSERT INTO articles (slug, title, dek, category, author, body, cover_image_url, featured, sort_order, status, created_at, updated_at, created_by, updated_by)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'published', ?, ?, ?, ?)`
@@ -954,6 +961,13 @@ async function handleUpdateArticle(request, env, id) {
 
   const { title, category, dek, body, author, coverImageUrl, featured } = await request.json();
   if (!title || !body) return jsonResponse({ error: "Falta título o cuerpo de la nota" }, 400);
+
+  /* Sólo puede haber una nota destacada a la vez: es la que se usa como
+     HERO de portada. Al marcar ésta, se desmarcan todas las demás para
+     que la elección del editor sea la que manda, no la fecha. */
+  if (featured) {
+    await env.DB.prepare("UPDATE articles SET featured = 0 WHERE featured = 1 AND id != ?").bind(id).run();
+  }
 
   let finalCover = coverImageUrl || existing.cover_image_url || null;
   if (!finalCover) finalCover = await autoPhotoForArticle(env, category, title);
@@ -2070,6 +2084,13 @@ async function handleToggleFeatured(request, env, id) {
   if (!article) return jsonResponse({ error: "No encontrada" }, 404);
 
   const { featured } = await request.json();
+
+  /* Sólo puede haber una nota destacada a la vez: es la que se usa como
+     HERO de portada. Al marcar ésta, se desmarcan todas las demás para
+     que la elección del editor sea la que manda, no la fecha. */
+  if (featured) {
+    await env.DB.prepare("UPDATE articles SET featured = 0 WHERE featured = 1 AND id != ?").bind(id).run();
+  }
 
   await env.DB.prepare(
     "UPDATE articles SET featured = ?, updated_at = ?, updated_by = ? WHERE id = ?"
