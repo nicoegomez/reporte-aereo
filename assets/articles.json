@@ -360,6 +360,18 @@
     "featured": true
   },
   {
+    "id": 129,
+    "title": "Vuelos a destino desconocido",
+    "dek": "Wingo lanza la tercera edición de Destino Oculto, donde los pasajeros no saben su destino hasta el aterrizaje.",
+    "category": "Comercial",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-09-10T10:01:21.198Z",
+    "dateLabel": "10 de septiembre de 2026",
+    "url": "notas/vuelos-a-destino-desconocido-2026-09-10-1j1o.html",
+    "image": "https://www.reporteaereo.com/assets/notas-img/1789034482603-g77boc.jpg",
+    "featured": false
+  },
+  {
     "id": 128,
     "title": "Motores Lycoming bajo la lupa",
     "dek": "La FAA emitió una directiva de aeronavegabilidad para determinados motores Lycoming debido a problemas con pernos de pistón que podrían causar fallas de motor.",
