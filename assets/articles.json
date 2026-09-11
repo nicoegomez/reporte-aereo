@@ -360,6 +360,18 @@
     "featured": true
   },
   {
+    "id": 128,
+    "title": "Motores Lycoming bajo la lupa",
+    "dek": "La FAA emitió una directiva de aeronavegabilidad para determinados motores Lycoming debido a problemas con pernos de pistón que podrían causar fallas de motor.",
+    "category": "Business",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-09-09T19:01:23.532Z",
+    "dateLabel": "9 de septiembre de 2026",
+    "url": "notas/motores-lycoming-bajo-la-lupa-2026-09-09-bvsr.html",
+    "image": "/assets/notas-img/1789141986156-6iabn4.jpg",
+    "featured": false
+  },
+  {
     "id": 126,
     "title": "Francia recibe Falcon 2000LXS Albatros",
     "dek": "La Marina Nacional de Francia recibió dos Falcon 2000LXS Albatros para vigilancia marítima, que reforzarán su capacidad de intervención y vigilancia en el mar.",
