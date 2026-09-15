@@ -2280,16 +2280,25 @@ async function handleRewriteArticle(request, env, id) {
     `<p>Con información de ${escapeHtml(article.source_name || "la fuente")}. Fuente original: ` +
     `<a href="${escapeHtml(article.source_url)}" target="_blank" rel="noopener">enlace</a>.</p>`;
 
-  /* El slug NO se regenera aunque cambie el título: el borrador todavía
-     no tiene URL pública, pero mantenerlo estable evita sorpresas si ya
-     se compartió desde el panel. Tampoco se toca la portada. */
+  /* El slug SÍ se regenera a partir del título nuevo: el borrador todavía
+     no tiene URL pública, así que no hay nada que romper — y dejarlo fijo
+     produciría una nota publicada bajo un slug que no corresponde a su
+     contenido (malo para SEO y confuso para el lector). La portada no se
+     toca: puede haberse elegido o rehosteado a mano. */
+  const nuevoSlug =
+    (slugify(titulo) || "nota") +
+    "-" +
+    String(article.created_at || new Date().toISOString()).slice(0, 10) +
+    "-" +
+    Math.random().toString(36).slice(2, 6);
+
   await env.DB.prepare(
     `UPDATE articles
-       SET title = ?, dek = ?, body = ?, body_format = 'html', meta_description = ?,
+       SET title = ?, slug = ?, dek = ?, body = ?, body_format = 'html', meta_description = ?,
            updated_at = ?, updated_by = ?
      WHERE id = ?`
   )
-    .bind(titulo, bajada, cuerpoHtml, metaDescripcion, new Date().toISOString(), session.u, id)
+    .bind(titulo, nuevoSlug, bajada, cuerpoHtml, metaDescripcion, new Date().toISOString(), session.u, id)
     .run();
 
   return jsonResponse({

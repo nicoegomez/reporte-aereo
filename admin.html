@@ -360,6 +360,39 @@ body::after { display: none; }   /* sin grano de papel dentro del panel */
   padding-top: .75rem;
   border-top: 1px solid var(--ra-niebla);
 }
+/* cuerpo de la vista previa: imita la tipografía de la nota publicada
+   para que lo que se ve acá sea lo que sale en el diario */
+.preview-body {
+  font-family: var(--serif);
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--ra-texto);
+  max-width: 62ch;
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--ra-niebla);
+}
+.preview-body p { margin: 0 0 1rem; }
+.preview-body h2, .preview-body h3 {
+  font-family: var(--serif);
+  font-size: 1.1875rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--ra-noche);
+  margin: 1.5rem 0 .625rem;
+}
+.preview-body ul, .preview-body ol { margin: 0 0 1rem; padding-left: 1.25rem; }
+.preview-body li { margin-bottom: .375rem; }
+.preview-body blockquote {
+  margin: 1.25rem 0;
+  padding-left: 1rem;
+  border-left: 3px solid var(--ra-rojo);
+  font-style: italic;
+  color: var(--ra-noche);
+}
+.preview-body a { color: var(--ra-rojo); }
+.preview-body img { max-width: 100%; height: auto; display: block; }
+.preview-body figcaption { font-family: var(--sans); font-size: .75rem; color: var(--ra-acero); margin-top: .375rem; }
 .preview-empty { color: var(--ra-acero); font-family: var(--sans); font-size: .875rem; font-style: italic; }
 
 /* ---------- listado de notas ---------- */
@@ -859,6 +892,7 @@ code {
                   <h2 class="preview-title" id="previewTitle"><span class="preview-empty">El titular aparece acá mientras escribís.</span></h2>
                   <p class="preview-dek" id="previewDek"></p>
                   <p class="preview-meta" id="previewMeta"></p>
+                  <div class="preview-body" id="previewBody"></div>
                 </div>
               </div>
             </div>
@@ -1336,6 +1370,59 @@ code {
     el.classList.toggle("over", value > max * 0.92);
   }
 
+  /* Réplica en el panel de bodyToHtml() del worker, para que la vista
+     previa muestre exactamente lo que va a salir publicado. Si cambia
+     bodyToHtml en worker.js, hay que reflejarlo acá. */
+  function previewBodyToHtml(body) {
+    return String(body || "")
+      .split(/\n\s*\n/)
+      .map(function (p) { return p.trim(); })
+      .filter(Boolean)
+      .map(function (p) {
+        var imgMatch = p.match(/^\{\{img:([^|}]+)(?:\|([^}]*))?\}\}$/);
+        if (imgMatch) {
+          var url = escapeHtml(imgMatch[1].trim());
+          var alt = escapeHtml((imgMatch[2] || "").trim());
+          return '<figure class="article-inline-img"><img src="' + url + '" alt="' + alt + '" loading="lazy">' +
+            (alt ? "<figcaption>" + alt + "</figcaption>" : "") + "</figure>";
+        }
+
+        var headingLineMatch = p.match(/^#{2,3}[ \t]*(.*)$/m);
+        if (headingLineMatch) {
+          var before = p.slice(0, headingLineMatch.index).trim();
+          var headingText = headingLineMatch[1].trim();
+          var rest = p.slice(headingLineMatch.index + headingLineMatch[0].length).replace(/^\n/, "");
+          if (!headingText) {
+            var nextLineMatch = rest.match(/^(.*)$/m);
+            if (nextLineMatch && nextLineMatch[1].trim()) {
+              headingText = nextLineMatch[1].trim();
+              rest = rest.slice(nextLineMatch[0].length).replace(/^\n/, "");
+            }
+          }
+          rest = rest.trim();
+          var html = "";
+          if (before) html += "<p>" + previewInlineMarks(escapeHtml(before)).replace(/\n/g, "<br>") + "</p>\n";
+          html += "<h2>" + previewInlineMarks(escapeHtml(headingText)) + "</h2>";
+          if (rest) html += "\n<p>" + previewInlineMarks(escapeHtml(rest)).replace(/\n/g, "<br>") + "</p>";
+          return html;
+        }
+
+        if (/^>\s?/.test(p)) {
+          var lines = p.split("\n").map(function (l) { return l.replace(/^>\s?/, "").trim(); }).filter(Boolean);
+          return '<blockquote class="pull-quote"><p>' + previewInlineMarks(escapeHtml(lines.join(" "))) + "</p></blockquote>";
+        }
+
+        return "<p>" + previewInlineMarks(escapeHtml(p)).replace(/\n/g, "<br>") + "</p>";
+      })
+      .join("\n");
+  }
+
+  function previewInlineMarks(text) {
+    return text
+      .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")
+      .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>");
+  }
+
   function updatePreview() {
     var title = $("pTitle").value.trim();
     var dek = $("pDek").value.trim();
@@ -1357,6 +1444,19 @@ code {
 
     var today = new Date().toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" });
     $("previewMeta").textContent = "Por " + author + " · " + today + (words ? " · " + mins + " min de lectura" : "");
+
+    /* Las notas del bot (Gemini) ya vienen como HTML armado: se muestran
+       tal cual. Las escritas a mano usan las marcas ##/>/** y pasan por
+       el mismo conversor que el worker. */
+    var bodyRaw = $("pBody").value;
+    var pb = $("previewBody");
+    if (!bodyRaw.trim()) {
+      pb.innerHTML = '<span class="preview-empty">El cuerpo de la nota aparece acá mientras escribís.</span>';
+    } else if ($("editId").dataset.bodyFormat === "html") {
+      pb.innerHTML = bodyRaw;
+    } else {
+      pb.innerHTML = previewBodyToHtml(bodyRaw);
+    }
   }
 
   ["pTitle", "pDek", "pBody", "pCategory", "pAuthor"].forEach(function (id) {
@@ -1518,6 +1618,7 @@ code {
     $("publishForm").reset();
     $("editId").value = "";
     $("editId").dataset.wasDraft = "";
+    $("editId").dataset.bodyFormat = "";
     setCover("");
     $("formTitle").textContent = "Nueva nota";
     $("publishBtn").textContent = "Publicar nota";
@@ -1553,6 +1654,7 @@ code {
         $("pTitle").value = a.title || "";
         $("pDek").value = a.dek || "";
         $("pBody").value = a.body || "";
+        $("editId").dataset.bodyFormat = "html";
         updatePreview();
         setMsg(msg, "Reescrita. Revisá el texto nuevo antes de publicar.", false);
       }
@@ -1808,6 +1910,7 @@ code {
       document.querySelector('.tab-btn[data-tab="new"]').click();
       $("editId").value = a.id;
       $("editId").dataset.wasDraft = "";
+      $("editId").dataset.bodyFormat = a.body_format || "";
       $("pTitle").value = a.title;
       $("pCategory").value = a.category;
       $("pAuthor").value = a.author;
@@ -2106,6 +2209,7 @@ code {
         document.querySelector('.tab-btn[data-tab="new"]').click();
         $("editId").value = a.id;
         $("editId").dataset.wasDraft = "1";
+        $("editId").dataset.bodyFormat = a.body_format || "";
         $("pTitle").value = a.title;
         $("pCategory").value = a.category;
         $("pAuthor").value = a.author;
