@@ -1653,6 +1653,16 @@ async function runAI(env, messages) {
   return null;
 }
 
+/* Modelos de Gemini a usar, en orden de preferencia. Se intenta el
+   primero y se cae al siguiente sólo si el modelo no existe o fue dado
+   de baja (404) — no ante errores de cuota o de red, donde reintentar
+   con otro modelo no cambiaría nada.
+   Google deprecó `gemini-2.5-flash` para cuentas nuevas en 2026 y esto
+   rompió la ingesta en silencio; la cadena de respaldo evita que una
+   próxima baja vuelva a dejar al bot sin redacción. Se puede forzar un
+   modelo puntual con la variable GEMINI_MODEL sin tocar el código. */
+const GEMINI_MODELS = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-latest"];
+
 /* Sanitizador liviano para el HTML que devuelve Gemini antes de guardarlo.
    Se espera sólo <h3>/<ul>/<li>/<p>/<strong>/<em>/<a>, así que por las
    dudas se recorta cualquier otra cosa (scripts, estilos, iframes,
@@ -1702,10 +1712,9 @@ function filtrarLinksInternosValidos(html, slugsValidos) {
    notasRelacionadas (opcional): últimas notas publicadas de la misma
    categoría, para que Gemini pueda enlazar internamente si hay
    continuidad real de tema — nunca a la fuerza. */
-async function reescribirConGemini(tituloOriginal, contenidoOriginal, apiKey, notasRelacionadas = []) {
+async function reescribirConGemini(tituloOriginal, contenidoOriginal, env, notasRelacionadas = []) {
+  const apiKey = env && env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("Falta GEMINI_API_KEY");
-
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
   const systemPrompt = [
     "Sos editor sénior de periodismo técnico aerocomercial en Argentina, escribiendo para Reporte Aéreo, un medio especializado en aviación comercial y turismo.",
@@ -1757,18 +1766,46 @@ async function reescribirConGemini(tituloOriginal, contenidoOriginal, apiKey, no
     },
   };
 
-  const res = await fetch(endpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  /* Un modelo forzado por variable de entorno manda; si no, la cadena
+     de respaldo. Sólo el 404 (modelo inexistente o dado de baja) hace
+     pasar al siguiente: ante cuota, permisos o red, reintentar con otro
+     modelo daría el mismo error y ocultaría la causa real. */
+  const modelos = env.GEMINI_MODEL ? [env.GEMINI_MODEL] : GEMINI_MODELS;
+  const errores = [];
+  let data = null;
 
-  if (!res.ok) {
+  for (const modelo of modelos) {
+    const endpoint =
+      "https://generativelanguage.googleapis.com/v1beta/models/" +
+      modelo +
+      ":generateContent?key=" +
+      apiKey;
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (res.ok) {
+      data = await res.json();
+      break;
+    }
+
     const errText = await res.text().catch(() => "");
-    throw new Error(`Gemini HTTP ${res.status}: ${errText.slice(0, 300)}`);
+    errores.push(`${modelo}: HTTP ${res.status} ${errText.slice(0, 200)}`);
+
+    if (res.status === 404) continue;
+    throw new Error(`Gemini falló con ${modelo}: HTTP ${res.status} ${errText.slice(0, 300)}`);
   }
 
-  const data = await res.json();
+  if (!data) {
+    throw new Error(
+      "Ningún modelo de Gemini disponible. Probá cargar el secret GEMINI_MODEL con un modelo vigente. Detalle: " +
+        errores.join(" | ")
+    );
+  }
+
   const text =
     data &&
     data.candidates &&
@@ -1818,7 +1855,7 @@ async function draftFromItem(env, item, feed) {
   }
 
   const relacionadas = await recentArticlesForLinking(env, feed.category);
-  const notaProcesada = await reescribirConGemini(item.title, material, env.GEMINI_API_KEY, relacionadas);
+  const notaProcesada = await reescribirConGemini(item.title, material, env, relacionadas);
 
   if (!notaProcesada || notaProcesada.insuficiente) {
     return { skip: "Gemini marcó el material como insuficiente" };
@@ -2268,7 +2305,7 @@ async function handleRewriteArticle(request, env, id) {
     notaProcesada = await reescribirConGemini(
       article.title,
       material,
-      env.GEMINI_API_KEY,
+      env,
       relacionadas
     );
   } catch (e) {
