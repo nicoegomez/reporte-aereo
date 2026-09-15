@@ -218,6 +218,14 @@ async function ensureSchema(env) {
   if (!userCols.includes("email")) statements.push("ALTER TABLE users ADD COLUMN email TEXT");
   if (!articleCols.includes("created_by")) statements.push("ALTER TABLE articles ADD COLUMN created_by TEXT");
   if (!articleCols.includes("updated_by")) statements.push("ALTER TABLE articles ADD COLUMN updated_by TEXT");
+  /* meta_description: SEO description generada por Gemini, separada del
+     dek/bajada. body_format distingue el "body" viejo (texto plano con
+     marcas ## que bodyToHtml() convierte y escapa) del que ya viene como
+     HTML armado por Gemini (cuerpo_html), que hay que renderizar tal cual
+     en vez de volver a escapar. Default 'text' preserva el comportamiento
+     de todas las notas existentes y de las que se cargan a mano. */
+  if (!articleCols.includes("meta_description")) statements.push("ALTER TABLE articles ADD COLUMN meta_description TEXT");
+  if (!articleCols.includes("body_format")) statements.push("ALTER TABLE articles ADD COLUMN body_format TEXT NOT NULL DEFAULT 'text'");
 
   for (const sql of statements) await env.DB.prepare(sql).run();
 
@@ -610,12 +618,15 @@ async function regenerateArticleFile(env, article) {
     category: article.category,
     author: article.author,
     dateLabel: dateLabelFor(article.created_at),
-    bodyHtml: bodyToHtml(article.body),
+    /* body_format='html' = ya viene armado (Gemini): se usa tal cual, sin
+       pasar por bodyToHtml (que espera texto plano con marcas ## y
+       escaparía cualquier <h3>/<ul> convirtiéndolo en texto visible). */
+    bodyHtml: article.body_format === "html" ? article.body : bodyToHtml(article.body),
     coverImageUrl: article.cover_image_url,
     slug: article.slug,
     isoDate: article.created_at,
     isoUpdated: article.updated_at,
-    description: metaDescription(article.dek, article.body),
+    description: article.meta_description || metaDescription(article.dek, article.body),
   });
   const path = `notas/${article.slug}.html`;
   const existing = await githubGetFile(env, path);
@@ -1642,6 +1653,111 @@ async function runAI(env, messages) {
   return null;
 }
 
+/* Sanitizador liviano para el HTML que devuelve Gemini antes de guardarlo.
+   Se espera sólo <h3>/<ul>/<li>/<p>/<strong>/<em>/<a>, así que por las
+   dudas se recorta cualquier otra cosa (scripts, estilos, iframes,
+   atributos on*, links javascript:). No reemplaza la revisión humana en
+   el panel antes de publicar, es sólo una segunda barrera. */
+function sanitizeAiHtml(html) {
+  return String(html || "")
+    .replace(/<(script|style|iframe|object|embed|link|meta)[\s\S]*?<\/\1\s*>/gi, "")
+    .replace(/<(script|style|iframe|object|embed|link|meta)\b[^>]*>/gi, "")
+    .replace(/\son\w+\s*=\s*(".*?"|'.*?'|[^\s>]+)/gi, "")
+    .replace(/(href|src)\s*=\s*(["'])\s*javascript:[^"']*\2/gi, '$1="#"')
+    .trim();
+}
+
+/* Reescribe y estructura una noticia con Gemini: recibe el título y el
+   material crudo de la fuente, y devuelve un objeto ya parseado con
+   titulo/bajada/cuerpo_html/meta_description. Usa responseSchema para
+   obligar a Gemini a devolver ese JSON exacto (no un "intento" de JSON
+   en texto libre que después haya que parsear a mano). Tira una excepción
+   si falta la API key, si la llamada HTTP falla, o si la respuesta no
+   trae contenido parseable — el llamador (draftFromItem, dentro del
+   try/catch de ingestFeed) es quien decide qué hacer con eso. */
+async function reescribirConGemini(tituloOriginal, contenidoOriginal, apiKey) {
+  if (!apiKey) throw new Error("Falta GEMINI_API_KEY");
+
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+  const systemPrompt = [
+    "Sos editor sénior de periodismo técnico aerocomercial en Argentina, escribiendo para Reporte Aéreo, un medio especializado en aviación comercial y turismo.",
+    "Tu tarea es reescribir y enriquecer ESTRUCTURALMENTE una noticia a partir del material de una fuente, en español rioplatense, con tono de periodista especializado del rubro — nunca de resumen automático ni de gacetilla de prensa traducida.",
+    "REGLAS ESTRICTAS (no negociables):",
+    "1. Usá ÚNICAMENTE hechos presentes en el material provisto. Nunca agregues cifras, fechas, nombres, rutas, cotizaciones ni declaraciones que no estén en el material.",
+    "2. \"Enriquecer\" significa reorganizar y estructurar mejor lo que ya está (subtítulos, listas, remarcar una tensión o un contraste que el propio material contenga) — NUNCA significa inventar contexto, antecedentes o cifras adicionales que no vinieron en el material.",
+    "3. No copies frases textuales largas de la fuente: reescribí con tus propias palabras.",
+    "4. No opines ni especules más allá de lo que los propios datos ya implican. No uses adjetivos promocionales.",
+    "5. Nunca inventes citas.",
+    "6. No arranques con la fórmula 'La aerolínea X + verbo'. Usá vocabulario técnico del rubro (factor de ocupación, código compartido, slot, hub, cabotaje, wet lease) con naturalidad, no lo parafrasees en términos genéricos.",
+    "7. Evitá muletillas de IA: 'cabe destacar', 'es importante mencionar', 'en definitiva', 'sin duda alguna', 'cabe resaltar', 'resulta relevante', 'en este sentido', 'vale la pena mencionar'.",
+    "8. En cuerpo_html usá HTML simple y válido: párrafos <p>, subtítulos <h3> sólo si el largo de la nota lo justifica, y listas <ul><li> cuando el material tenga varios puntos enumerables (rutas, fechas, cifras). No uses <script>, <style>, ni atributos de estilo o eventos.",
+    "9. meta_description: una sola oración de 140 a 160 caracteres pensada para el <meta name=\"description\"> de Google, sin comillas.",
+    "Si el material es demasiado escaso para armar una nota real, respondé igual con el JSON pedido pero con insuficiente=true y el resto de los campos vacíos.",
+    "Devolvé ÚNICAMENTE el JSON pedido por el esquema, sin texto ni comentarios adicionales antes ni después.",
+  ].join("\n");
+
+  const userPrompt = [
+    "TITULO ORIGINAL: " + tituloOriginal,
+    "MATERIAL DE LA FUENTE:",
+    contenidoOriginal,
+  ].join("\n\n");
+
+  const body = {
+    systemInstruction: { parts: [{ text: systemPrompt }] },
+    contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+    generationConfig: {
+      temperature: 0.5,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: "OBJECT",
+        properties: {
+          insuficiente: { type: "BOOLEAN" },
+          titulo: { type: "STRING" },
+          bajada: { type: "STRING" },
+          cuerpo_html: { type: "STRING" },
+          meta_description: { type: "STRING" },
+        },
+        required: ["insuficiente", "titulo", "bajada", "cuerpo_html", "meta_description"],
+      },
+    },
+  };
+
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text().catch(() => "");
+    throw new Error(`Gemini HTTP ${res.status}: ${errText.slice(0, 300)}`);
+  }
+
+  const data = await res.json();
+  const text =
+    data &&
+    data.candidates &&
+    data.candidates[0] &&
+    data.candidates[0].content &&
+    data.candidates[0].content.parts &&
+    data.candidates[0].content.parts[0] &&
+    data.candidates[0].content.parts[0].text;
+
+  if (!text) throw new Error("Gemini no devolvió contenido (posible bloqueo de safety o cuota agotada)");
+
+  const cleaned = String(text).replace(/```[a-z]*\n?/gi, "").replace(/```/g, "").trim();
+
+  let notaProcesada;
+  try {
+    notaProcesada = JSON.parse(cleaned);
+  } catch (e) {
+    throw new Error("Gemini devolvió un JSON inválido: " + String((e && e.message) || e));
+  }
+
+  return notaProcesada;
+}
+
 async function draftFromItem(env, item, feed) {
   /* si el feed sólo trae un teaser, leemos la nota original */
   let material = item.desc || "";
@@ -1654,37 +1770,27 @@ async function draftFromItem(env, item, feed) {
     return { skip: "material insuficiente (" + material.length + " car.)" };
   }
 
-  const prompt = [
-    "TITULO ORIGINAL: " + item.title,
-    "FUENTE: " + feed.name,
-    "MATERIAL DE LA FUENTE:\n" + material,
-  ].join("\n\n");
+  const notaProcesada = await reescribirConGemini(item.title, material, env.GEMINI_API_KEY);
 
-  const text = await runAI(env, [
-    { role: "system", content: BOT_SYSTEM_PROMPT },
-    { role: "user", content: prompt },
-  ]);
-
-  if (!text) return { skip: "la IA no devolvió respuesta" };
-  if (/INSUFICIENTE/i.test(text)) return { skip: "la IA marcó el material como insuficiente" };
-
-  const data = parseDraftResponse(text);
-  if (!data || !data.titulo || !data.cuerpo) {
-    return { skip: "respuesta de la IA sin formato válido" };
+  if (!notaProcesada || notaProcesada.insuficiente) {
+    return { skip: "Gemini marcó el material como insuficiente" };
   }
 
-  const titulo = String(data.titulo).trim().slice(0, 140);
-  const bajada = String(data.bajada || "").trim().slice(0, 220);
-  let cuerpo = String(data.cuerpo).trim();
+  const titulo = String(notaProcesada.titulo || "").trim().slice(0, 140);
+  const bajada = String(notaProcesada.bajada || "").trim().slice(0, 220);
+  const metaDescripcion = String(notaProcesada.meta_description || "").trim().slice(0, 300);
+  let cuerpoHtml = sanitizeAiHtml(notaProcesada.cuerpo_html);
 
-  if (titulo.length < 15 || cuerpo.length < 200) {
-    return { skip: "texto demasiado corto (" + titulo.length + "/" + cuerpo.length + ")" };
+  if (titulo.length < 15 || cuerpoHtml.length < 200) {
+    return { skip: "texto demasiado corto (" + titulo.length + "/" + cuerpoHtml.length + ")" };
   }
 
-  /* pie de atribución obligatorio */
-  cuerpo += "\n\nCon información de " + feed.name + ". Fuente original: " + item.link;
+  /* pie de atribución obligatorio, como <p> porque cuerpo_html ya es HTML */
+  cuerpoHtml +=
+    `<p>Con información de ${escapeHtml(feed.name)}. Fuente original: ` +
+    `<a href="${escapeHtml(item.link)}" target="_blank" rel="noopener">enlace</a>.</p>`;
 
-  return { titulo, bajada, cuerpo };
+  return { titulo, bajada, cuerpo: cuerpoHtml, metaDescription: metaDescripcion };
 }
 
 /* ---------------- ingesta ---------------- */
@@ -1766,8 +1872,13 @@ async function ingestFeed(env, feed) {
     const base = slugify(draft.titulo) || "nota";
     const slug = base + "-" + now.slice(0, 10) + "-" + Math.random().toString(36).slice(2, 6);
 
-    /* fuentes oficiales publican directo; medios quedan en borrador */
-    const status = feed.trust === "official" ? "published" : "draft";
+    /* Gemini es un pipeline nuevo: hasta validarlo en producción, TODO lo
+       que pasa por acá queda en borrador para revisión humana, sin
+       excepción por trust del feed (hoy ningún feed es "official", así
+       que esto no cambia el comportamiento actual; si en el futuro se
+       suma uno, sus notas van a necesitar aprobación igual que las demás
+       mientras esta línea siga así). */
+    const status = "draft";
 
     let cover = item.image || null;
     if (!cover) cover = await autoPhotoForArticle(env, feed.category, draft.titulo);
@@ -1778,14 +1889,15 @@ async function ingestFeed(env, feed) {
 
     const ins = await env.DB.prepare(
       `INSERT INTO articles
-         (slug, title, dek, category, author, body, cover_image_url, featured, sort_order,
+         (slug, title, dek, category, author, body, body_format, meta_description,
+          cover_image_url, featured, sort_order,
           status, created_at, updated_at, created_by, updated_by,
           source_url, source_name, source_guid, is_auto)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, 'bot', 'bot', ?, ?, ?, 1)`
+       VALUES (?, ?, ?, ?, ?, ?, 'html', ?, ?, 0, ?, ?, ?, ?, 'bot', 'bot', ?, ?, ?, 1)`
     )
       .bind(
         slug, draft.titulo, draft.bajada, feed.category, BOT_AUTHOR, draft.cuerpo,
-        cover, sortOrder, status, now, now,
+        draft.metaDescription, cover, sortOrder, status, now, now,
         item.link, feed.name, item.guid
       )
       .run();
@@ -2221,40 +2333,4 @@ export default {
     /* todo lo demás: servir assets estáticos */
     return env.ASSETS.fetch(request);
   },
-
-// Función para llamar a Gemini API
-async function reescribirConGemini(tituloOriginal, contenidoOriginal, apiKey) {
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-
-  const prompt = `
-Tu rol es el de un editor sénior de periodismo técnico aerocomercial en Argentina.
-Reescribe la siguiente noticia para "Reporte Aéreo".
-
-Reglas estrictas:
-1. No hagas un resumen simple. Aporta contexto del mercado aerocomercial argentino/latinoamericano si aplica.
-2. Estructura el cuerpo con subtítulos (<h3>) y listas de puntos clave (<ul><li>).
-3. Tono: Profesional, técnico, analítico.
-4. Devuelve ÚNICAMENTE un objeto JSON válido con los campos exactos: "titulo", "bajada", "cuerpo_html", "meta_description".
-
-Título original: ${tituloOriginal}
-Texto original: ${contenidoOriginal}
-  `;
-
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { responseMimeType: "application/json" }
-    })
-  });
-
-  if (!response.ok) {
-    throw new Error(`Error en Gemini API: ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  const rawText = data.candidates[0].content.parts[0].text;
-  return JSON.parse(rawText);
-}
 };
