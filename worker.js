@@ -1774,6 +1774,16 @@ async function reescribirConGemini(tituloOriginal, contenidoOriginal, env, notas
   const errores = [];
   let data = null;
 
+  /* Errores por los que vale la pena insistir:
+       404 -> el modelo ya no existe: probar el siguiente de la cadena.
+       503 -> ese modelo está saturado en este momento: conviene esperar
+              un poco y reintentar, y si sigue, ir al siguiente.
+       429 -> cuota agotada: NO se reintenta ni se cambia de modelo, la
+              cuota es de la cuenta y el error sería el mismo.
+     Cualquier otro (401, 400, etc.) es un problema real de la petición
+     o de las credenciales: cortar y mostrarlo tal cual. */
+  const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+
   for (const modelo of modelos) {
     const endpoint =
       "https://generativelanguage.googleapis.com/v1beta/models/" +
@@ -1781,27 +1791,42 @@ async function reescribirConGemini(tituloOriginal, contenidoOriginal, env, notas
       ":generateContent?key=" +
       apiKey;
 
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    /* hasta 3 intentos por modelo ante saturación, con espera creciente */
+    let ultimoStatus = 0;
+    let ultimoTexto = "";
 
-    if (res.ok) {
-      data = await res.json();
-      break;
+    for (let intento = 0; intento < 3; intento++) {
+      if (intento > 0) await esperar(intento * 2000);
+
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        data = await res.json();
+        break;
+      }
+
+      ultimoStatus = res.status;
+      ultimoTexto = await res.text().catch(() => "");
+
+      /* sólo el 503 justifica reintentar el mismo modelo */
+      if (res.status !== 503) break;
     }
 
-    const errText = await res.text().catch(() => "");
-    errores.push(`${modelo}: HTTP ${res.status} ${errText.slice(0, 200)}`);
+    if (data) break;
 
-    if (res.status === 404) continue;
-    throw new Error(`Gemini falló con ${modelo}: HTTP ${res.status} ${errText.slice(0, 300)}`);
+    errores.push(`${modelo}: HTTP ${ultimoStatus} ${ultimoTexto.slice(0, 200)}`);
+
+    if (ultimoStatus === 404 || ultimoStatus === 503) continue;
+    throw new Error(`Gemini falló con ${modelo}: HTTP ${ultimoStatus} ${ultimoTexto.slice(0, 300)}`);
   }
 
   if (!data) {
     throw new Error(
-      "Ningún modelo de Gemini disponible. Probá cargar el secret GEMINI_MODEL con un modelo vigente. Detalle: " +
+      "Ningún modelo de Gemini respondió (saturación o modelos dados de baja). Si persiste, probá más tarde o forzá otro modelo con el secret GEMINI_MODEL. Detalle: " +
         errores.join(" | ")
     );
   }
