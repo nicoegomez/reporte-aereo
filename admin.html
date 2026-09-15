@@ -892,6 +892,7 @@ code {
                 </div>
 
                 <button class="btn-submit" type="submit" id="publishBtn">Publicar nota</button>
+                <button type="button" class="btn-secondary hidden" id="rewriteBtn" style="width:100%; margin-top:.5rem;">Reescribir con Gemini</button>
                 <button type="button" class="btn-secondary hidden" id="cancelEditBtn" style="width:100%; margin-top:.5rem;">Cancelar edición</button>
                 <div class="msg hidden" id="publishMsg"></div>
               </div>
@@ -1523,10 +1524,45 @@ code {
     $("coverStatus").textContent = "Si no subís nada, el sistema busca sola una foto relacionada con el tema de la nota.";
     $("inlineImgStatus").textContent = "";
     hide($("cancelEditBtn"));
+    hide($("rewriteBtn"));
     updatePreview();
   }
 
   $("cancelEditBtn").addEventListener("click", resetForm);
+
+  /* Reescribir con Gemini desde el propio editor: sólo aparece en
+     borradores del bot que tengan fuente original (el endpoint relee esa
+     fuente; sin ella no hay material del cual regenerar). */
+  $("rewriteBtn").addEventListener("click", async function () {
+    var id = $("editId").value;
+    if (!id) return;
+    if (!confirm("Gemini va a releer la fuente original y reescribir la nota desde cero.\n\nSe pierden los cambios que hayas hecho acá (título, bajada y cuerpo). ¿Seguir?")) return;
+
+    var rbtn = $("rewriteBtn");
+    var msg = $("publishMsg");
+    rbtn.disabled = true;
+    rbtn.textContent = "Reescribiendo…";
+
+    try {
+      var res = await fetch("/api/articles/" + id + "/rewrite", { method: "POST" });
+      var data = await res.json().catch(function () { return {}; });
+      if (!res.ok) {
+        setMsg(msg, data.error || "No se pudo reescribir la nota.", true);
+      } else {
+        var a = data.article || {};
+        $("pTitle").value = a.title || "";
+        $("pDek").value = a.dek || "";
+        $("pBody").value = a.body || "";
+        updatePreview();
+        setMsg(msg, "Reescrita. Revisá el texto nuevo antes de publicar.", false);
+      }
+    } catch (err) {
+      setMsg(msg, "Error de red al reescribir: " + String(err), true);
+    }
+
+    rbtn.disabled = false;
+    rbtn.textContent = "Reescribir con Gemini";
+  });
 
   $("publishForm").addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -1782,6 +1818,8 @@ code {
       $("formTitle").textContent = "Editar nota";
       $("publishBtn").textContent = "Guardar cambios";
       show($("cancelEditBtn"));
+      /* nota ya publicada: reescribir con IA no aplica */
+      hide($("rewriteBtn"));
       updatePreview();
     }
   });
@@ -1995,6 +2033,7 @@ code {
           '<div class="article-row-actions">' +
             '<button data-action="feature">' + (a.featured ? "Quitar destaque" : "Destacar") + '</button>' +
             '<button data-action="review">Revisar</button>' +
+            '<button data-action="rewrite">Reescribir</button>' +
             '<button data-action="approve">Publicar</button>' +
             '<button data-action="discard">Descartar</button>' +
           '</div>' +
@@ -2036,6 +2075,22 @@ code {
         return;
       }
 
+      if (action === "rewrite") {
+        if (!confirm("Gemini va a releer la fuente original y reescribir el borrador desde cero.\n\nSe pierde el texto actual (título, bajada y cuerpo). ¿Seguir?")) return;
+        btn.disabled = true;
+        btn.textContent = "Reescribiendo…";
+        var rw = await fetch("/api/articles/" + id + "/rewrite", { method: "POST" });
+        var rwData = await rw.json().catch(function () { return {}; });
+        if (rw.ok) {
+          loadDrafts();
+        } else {
+          alert(rwData.error || "No se pudo reescribir la nota.");
+          btn.disabled = false;
+          btn.textContent = "Reescribir";
+        }
+        return;
+      }
+
       if (action === "discard") {
         if (!confirm("¿Descartar este borrador?")) return;
         await fetch("/api/articles/" + id, { method: "DELETE" });
@@ -2063,6 +2118,8 @@ code {
         if ($("formTitle")) $("formTitle").textContent = "Revisar borrador";
         $("publishBtn").textContent = "Guardar y publicar";
         show($("cancelEditBtn"));
+        /* sólo con fuente original hay material que releer */
+        if (a.source_url) show($("rewriteBtn")); else hide($("rewriteBtn"));
         updatePreview();
       }
     });

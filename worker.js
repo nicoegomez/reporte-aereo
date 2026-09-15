@@ -2219,6 +2219,85 @@ async function handleApproveArticle(request, env, id) {
   return jsonResponse({ ok: true, url: "/notas/" + fresh.slug + ".html" });
 }
 
+/* Vuelve a pasar un borrador del bot por Gemini, releyendo el material
+   de la fuente original. NO reescribe sobre el texto ya generado: eso
+   degrada la nota en cada pasada (fotocopia de fotocopia) y arrastra
+   cualquier error que Gemini hubiera cometido la primera vez. Se
+   regenera desde el material crudo, que es lo único confiable.
+   Sólo aplica a borradores con source_url: una nota escrita a mano o ya
+   publicada no se toca. */
+async function handleRewriteArticle(request, env, id) {
+  const session = await requireSession(request, env);
+  if (!session) return jsonResponse({ error: "No autenticado" }, 401);
+
+  const article = await env.DB.prepare("SELECT * FROM articles WHERE id = ?").bind(id).first();
+  if (!article) return jsonResponse({ error: "No encontrada" }, 404);
+
+  if (article.status !== "draft") {
+    return jsonResponse({ error: "Sólo se pueden reescribir borradores, no notas publicadas" }, 400);
+  }
+  if (!article.source_url) {
+    return jsonResponse({ error: "Esta nota no tiene fuente original: no hay material para reescribir" }, 400);
+  }
+
+  const material = await fetchSourceText(article.source_url);
+  if (!material || material.length < 200) {
+    return jsonResponse(
+      { error: "No se pudo releer la fuente original (¿la nota ya no está disponible?)" },
+      400
+    );
+  }
+
+  const relacionadas = await recentArticlesForLinking(env, article.category);
+
+  let notaProcesada;
+  try {
+    notaProcesada = await reescribirConGemini(
+      article.title,
+      material,
+      env.GEMINI_API_KEY,
+      relacionadas
+    );
+  } catch (e) {
+    return jsonResponse({ error: "Gemini falló: " + String((e && e.message) || e) }, 502);
+  }
+
+  if (!notaProcesada || notaProcesada.insuficiente) {
+    return jsonResponse({ error: "Gemini marcó el material como insuficiente" }, 400);
+  }
+
+  const titulo = String(notaProcesada.titulo || "").trim().slice(0, 140);
+  const bajada = String(notaProcesada.bajada || "").trim().slice(0, 220);
+  const metaDescripcion = String(notaProcesada.meta_description || "").trim().slice(0, 300);
+  let cuerpoHtml = sanitizeAiHtml(notaProcesada.cuerpo_html);
+  cuerpoHtml = filtrarLinksInternosValidos(cuerpoHtml, relacionadas.map((n) => n.slug));
+
+  if (titulo.length < 15 || cuerpoHtml.length < 200) {
+    return jsonResponse({ error: "Gemini devolvió un texto demasiado corto: se descartó" }, 400);
+  }
+
+  cuerpoHtml +=
+    `<p>Con información de ${escapeHtml(article.source_name || "la fuente")}. Fuente original: ` +
+    `<a href="${escapeHtml(article.source_url)}" target="_blank" rel="noopener">enlace</a>.</p>`;
+
+  /* El slug NO se regenera aunque cambie el título: el borrador todavía
+     no tiene URL pública, pero mantenerlo estable evita sorpresas si ya
+     se compartió desde el panel. Tampoco se toca la portada. */
+  await env.DB.prepare(
+    `UPDATE articles
+       SET title = ?, dek = ?, body = ?, body_format = 'html', meta_description = ?,
+           updated_at = ?, updated_by = ?
+     WHERE id = ?`
+  )
+    .bind(titulo, bajada, cuerpoHtml, metaDescripcion, new Date().toISOString(), session.u, id)
+    .run();
+
+  return jsonResponse({
+    ok: true,
+    article: { id: Number(id), title: titulo, dek: bajada, body: cuerpoHtml, meta_description: metaDescripcion },
+  });
+}
+
 /* Marca/desmarca una nota como destacada sin tocar el resto del
    contenido. Útil para destacar un borrador del bot desde la lista,
    sin tener que abrir "Revisar" y volver a guardar todo el formulario.
@@ -2351,6 +2430,9 @@ export default {
 
       const approveMatch = path.match(/^\/api\/articles\/(\d+)\/approve$/);
       if (approveMatch && request.method === "POST") return await handleApproveArticle(request, env, approveMatch[1]);
+
+      const rewriteMatch = path.match(/^\/api\/articles\/(\d+)\/rewrite$/);
+      if (rewriteMatch && request.method === "POST") return await handleRewriteArticle(request, env, rewriteMatch[1]);
 
       const featureMatch = path.match(/^\/api\/articles\/(\d+)\/feature$/);
       if (featureMatch && request.method === "POST") return await handleToggleFeatured(request, env, featureMatch[1]);
