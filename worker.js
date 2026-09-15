@@ -1792,6 +1792,19 @@ async function reescribirConGemini(tituloOriginal, contenidoOriginal, apiKey, no
   return notaProcesada;
 }
 
+/* Recorta a un máximo sin partir palabras ni dejar la frase colgando a
+   mitad: si hay que cortar, vuelve hasta el último espacio y agrega
+   puntos suspensivos. Los topes son una red de seguridad contra una
+   respuesta desbocada del modelo, no un criterio editorial — por eso son
+   holgados: el texto normal nunca debería llegar a tocarlos. */
+function recortarLimpio(texto, max) {
+  const t = String(texto || "").trim();
+  if (t.length <= max) return t;
+  const cortado = t.slice(0, max);
+  const ultimoEspacio = cortado.lastIndexOf(" ");
+  return (ultimoEspacio > max * 0.6 ? cortado.slice(0, ultimoEspacio) : cortado).replace(/[,;:\s]+$/, "") + "…";
+}
+
 async function draftFromItem(env, item, feed) {
   /* si el feed sólo trae un teaser, leemos la nota original */
   let material = item.desc || "";
@@ -1811,9 +1824,9 @@ async function draftFromItem(env, item, feed) {
     return { skip: "Gemini marcó el material como insuficiente" };
   }
 
-  const titulo = String(notaProcesada.titulo || "").trim().slice(0, 140);
-  const bajada = String(notaProcesada.bajada || "").trim().slice(0, 220);
-  const metaDescripcion = String(notaProcesada.meta_description || "").trim().slice(0, 300);
+  const titulo = recortarLimpio(notaProcesada.titulo, 200);
+  const bajada = recortarLimpio(notaProcesada.bajada, 400);
+  const metaDescripcion = recortarLimpio(notaProcesada.meta_description, 320);
   let cuerpoHtml = sanitizeAiHtml(notaProcesada.cuerpo_html);
   cuerpoHtml = filtrarLinksInternosValidos(cuerpoHtml, relacionadas.map((n) => n.slug));
 
@@ -2266,9 +2279,9 @@ async function handleRewriteArticle(request, env, id) {
     return jsonResponse({ error: "Gemini marcó el material como insuficiente" }, 400);
   }
 
-  const titulo = String(notaProcesada.titulo || "").trim().slice(0, 140);
-  const bajada = String(notaProcesada.bajada || "").trim().slice(0, 220);
-  const metaDescripcion = String(notaProcesada.meta_description || "").trim().slice(0, 300);
+  const titulo = recortarLimpio(notaProcesada.titulo, 200);
+  const bajada = recortarLimpio(notaProcesada.bajada, 400);
+  const metaDescripcion = recortarLimpio(notaProcesada.meta_description, 320);
   let cuerpoHtml = sanitizeAiHtml(notaProcesada.cuerpo_html);
   cuerpoHtml = filtrarLinksInternosValidos(cuerpoHtml, relacionadas.map((n) => n.slug));
 

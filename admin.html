@@ -211,6 +211,9 @@ body::after { display: none; }   /* sin grano de papel dentro del panel */
   background: var(--ra-blanco);
 }
 .field textarea { resize: vertical; min-height: 380px; line-height: 1.75; font-size: .9375rem; }
+/* título y bajada son textarea para que el texto largo se vea entero,
+   pero no deben heredar la altura del cuerpo */
+#pTitle, #pDek { min-height: 0; resize: vertical; overflow: hidden; }
 .field-row { display: flex; gap: var(--space-4); }
 .field-row .field { flex: 1; }
 .field-hint { font-size: .75rem; color: var(--ra-acero); margin-top: .375rem; line-height: 1.5; }
@@ -220,12 +223,12 @@ body::after { display: none; }   /* sin grano de papel dentro del panel */
   font-family: var(--serif);
   font-size: 1.5rem;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.25;
   letter-spacing: -.02em;
   padding: .75rem;
 }
-#pDek { font-family: var(--serif); font-size: 1.0625rem; line-height: 1.45; }
-#pBody { font-family: var(--serif); font-size: 1.0625rem; line-height: 1.8; }
+#pDek { font-family: var(--serif); font-size: 1.0625rem; line-height: 1.55; padding: .75rem; }
+#pBody { font-family: var(--serif); font-size: 1.0625rem; line-height: 1.8; min-height: 560px; padding: .875rem; }
 
 .counter {
   float: right;
@@ -854,13 +857,13 @@ code {
                 </div>
 
                 <div class="field">
-                  <label for="pTitle">Título <span class="counter" id="titleCount">0 / 140</span></label>
-                  <input id="pTitle" type="text" required maxlength="140" placeholder="El titular, como saldría en tapa">
+                  <label for="pTitle">Título <span class="counter" id="titleCount">0</span></label>
+                  <textarea id="pTitle" required rows="2" maxlength="200" placeholder="El titular, como saldría en tapa"></textarea>
                 </div>
 
                 <div class="field">
-                  <label for="pDek">Bajada <span class="counter" id="dekCount">0 / 220</span></label>
-                  <input id="pDek" type="text" maxlength="220" placeholder="Una línea que amplíe el título y dé contexto">
+                  <label for="pDek">Bajada <span class="counter" id="dekCount">0</span></label>
+                  <textarea id="pDek" rows="3" maxlength="400" placeholder="Una línea que amplíe el título y dé contexto"></textarea>
                 </div>
 
                 <div class="field" style="margin-bottom:0;">
@@ -1365,9 +1368,24 @@ code {
   });
 
   /* ---------- contadores y vista previa ---------- */
-  function setCounter(el, value, max) {
-    el.textContent = value + " / " + max;
-    el.classList.toggle("over", value > max * 0.92);
+  /* El contador es orientativo, no un tope: muestra los caracteres y
+     marca en rojo cuando se pasa del largo recomendado para que se vea
+     bien en tapa y en Google. No impide guardar. */
+  function setCounter(el, value, recomendado, etiqueta) {
+    el.textContent = value + " caracteres";
+    var pasado = value > recomendado;
+    el.classList.toggle("over", pasado);
+    el.title = pasado
+      ? "Más largo que lo recomendado para " + etiqueta + " (~" + recomendado + "). Se puede publicar igual."
+      : "Recomendado hasta ~" + recomendado + " caracteres";
+  }
+
+  /* Crece el alto del campo con el contenido, para no tener que
+     scrollear dentro de un renglón. */
+  function autoGrow(el) {
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
   }
 
   /* Réplica en el panel de bodyToHtml() del worker, para que la vista
@@ -1429,8 +1447,10 @@ code {
     var cat = $("pCategory").value;
     var author = $("pAuthor").value.trim() || $("pAuthor").placeholder || "Redacción";
 
-    setCounter($("titleCount"), $("pTitle").value.length, 140);
-    setCounter($("dekCount"), $("pDek").value.length, 220);
+    setCounter($("titleCount"), $("pTitle").value.length, 90, "un titular");
+    setCounter($("dekCount"), $("pDek").value.length, 200, "una bajada");
+    autoGrow($("pTitle"));
+    autoGrow($("pDek"));
 
     $("previewKicker").textContent = cat;
     $("previewTitle").innerHTML = title
@@ -1462,6 +1482,22 @@ code {
   ["pTitle", "pDek", "pBody", "pCategory", "pAuthor"].forEach(function (id) {
     $(id).addEventListener("input", updatePreview);
     $(id).addEventListener("change", updatePreview);
+  });
+
+  /* Título y bajada son textarea sólo para poder verlos enteros: siguen
+     siendo de una sola línea. Enter no debe meter un salto (rompería el
+     titular), y un pegado multilínea se aplana a espacios. */
+  ["pTitle", "pDek"].forEach(function (id) {
+    $(id).addEventListener("keydown", function (e) {
+      if (e.key === "Enter") e.preventDefault();
+    });
+    $(id).addEventListener("input", function () {
+      if (this.value.indexOf("\n") !== -1) {
+        var pos = this.selectionStart;
+        this.value = this.value.replace(/\s*\n+\s*/g, " ");
+        this.selectionStart = this.selectionEnd = Math.min(pos, this.value.length);
+      }
+    });
   });
 
   /* ---------- marcas de formato en el cuerpo ---------- */
