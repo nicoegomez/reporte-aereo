@@ -1667,6 +1667,30 @@ function sanitizeAiHtml(html) {
     .trim();
 }
 
+/* Últimas notas PUBLICADAS de la misma categoría — candidatas a enlace
+   interno. Sólo publicadas: no tiene sentido linkear a un borrador que
+   puede no llegar a existir como URL pública, o que podría descartarse. */
+async function recentArticlesForLinking(env, category, limit = 8) {
+  const { results } = await env.DB.prepare(
+    "SELECT slug, title FROM articles WHERE status = 'published' AND category = ? ORDER BY created_at DESC LIMIT ?"
+  )
+    .bind(category, limit)
+    .all();
+  return results || [];
+}
+
+/* Segunda barrera contra alucinación de links: saca cualquier <a> a
+   /notas/ cuyo slug no esté exactamente en la lista de candidatos que le
+   dimos a Gemini (por si arma un slug parecido pero no exacto, o linkea
+   algo que no le pasamos). Deja el texto del link, saca sólo el <a>. */
+function filtrarLinksInternosValidos(html, slugsValidos) {
+  const validos = new Set(slugsValidos);
+  return String(html || "").replace(
+    /<a\s+href="\/notas\/([^"]+)\.html"([^>]*)>([\s\S]*?)<\/a>/gi,
+    (match, slug, _attrs, text) => (validos.has(slug) ? match : text)
+  );
+}
+
 /* Reescribe y estructura una noticia con Gemini: recibe el título y el
    material crudo de la fuente, y devuelve un objeto ya parseado con
    titulo/bajada/cuerpo_html/meta_description. Usa responseSchema para
@@ -1674,8 +1698,11 @@ function sanitizeAiHtml(html) {
    en texto libre que después haya que parsear a mano). Tira una excepción
    si falta la API key, si la llamada HTTP falla, o si la respuesta no
    trae contenido parseable — el llamador (draftFromItem, dentro del
-   try/catch de ingestFeed) es quien decide qué hacer con eso. */
-async function reescribirConGemini(tituloOriginal, contenidoOriginal, apiKey) {
+   try/catch de ingestFeed) es quien decide qué hacer con eso.
+   notasRelacionadas (opcional): últimas notas publicadas de la misma
+   categoría, para que Gemini pueda enlazar internamente si hay
+   continuidad real de tema — nunca a la fuerza. */
+async function reescribirConGemini(tituloOriginal, contenidoOriginal, apiKey, notasRelacionadas = []) {
   if (!apiKey) throw new Error("Falta GEMINI_API_KEY");
 
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
@@ -1693,14 +1720,21 @@ async function reescribirConGemini(tituloOriginal, contenidoOriginal, apiKey) {
     "7. Evitá muletillas de IA: 'cabe destacar', 'es importante mencionar', 'en definitiva', 'sin duda alguna', 'cabe resaltar', 'resulta relevante', 'en este sentido', 'vale la pena mencionar'.",
     "8. En cuerpo_html usá HTML simple y válido: párrafos <p>, subtítulos <h3> sólo si el largo de la nota lo justifica, y listas <ul><li> cuando el material tenga varios puntos enumerables (rutas, fechas, cifras). No uses <script>, <style>, ni atributos de estilo o eventos.",
     "9. meta_description: una sola oración de 140 a 160 caracteres pensada para el <meta name=\"description\"> de Google, sin comillas.",
+    "10. Enlace interno: en la sección NOTAS RELACIONADAS YA PUBLICADAS de más abajo tenés una lista de [slug] título de notas que ya existen en el sitio. SOLO si alguna tiene continuidad real y directa con esta noticia (mismo hecho en desarrollo, mismo anuncio, misma ruta/aerolínea de un episodio anterior — no un tema apenas parecido), podés mencionarla con un enlace natural dentro del texto: <a href=\"/notas/SLUG-EXACTO.html\">texto de anclaje</a>, usando el slug EXACTO tal como aparece entre corchetes. Nunca inventes un slug que no esté literalmente en esa lista. Si ninguna nota de la lista tiene continuidad real, no menciones la lista ni fuerces ningún link — es preferible cero enlaces internos a uno forzado o irrelevante.",
     "Si el material es demasiado escaso para armar una nota real, respondé igual con el JSON pedido pero con insuficiente=true y el resto de los campos vacíos.",
     "Devolvé ÚNICAMENTE el JSON pedido por el esquema, sin texto ni comentarios adicionales antes ni después.",
   ].join("\n");
+
+  const notasRelacionadasTexto = notasRelacionadas.length
+    ? "NOTAS RELACIONADAS YA PUBLICADAS (usar sólo si hay continuidad real; slug exacto entre corchetes):\n" +
+      notasRelacionadas.map((n) => `- [${n.slug}] ${n.title}`).join("\n")
+    : "NOTAS RELACIONADAS YA PUBLICADAS: no hay ninguna todavía en esta categoría — no incluyas ningún enlace interno.";
 
   const userPrompt = [
     "TITULO ORIGINAL: " + tituloOriginal,
     "MATERIAL DE LA FUENTE:",
     contenidoOriginal,
+    notasRelacionadasTexto,
   ].join("\n\n");
 
   const body = {
@@ -1770,7 +1804,8 @@ async function draftFromItem(env, item, feed) {
     return { skip: "material insuficiente (" + material.length + " car.)" };
   }
 
-  const notaProcesada = await reescribirConGemini(item.title, material, env.GEMINI_API_KEY);
+  const relacionadas = await recentArticlesForLinking(env, feed.category);
+  const notaProcesada = await reescribirConGemini(item.title, material, env.GEMINI_API_KEY, relacionadas);
 
   if (!notaProcesada || notaProcesada.insuficiente) {
     return { skip: "Gemini marcó el material como insuficiente" };
@@ -1780,6 +1815,7 @@ async function draftFromItem(env, item, feed) {
   const bajada = String(notaProcesada.bajada || "").trim().slice(0, 220);
   const metaDescripcion = String(notaProcesada.meta_description || "").trim().slice(0, 300);
   let cuerpoHtml = sanitizeAiHtml(notaProcesada.cuerpo_html);
+  cuerpoHtml = filtrarLinksInternosValidos(cuerpoHtml, relacionadas.map((n) => n.slug));
 
   if (titulo.length < 15 || cuerpoHtml.length < 200) {
     return { skip: "texto demasiado corto (" + titulo.length + "/" + cuerpoHtml.length + ")" };
