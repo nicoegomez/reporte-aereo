@@ -2221,4 +2221,40 @@ export default {
     /* todo lo demás: servir assets estáticos */
     return env.ASSETS.fetch(request);
   },
+
+// Función para llamar a Gemini API
+async function reescribirConGemini(tituloOriginal, contenidoOriginal, apiKey) {
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+  const prompt = `
+Tu rol es el de un editor sénior de periodismo técnico aerocomercial en Argentina.
+Reescribe la siguiente noticia para "Reporte Aéreo".
+
+Reglas estrictas:
+1. No hagas un resumen simple. Aporta contexto del mercado aerocomercial argentino/latinoamericano si aplica.
+2. Estructura el cuerpo con subtítulos (<h3>) y listas de puntos clave (<ul><li>).
+3. Tono: Profesional, técnico, analítico.
+4. Devuelve ÚNICAMENTE un objeto JSON válido con los campos exactos: "titulo", "bajada", "cuerpo_html", "meta_description".
+
+Título original: ${tituloOriginal}
+Texto original: ${contenidoOriginal}
+  `;
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { responseMimeType: "application/json" }
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error en Gemini API: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  const rawText = data.candidates[0].content.parts[0].text;
+  return JSON.parse(rawText);
+}
 };
