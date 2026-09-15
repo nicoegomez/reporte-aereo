@@ -1668,6 +1668,29 @@ const GEMINI_MODELS = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-lat
    dudas se recorta cualquier otra cosa (scripts, estilos, iframes,
    atributos on*, links javascript:). No reemplaza la revisión humana en
    el panel antes de publicar, es sólo una segunda barrera. */
+/* Gemini devuelve el HTML en una sola línea, sin saltos entre etiquetas:
+   ilegible para editar en el panel. Esto lo separa en bloques — un
+   elemento por línea, con los <li> indentados dentro de su lista — sin
+   cambiar el HTML que se renderiza (los saltos entre etiquetas de bloque
+   no afectan el resultado visual). */
+function formatearHtmlLegible(html) {
+  let out = String(html || "")
+    /* salto antes de cada etiqueta de bloque de apertura */
+    .replace(/\s*<(p|h[1-6]|ul|ol|li|blockquote|figure)(\s[^>]*)?>/gi, "\n<$1$2>")
+    /* salto después de cada cierre de bloque */
+    .replace(/<\/(p|h[1-6]|ul|ol|li|blockquote|figure)>\s*/gi, "</$1>\n")
+    /* los items van indentados dentro de su lista */
+    .replace(/\n<li(\s[^>]*)?>/gi, "\n  <li$1>")
+    /* una sola línea en blanco como máximo */
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  /* línea en blanco entre bloques de primer nivel, para que se lea como
+     párrafos separados igual que las notas escritas a mano */
+  out = out.replace(/<\/(p|h[1-6]|ul|ol|blockquote|figure)>\n(?=<)/gi, "</$1>\n\n");
+  return out;
+}
+
 function sanitizeAiHtml(html) {
   return String(html || "")
     .replace(/<(script|style|iframe|object|embed|link|meta)[\s\S]*?<\/\1\s*>/gi, "")
@@ -1891,6 +1914,7 @@ async function draftFromItem(env, item, feed) {
   const metaDescripcion = recortarLimpio(notaProcesada.meta_description, 320);
   let cuerpoHtml = sanitizeAiHtml(notaProcesada.cuerpo_html);
   cuerpoHtml = filtrarLinksInternosValidos(cuerpoHtml, relacionadas.map((n) => n.slug));
+  cuerpoHtml = formatearHtmlLegible(cuerpoHtml);
 
   if (titulo.length < 15 || cuerpoHtml.length < 200) {
     return { skip: "texto demasiado corto (" + titulo.length + "/" + cuerpoHtml.length + ")" };
@@ -2346,6 +2370,7 @@ async function handleRewriteArticle(request, env, id) {
   const metaDescripcion = recortarLimpio(notaProcesada.meta_description, 320);
   let cuerpoHtml = sanitizeAiHtml(notaProcesada.cuerpo_html);
   cuerpoHtml = filtrarLinksInternosValidos(cuerpoHtml, relacionadas.map((n) => n.slug));
+  cuerpoHtml = formatearHtmlLegible(cuerpoHtml);
 
   if (titulo.length < 15 || cuerpoHtml.length < 200) {
     return jsonResponse({ error: "Gemini devolvió un texto demasiado corto: se descartó" }, 400);

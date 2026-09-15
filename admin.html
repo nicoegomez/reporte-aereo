@@ -880,7 +880,7 @@ code {
                   <input id="pInlineFile" type="file" accept="image/*" class="hidden">
                   <textarea id="pBody" required placeholder="Escribí la nota.&#10;&#10;Separá los párrafos con una línea en blanco."></textarea>
                   <p class="field-hint" id="inlineImgStatus"></p>
-                  <p class="field-hint">
+                  <p class="field-hint" id="bodyFormatHint">
                     Párrafos separados por una línea en blanco. <strong>##</strong> al inicio hace un subtítulo,
                     <strong>&gt;</strong> una cita destacada, <strong>**texto**</strong> negrita y <strong>*texto*</strong> cursiva.
                   </p>
@@ -1477,6 +1477,13 @@ code {
     } else {
       pb.innerHTML = previewBodyToHtml(bodyRaw);
     }
+
+    var hint = $("bodyFormatHint");
+    if (hint) {
+      hint.innerHTML = $("editId").dataset.bodyFormat === "html"
+        ? 'Esta nota está en <strong>HTML</strong> (la redactó el bot). Los párrafos van entre <strong>&lt;p&gt;</strong>, los subtítulos entre <strong>&lt;h3&gt;</strong> y las listas con <strong>&lt;ul&gt;&lt;li&gt;</strong>. Los botones de arriba insertan las etiquetas correctas.'
+        : 'Párrafos separados por una línea en blanco. <strong>##</strong> al inicio hace un subtítulo, <strong>&gt;</strong> una cita destacada, <strong>**texto**</strong> negrita y <strong>*texto*</strong> cursiva.';
+    }
   }
 
   ["pTitle", "pDek", "pBody", "pCategory", "pAuthor"].forEach(function (id) {
@@ -1559,6 +1566,15 @@ code {
   document.querySelectorAll(".body-toolbar button[data-mark]").forEach(function (btn) {
     btn.addEventListener("click", function () {
       var m = btn.dataset.mark;
+      /* Las notas del bot vienen en HTML: las marcas de texto plano no se
+         interpretan ahí, así que se insertan las etiquetas reales. */
+      if ($("editId").dataset.bodyFormat === "html") {
+        if (m === "bold") wrapSelection("<strong>", "</strong>");
+        else if (m === "italic") wrapSelection("<em>", "</em>");
+        else if (m === "h2") wrapSelection("<h3>", "</h3>");
+        else if (m === "quote") wrapSelection("<blockquote><p>", "</p></blockquote>");
+        return;
+      }
       if (m === "bold") wrapSelection("**", "**");
       else if (m === "italic") wrapSelection("*", "*");
       else if (m === "h2") prefixParagraph("## ");
