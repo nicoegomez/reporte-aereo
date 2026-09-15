@@ -1,5 +1,17 @@
 [
   {
+    "id": 127,
+    "title": "Buenos Aires supera los 8 millones de pasajeros",
+    "dek": "El mercado aéreo de Buenos Aires concentró el 76% de los ingresos internacionales en el primer semestre del año con 8,6 millones de pasajeros.",
+    "category": "Actualidad",
+    "author": "Redacción Reporte Aéreo",
+    "date": "2026-09-09T19:00:57.347Z",
+    "dateLabel": "9 de septiembre de 2026",
+    "url": "notas/buenos-aires-supera-los-8-millones-de-pasajeros-2026-09-09-l392.html",
+    "image": "/assets/notas-img/1789141885861-cjmd2g.jpg",
+    "featured": true
+  },
+  {
     "id": 137,
     "title": "Volotea: Nuevas rutas en España",
     "dek": "La línea aérea lanza cinco rutas domésticas desde A Coruña para mejorar la conectividad en España.",
@@ -117,18 +129,6 @@
     "dateLabel": "9 de septiembre de 2026",
     "url": "notas/motores-lycoming-bajo-la-lupa-2026-09-09-bvsr.html",
     "image": "/assets/notas-img/1789141986156-6iabn4.jpg",
-    "featured": false
-  },
-  {
-    "id": 127,
-    "title": "Buenos Aires supera los 8 millones de pasajeros",
-    "dek": "El mercado aéreo de Buenos Aires concentró el 76% de los ingresos internacionales en el primer semestre del año con 8,6 millones de pasajeros.",
-    "category": "Actualidad",
-    "author": "Redacción Reporte Aéreo",
-    "date": "2026-09-09T19:00:57.347Z",
-    "dateLabel": "9 de septiembre de 2026",
-    "url": "notas/buenos-aires-supera-los-8-millones-de-pasajeros-2026-09-09-l392.html",
-    "image": "/assets/notas-img/1789141885861-cjmd2g.jpg",
     "featured": false
   },
   {
