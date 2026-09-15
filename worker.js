@@ -278,6 +278,21 @@ function inlineMarks(escaped) {
      > Cita destacada / — Autor          -> <blockquote class="pull-quote">
      **negrita** y *cursiva*             -> <strong> / <em>
    Un cuerpo sin ninguna de estas marcas se renderiza igual que antes. */
+/* El formato del cuerpo se deduce del contenido, no de una marca
+   guardada: si el editor reemplaza una nota HTML del bot por texto
+   plano, la marca vieja haría que el texto se inserte sin convertir y
+   los párrafos se fusionen en un bloque. Se considera HTML sólo si
+   realmente trae etiquetas de bloque. */
+function detectarFormatoCuerpo(body) {
+  return /<(p|h[1-6]|ul|ol|blockquote|figure|div)\b[^>]*>/i.test(String(body || "")) ? "html" : "text";
+}
+
+/* Renderiza el cuerpo según su formato real. Único lugar donde se decide
+   si pasa por bodyToHtml o se usa tal cual. */
+function renderBody(body) {
+  return detectarFormatoCuerpo(body) === "html" ? String(body || "") : bodyToHtml(body);
+}
+
 function bodyToHtml(body) {
   return body
     .split(/\n\s*\n/)
@@ -618,10 +633,9 @@ async function regenerateArticleFile(env, article) {
     category: article.category,
     author: article.author,
     dateLabel: dateLabelFor(article.created_at),
-    /* body_format='html' = ya viene armado (Gemini): se usa tal cual, sin
-       pasar por bodyToHtml (que espera texto plano con marcas ## y
-       escaparía cualquier <h3>/<ul> convirtiéndolo en texto visible). */
-    bodyHtml: article.body_format === "html" ? article.body : bodyToHtml(article.body),
+    /* El formato se deduce del cuerpo en cada render: así una nota del
+       bot editada a mano como texto plano vuelve a convertirse bien. */
+    bodyHtml: renderBody(article.body),
     coverImageUrl: article.cover_image_url,
     slug: article.slug,
     isoDate: article.created_at,
@@ -983,8 +997,10 @@ async function handleUpdateArticle(request, env, id) {
   let finalCover = coverImageUrl || existing.cover_image_url || null;
   if (!finalCover) finalCover = await autoPhotoForArticle(env, category, title);
 
+  /* El formato se recalcula en cada guardado: si el editor reemplazó el
+     HTML del bot por texto plano (o viceversa), la columna acompaña. */
   await env.DB.prepare(
-    `UPDATE articles SET title=?, dek=?, category=?, author=?, body=?, cover_image_url=?, featured=?, updated_at=?, updated_by=? WHERE id=?`
+    `UPDATE articles SET title=?, dek=?, category=?, author=?, body=?, body_format=?, cover_image_url=?, featured=?, updated_at=?, updated_by=? WHERE id=?`
   )
     .bind(
       title,
@@ -992,6 +1008,7 @@ async function handleUpdateArticle(request, env, id) {
       category || "Actualidad",
       author || session.n,
       body,
+      detectarFormatoCuerpo(body),
       finalCover,
       featured ? 1 : 0,
       new Date().toISOString(),

@@ -1391,6 +1391,13 @@ code {
   /* Réplica en el panel de bodyToHtml() del worker, para que la vista
      previa muestre exactamente lo que va a salir publicado. Si cambia
      bodyToHtml en worker.js, hay que reflejarlo acá. */
+  /* Mismo criterio que detectarFormatoCuerpo() en worker.js: el formato
+     sale del contenido, no de una marca guardada. Si cambia allá, hay
+     que reflejarlo acá. */
+  function esCuerpoHtml(body) {
+    return /<(p|h[1-6]|ul|ol|blockquote|figure|div)\b[^>]*>/i.test(String(body || ""));
+  }
+
   function previewBodyToHtml(body) {
     return String(body || "")
       .split(/\n\s*\n/)
@@ -1472,7 +1479,7 @@ code {
     var pb = $("previewBody");
     if (!bodyRaw.trim()) {
       pb.innerHTML = '<span class="preview-empty">El cuerpo de la nota aparece acá mientras escribís.</span>';
-    } else if ($("editId").dataset.bodyFormat === "html") {
+    } else if (esCuerpoHtml(bodyRaw)) {
       pb.innerHTML = bodyRaw;
     } else {
       pb.innerHTML = previewBodyToHtml(bodyRaw);
@@ -1480,7 +1487,7 @@ code {
 
     var hint = $("bodyFormatHint");
     if (hint) {
-      hint.innerHTML = $("editId").dataset.bodyFormat === "html"
+      hint.innerHTML = esCuerpoHtml(bodyRaw)
         ? 'Esta nota está en <strong>HTML</strong> (la redactó el bot). Los párrafos van entre <strong>&lt;p&gt;</strong>, los subtítulos entre <strong>&lt;h3&gt;</strong> y las listas con <strong>&lt;ul&gt;&lt;li&gt;</strong>. Los botones de arriba insertan las etiquetas correctas.'
         : 'Párrafos separados por una línea en blanco. <strong>##</strong> al inicio hace un subtítulo, <strong>&gt;</strong> una cita destacada, <strong>**texto**</strong> negrita y <strong>*texto*</strong> cursiva.';
     }
@@ -1568,7 +1575,7 @@ code {
       var m = btn.dataset.mark;
       /* Las notas del bot vienen en HTML: las marcas de texto plano no se
          interpretan ahí, así que se insertan las etiquetas reales. */
-      if ($("editId").dataset.bodyFormat === "html") {
+      if (esCuerpoHtml($("pBody").value)) {
         if (m === "bold") wrapSelection("<strong>", "</strong>");
         else if (m === "italic") wrapSelection("<em>", "</em>");
         else if (m === "h2") wrapSelection("<h3>", "</h3>");
